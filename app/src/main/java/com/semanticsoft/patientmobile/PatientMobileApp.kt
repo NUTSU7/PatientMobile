@@ -13,8 +13,6 @@ import com.semanticsoft.patientmobile.ui.screens.login.LoginScreen
 import com.semanticsoft.patientmobile.ui.screens.login.LoginViewModel
 import com.semanticsoft.patientmobile.ui.screens.registration.RegistrationScreen
 import com.semanticsoft.patientmobile.ui.screens.registration.RegistrationViewModel
-import com.semanticsoft.patientmobile.ui.screens.upload.UploadScreen
-import com.semanticsoft.patientmobile.ui.screens.upload.UploadViewModel
 
 @Composable
 fun PatientMobileApp(navController: NavHostController = rememberNavController()) {
@@ -60,19 +58,7 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
         composable(AppDestination.Dashboard.route) {
             val vm: DashboardViewModel = viewModel()
             DashboardScreen(
-                state = vm.state,
-                onUploadClick = { navController.navigate(AppDestination.Upload.route) }
-            )
-        }
-
-        composable(AppDestination.Upload.route) {
-            val vm: UploadViewModel = viewModel()
-            UploadScreen(
-                state = vm.state,
-                onDocumentNameChange = vm::onDocumentNameChange,
-                onNotesChange = vm::onNotesChange,
-                onUploadClick = vm::upload,
-                onBack = { navController.popBackStack() }
+                state = vm.state
             )
         }
     }

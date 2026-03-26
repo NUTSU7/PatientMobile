@@ -13,6 +13,8 @@ import com.semanticsoft.patientmobile.data.repository.PatientRepository
 
 data class DashboardUiState(
     val greetingName: String = "",
+    val fullName: String = "",
+    val role: String = "",
     val lastAnalysisDate: String = "15 Mar 2026",
     val attentionItems: List<AttentionItem> = emptyList(),
     val basicIndicators: List<BasicIndicatorItem> = emptyList(),
@@ -36,6 +38,8 @@ class DashboardViewModel(
 
     val state: DashboardUiState = DashboardUiState(
         greetingName = repository.getDashboardGreetingName(),
+        fullName = repository.getUserFullName(),
+        role = repository.getUserRole(),
         attentionItems = repository.getAttentionItems().ifEmpty { demoAttentionItems },
         basicIndicators = repository.getBasicIndicators(),
         markerCategories = repository.getMarkerCategories(),

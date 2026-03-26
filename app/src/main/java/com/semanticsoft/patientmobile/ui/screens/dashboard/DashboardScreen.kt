@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.semanticsoft.patientmobile.ui.components.BasicIndicatorsCard
 import com.semanticsoft.patientmobile.ui.components.ClinicalPillarCard
 import com.semanticsoft.patientmobile.ui.components.GeneralMarkersCard
@@ -45,15 +47,20 @@ import com.semanticsoft.patientmobile.ui.components.ResumeAICard
 import com.semanticsoft.patientmobile.ui.components.WarningCard
 import com.semanticsoft.patientmobile.ui.common.dashboardSpacing
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
+import com.semanticsoft.patientmobile.ui.screens.uploadFile.UploadFileScreen
+import com.semanticsoft.patientmobile.ui.screens.uploadFile.UploadFileViewModel
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
 
 @Composable
 fun DashboardScreen(
     state: DashboardUiState,
-    onUploadClick: () -> Unit
+    onMenuClick: () -> Unit = {},
+    onUploadClick: () -> Unit = {}
 ) {
     SetStatusBar(color = Color.White, darkIcons = true)
     var selectedCategoryIndex by rememberSaveable { mutableIntStateOf(0) }
+    var showUploadModal by rememberSaveable { mutableStateOf(false) }
+    val uploadFileViewModel = androidx.lifecycle.viewmodel.compose.viewModel<UploadFileViewModel>()
     val selectedCategoryName = state.markerCategories.getOrNull(selectedCategoryIndex)?.name ?: "Toate"
     val filteredGeneralMarkers = if (selectedCategoryName.equals("Toate", ignoreCase = true)) {
         state.generalMarkerCards
@@ -82,7 +89,7 @@ fun DashboardScreen(
                             .height(141.dp)
                     ) {
                         IconButton(
-                            onClick = {},
+                            onClick = onMenuClick,
                             modifier = Modifier
                                 .align(Alignment.TopStart)
                                 .offset(x = (horizontalPadding - 8.dp), y = 50.dp)
@@ -137,7 +144,7 @@ fun DashboardScreen(
                         }
 
                         IconButton(
-                            onClick = onUploadClick,
+                            onClick = { showUploadModal = true },
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .offset(x = -horizontalPadding, y = 50.dp)
@@ -301,6 +308,15 @@ fun DashboardScreen(
 
                 item { Spacer(modifier = Modifier.height(spacing.bottomSpacer)) }
             }
+        }
+
+        // Upload File Modal
+        if (showUploadModal) {
+            UploadFileScreen(
+                state = uploadFileViewModel.state,
+                viewModel = uploadFileViewModel,
+                onDismiss = { showUploadModal = false }
+            )
         }
     }
 }
