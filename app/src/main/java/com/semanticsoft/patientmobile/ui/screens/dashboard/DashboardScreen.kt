@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +44,7 @@ import com.semanticsoft.patientmobile.ui.components.BasicIndicatorsCard
 import com.semanticsoft.patientmobile.ui.components.GeneralMarkersCard
 import com.semanticsoft.patientmobile.ui.components.HealthScoreCard
 import com.semanticsoft.patientmobile.ui.components.MarkerOverviewSection
+import com.semanticsoft.patientmobile.ui.components.ResumeAICard
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
 import com.semanticsoft.patientmobile.ui.theme.AttentionHigh
@@ -175,14 +175,12 @@ fun DashboardScreen(
                 }
 
                 item {
-                    Button(
-                        onClick = onUploadClick,
+                    ResumeAICard(
+                        summaryText = state.aiSummary,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = horizontalPadding)
-                    ) {
-                        Text("Încarcă analiză nouă")
-                    }
+                    )
                 }
 
                 if (state.basicIndicators.isNotEmpty()) {
@@ -269,27 +267,6 @@ fun DashboardScreen(
                             state.attentionItems.forEach { item ->
                                 AttentionRow(item = item)
                             }
-                        }
-                    }
-                }
-
-                item {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = horizontalPadding),
-                        shape = RoundedCornerShape(20.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text("AI · Rezumat pe înțelesul tău", style = MaterialTheme.typography.titleMedium)
-                            Text(state.aiSummary, style = MaterialTheme.typography.bodyLarge)
-                            Text(
-                                "Consultați medicul pentru interpretare medicală.",
-                                style = MaterialTheme.typography.bodySmall
-                            )
                         }
                     }
                 }
