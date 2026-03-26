@@ -45,6 +45,7 @@ import com.semanticsoft.patientmobile.ui.components.GeneralMarkersCard
 import com.semanticsoft.patientmobile.ui.components.HealthScoreCard
 import com.semanticsoft.patientmobile.ui.components.MarkerOverviewSection
 import com.semanticsoft.patientmobile.ui.components.ResumeAICard
+import com.semanticsoft.patientmobile.ui.components.WarningCard
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
 import com.semanticsoft.patientmobile.ui.theme.AttentionHigh
@@ -159,6 +160,16 @@ fun DashboardScreen(
                             )
                         }
                     }
+                }
+
+                // Warning Cards - above Health Score
+                items(state.warningCards) { warningCard ->
+                    WarningCard(
+                        warningCard = warningCard,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = horizontalPadding)
+                    )
                 }
 
                 item {

@@ -8,6 +8,9 @@ import com.semanticsoft.patientmobile.data.model.IndicatorStatus
 import com.semanticsoft.patientmobile.data.model.IndicatorTrendDirection
 import com.semanticsoft.patientmobile.data.model.MarkerCategoryItem
 import com.semanticsoft.patientmobile.data.model.MarkerSummary
+import com.semanticsoft.patientmobile.data.model.WarningCardItem
+import com.semanticsoft.patientmobile.data.model.WarningIndicatorItem
+import com.semanticsoft.patientmobile.data.model.WarningLevel
 
 interface PatientRepository {
     fun getDashboardGreetingName(): String
@@ -17,6 +20,7 @@ interface PatientRepository {
     fun getGeneralMarkerCards(): List<GeneralMarkerCardItem>
     fun getMarkerSummary(): MarkerSummary
     fun getAiSummary(): String
+    fun getWarningCards(): List<WarningCardItem>
 }
 
 class MockPatientRepository : PatientRepository {
@@ -117,4 +121,24 @@ class MockPatientRepository : PatientRepository {
     override fun getAiSummary(): String =
         "Rezultatele tale sunt în mare parte stabile. LDL este peste limita sigură, " +
             "iar vitamina D rămâne scăzută. Restul markerilor majori sunt în interval normal."
+
+    override fun getWarningCards(): List<WarningCardItem> = listOf(
+        WarningCardItem(
+            level = WarningLevel.HIGH,
+            indicators = listOf(
+                WarningIndicatorItem("TSH", "0.3", "mIU/L"),
+                WarningIndicatorItem("Vitamina D", "18", "ng/mL"),
+                WarningIndicatorItem("Colesterol LDL", "4.5", "mmol/L"),
+                WarningIndicatorItem("Acid uric", "7.2", "mg/dL")
+            )
+        ),
+        WarningCardItem(
+            level = WarningLevel.MODERATE,
+            indicators = listOf(
+                WarningIndicatorItem("Glucoza a jeun", "6.8", "mmol/L"),
+                WarningIndicatorItem("Trigliceride", "1.8", "mmol/L"),
+                WarningIndicatorItem("HbA1c", "5.8", "%")
+            )
+        )
+    )
 }
