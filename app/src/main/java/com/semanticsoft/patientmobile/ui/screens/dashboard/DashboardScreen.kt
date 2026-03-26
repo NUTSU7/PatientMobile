@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.semanticsoft.patientmobile.data.model.AttentionItem
 import com.semanticsoft.patientmobile.ui.components.BasicIndicatorsCard
 import com.semanticsoft.patientmobile.ui.components.HealthScoreCard
+import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
 import com.semanticsoft.patientmobile.ui.theme.AttentionHigh
 import com.semanticsoft.patientmobile.ui.theme.AttentionModerate
@@ -49,6 +50,8 @@ fun DashboardScreen(
     state: DashboardUiState,
     onUploadClick: () -> Unit
 ) {
+    SetStatusBar(color = Color.White, darkIcons = true)
+
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val horizontalPadding = when {
             maxWidth >= 600.dp -> 40.dp

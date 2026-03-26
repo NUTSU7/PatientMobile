@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 
 @Composable
 fun RegistrationScreen(
@@ -54,6 +55,8 @@ fun RegistrationScreen(
     onRegisterClick: () -> Unit,
     onGoToLogin: () -> Unit
 ) {
+    SetStatusBar(color = Color(0xFF3B82F6), darkIcons = false)
+
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
