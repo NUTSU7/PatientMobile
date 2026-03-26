@@ -43,3 +43,19 @@ data class BasicIndicatorItem(
     val markerPosition: Float,
     val segments: IndicatorSegments = IndicatorSegments()
 )
+
+data class MarkerCategoryItem(
+    val name: String,
+    val count: Int
+)
+
+data class GeneralMarkerCardItem(
+    val title: String,
+    val category: String,
+    val value: String,
+    val unit: String,
+    val status: IndicatorStatus,
+    val normalRange: String,
+    val borderlineRange: String,
+    val attentionRange: String
+)
