@@ -18,6 +18,7 @@ interface PatientRepository {
     fun getDashboardGreetingName(): String
     fun getUserFullName(): String
     fun getUserRole(): String
+    fun getUserProfilePhotoResId(): Int?
     fun getAttentionItems(): List<AttentionItem>
     fun getBasicIndicators(): List<BasicIndicatorItem>
     fun getMarkerCategories(): List<MarkerCategoryItem>
@@ -32,6 +33,7 @@ class MockPatientRepository : PatientRepository {
     override fun getDashboardGreetingName(): String = "Alexandru"
     override fun getUserFullName(): String = "Alexandru Popescu"
     override fun getUserRole(): String = "Pacient"
+    override fun getUserProfilePhotoResId(): Int? = null
 
     override fun getAttentionItems(): List<AttentionItem> = listOf(
         AttentionItem("TSH", "0.3", "mIU/L", "Atenție"),
