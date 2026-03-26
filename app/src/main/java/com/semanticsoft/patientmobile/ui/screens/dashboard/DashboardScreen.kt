@@ -43,6 +43,7 @@ import com.semanticsoft.patientmobile.ui.components.HealthScoreCard
 import com.semanticsoft.patientmobile.ui.components.MarkerOverviewSection
 import com.semanticsoft.patientmobile.ui.components.ResumeAICard
 import com.semanticsoft.patientmobile.ui.components.WarningCard
+import com.semanticsoft.patientmobile.ui.common.dashboardSpacing
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
 
@@ -62,11 +63,8 @@ fun DashboardScreen(
     val visibleClinicalPillars = state.clinicalPillarCards.filter { it.reportCount > 0 }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val horizontalPadding = when {
-            maxWidth >= 600.dp -> 40.dp
-            maxWidth >= 400.dp -> 24.dp
-            else -> 16.dp
-        }
+        val spacing = dashboardSpacing(maxWidth.value)
+        val horizontalPadding = spacing.horizontalPadding
 
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -74,7 +72,7 @@ fun DashboardScreen(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(spacing.listItemGap)
             ) {
                 item {
                     Box(
@@ -193,7 +191,10 @@ fun DashboardScreen(
                     item {
                         Text(
                             text = "Indicatori de bază",
-                            style = MaterialTheme.typography.titleLarge,
+                            color = Color(0xFF111827),
+                            fontSize = 17.sp,
+                            lineHeight = 28.sp,
+                            fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = horizontalPadding)
                         )
                     }
@@ -221,7 +222,7 @@ fun DashboardScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = horizontalPadding),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                                verticalArrangement = Arrangement.spacedBy(spacing.markerHeaderGap)
                             ) {
                                 Text(
                                     text = "Prezentare generală markeri",
@@ -264,7 +265,7 @@ fun DashboardScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = horizontalPadding),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                            verticalArrangement = Arrangement.spacedBy(spacing.sectionGap)
                         ) {
                             Text(
                                 text = "Piloni clinici",
@@ -275,11 +276,11 @@ fun DashboardScreen(
                             )
 
                             val rows = visibleClinicalPillars.chunked(2)
-                            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(spacing.clinicalGridGap)) {
                                 rows.forEach { rowItems ->
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(spacing.clinicalGridGap)
                                     ) {
                                         rowItems.forEach { item ->
                                             ClinicalPillarCard(
@@ -298,7 +299,7 @@ fun DashboardScreen(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(8.dp)) }
+                item { Spacer(modifier = Modifier.height(spacing.bottomSpacer)) }
             }
         }
     }
