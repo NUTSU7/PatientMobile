@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import com.semanticsoft.patientmobile.data.model.AttentionItem
+import com.semanticsoft.patientmobile.ui.components.BasicIndicatorsCard
 import com.semanticsoft.patientmobile.ui.components.HealthScoreCard
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
 import com.semanticsoft.patientmobile.ui.theme.AttentionHigh
@@ -97,6 +98,31 @@ fun DashboardScreen(
                     ) {
                         Text("Încarcă analiză nouă")
                     }
+                }
+
+                item {
+                    Text(
+                        text = "Indicatori de bază",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(horizontal = horizontalPadding)
+                    )
+                }
+
+                items(state.basicIndicators) { indicator ->
+                    BasicIndicatorsCard(
+                        title = indicator.title,
+                        value = indicator.value,
+                        unit = indicator.unit,
+                        status = indicator.status,
+                        trendDirection = indicator.trendDirection,
+                        trendDelta = indicator.trendDelta,
+                        trendDescription = indicator.trendDescription,
+                        markerPosition = indicator.markerPosition,
+                        segments = indicator.segments,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = horizontalPadding)
+                    )
                 }
 
                 item {
