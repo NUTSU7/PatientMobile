@@ -3,6 +3,7 @@ package com.semanticsoft.patientmobile.ui.screens.dashboard
 import androidx.lifecycle.ViewModel
 import com.semanticsoft.patientmobile.data.model.AttentionItem
 import com.semanticsoft.patientmobile.data.model.BasicIndicatorItem
+import com.semanticsoft.patientmobile.data.model.ClinicalPillarCardItem
 import com.semanticsoft.patientmobile.data.model.GeneralMarkerCardItem
 import com.semanticsoft.patientmobile.data.model.MarkerCategoryItem
 import com.semanticsoft.patientmobile.data.model.MarkerSummary
@@ -19,7 +20,8 @@ data class DashboardUiState(
     val generalMarkerCards: List<GeneralMarkerCardItem> = emptyList(),
     val markerSummary: MarkerSummary = MarkerSummary(0, 0, 0, 0),
     val aiSummary: String = "",
-    val warningCards: List<WarningCardItem> = emptyList()
+    val warningCards: List<WarningCardItem> = emptyList(),
+    val clinicalPillarCards: List<ClinicalPillarCardItem> = emptyList()
 )
 
 class DashboardViewModel(
@@ -40,6 +42,7 @@ class DashboardViewModel(
         generalMarkerCards = repository.getGeneralMarkerCards(),
         markerSummary = repository.getMarkerSummary(),
         aiSummary = repository.getAiSummary(),
-        warningCards = repository.getWarningCards()
+        warningCards = repository.getWarningCards(),
+        clinicalPillarCards = repository.getClinicalPillarCards()
     )
 }
