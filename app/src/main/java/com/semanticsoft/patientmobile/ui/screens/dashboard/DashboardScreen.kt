@@ -29,6 +29,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,7 +42,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import com.semanticsoft.patientmobile.data.model.AttentionItem
 import com.semanticsoft.patientmobile.ui.components.BasicIndicatorsCard
+import com.semanticsoft.patientmobile.ui.components.GeneralMarkersCard
 import com.semanticsoft.patientmobile.ui.components.HealthScoreCard
+import com.semanticsoft.patientmobile.ui.components.MarkerOverviewSection
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
 import com.semanticsoft.patientmobile.ui.theme.AttentionHigh
@@ -51,6 +57,13 @@ fun DashboardScreen(
     onUploadClick: () -> Unit
 ) {
     SetStatusBar(color = Color.White, darkIcons = true)
+    var selectedCategoryIndex by rememberSaveable { mutableIntStateOf(0) }
+    val selectedCategoryName = state.markerCategories.getOrNull(selectedCategoryIndex)?.name ?: "Toate"
+    val filteredGeneralMarkers = if (selectedCategoryName.equals("Toate", ignoreCase = true)) {
+        state.generalMarkerCards
+    } else {
+        state.generalMarkerCards.filter { it.category.equals(selectedCategoryName, ignoreCase = true) }
+    }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val horizontalPadding = when {
@@ -196,6 +209,48 @@ fun DashboardScreen(
                                 .fillMaxWidth()
                                 .padding(horizontal = horizontalPadding)
                         )
+                    }
+
+                    if (state.markerCategories.isNotEmpty()) {
+                        item {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = horizontalPadding),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Text(
+                                    text = "Prezentare generală markeri",
+                                    color = Color(0xFF111827),
+                                    fontSize = 17.sp,
+                                    lineHeight = 28.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                MarkerOverviewSection(
+                                    categories = state.markerCategories,
+                                    selectedIndex = selectedCategoryIndex,
+                                    onCategorySelected = { selectedCategoryIndex = it },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+
+                        items(filteredGeneralMarkers) { markerCard ->
+                            GeneralMarkersCard(
+                                title = markerCard.title,
+                                category = markerCard.category,
+                                value = markerCard.value,
+                                unit = markerCard.unit,
+                                status = markerCard.status,
+                                normalRange = markerCard.normalRange,
+                                borderlineRange = markerCard.borderlineRange,
+                                attentionRange = markerCard.attentionRange,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = horizontalPadding)
+                            )
+                        }
                     }
                 }
 

@@ -3,6 +3,8 @@ package com.semanticsoft.patientmobile.ui.screens.dashboard
 import androidx.lifecycle.ViewModel
 import com.semanticsoft.patientmobile.data.model.AttentionItem
 import com.semanticsoft.patientmobile.data.model.BasicIndicatorItem
+import com.semanticsoft.patientmobile.data.model.GeneralMarkerCardItem
+import com.semanticsoft.patientmobile.data.model.MarkerCategoryItem
 import com.semanticsoft.patientmobile.data.model.MarkerSummary
 import com.semanticsoft.patientmobile.data.repository.MockPatientRepository
 import com.semanticsoft.patientmobile.data.repository.PatientRepository
@@ -12,6 +14,8 @@ data class DashboardUiState(
     val lastAnalysisDate: String = "15 Mar 2026",
     val attentionItems: List<AttentionItem> = emptyList(),
     val basicIndicators: List<BasicIndicatorItem> = emptyList(),
+    val markerCategories: List<MarkerCategoryItem> = emptyList(),
+    val generalMarkerCards: List<GeneralMarkerCardItem> = emptyList(),
     val markerSummary: MarkerSummary = MarkerSummary(0, 0, 0, 0),
     val aiSummary: String = ""
 )
@@ -30,6 +34,8 @@ class DashboardViewModel(
         greetingName = repository.getDashboardGreetingName(),
         attentionItems = repository.getAttentionItems().ifEmpty { demoAttentionItems },
         basicIndicators = repository.getBasicIndicators(),
+        markerCategories = repository.getMarkerCategories(),
+        generalMarkerCards = repository.getGeneralMarkerCards(),
         markerSummary = repository.getMarkerSummary(),
         aiSummary = repository.getAiSummary()
     )
