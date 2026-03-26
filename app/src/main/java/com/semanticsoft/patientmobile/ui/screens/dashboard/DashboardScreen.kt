@@ -26,8 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.data.model.AttentionItem
+import com.semanticsoft.patientmobile.ui.components.HealthScoreCard
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
 import com.semanticsoft.patientmobile.ui.theme.AttentionHigh
 import com.semanticsoft.patientmobile.ui.theme.AttentionModerate
@@ -45,12 +45,6 @@ fun DashboardScreen(
             maxWidth >= 600.dp -> 40.dp
             maxWidth >= 400.dp -> 24.dp
             else -> 16.dp
-        }
-
-        val scoreFont = when {
-            maxWidth >= 600.dp -> 44.sp
-            maxWidth >= 400.dp -> 40.sp
-            else -> 34.sp
         }
 
         Surface(
@@ -82,38 +76,26 @@ fun DashboardScreen(
                 }
 
                 item {
-                    Card(
+                    HealthScoreCard(
+                        score = state.markerSummary.score,
+                        normalCount = state.markerSummary.normal,
+                        borderlineCount = state.markerSummary.borderline,
+                        attentionCount = state.markerSummary.attention,
+                        statusText = "Necesită atenție",
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = horizontalPadding),
-                        shape = RoundedCornerShape(20.dp)
+                            .padding(horizontal = horizontalPadding)
+                    )
+                }
+
+                item {
+                    Button(
+                        onClick = onUploadClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = horizontalPadding)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Text("Scorul tău de sănătate", style = MaterialTheme.typography.titleLarge)
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Text(
-                                    text = "${state.markerSummary.score}/100",
-                                    style = MaterialTheme.typography.headlineSmall.copy(fontSize = scoreFont)
-                                )
-                                Text("Necesită atenție", color = AttentionModerate)
-                            }
-                            Text(
-                                text = "${state.markerSummary.normal} normali · ${state.markerSummary.borderline} la limită · ${state.markerSummary.attention} atenție",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Button(
-                                onClick = onUploadClick,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("Încarcă analiză nouă")
-                            }
-                        }
+                        Text("Încarcă analiză nouă")
                     }
                 }
 
