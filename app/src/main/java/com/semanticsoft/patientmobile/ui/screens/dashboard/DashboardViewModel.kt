@@ -6,6 +6,7 @@ import com.semanticsoft.patientmobile.data.model.BasicIndicatorItem
 import com.semanticsoft.patientmobile.data.model.GeneralMarkerCardItem
 import com.semanticsoft.patientmobile.data.model.MarkerCategoryItem
 import com.semanticsoft.patientmobile.data.model.MarkerSummary
+import com.semanticsoft.patientmobile.data.model.WarningCardItem
 import com.semanticsoft.patientmobile.data.repository.MockPatientRepository
 import com.semanticsoft.patientmobile.data.repository.PatientRepository
 
@@ -17,7 +18,8 @@ data class DashboardUiState(
     val markerCategories: List<MarkerCategoryItem> = emptyList(),
     val generalMarkerCards: List<GeneralMarkerCardItem> = emptyList(),
     val markerSummary: MarkerSummary = MarkerSummary(0, 0, 0, 0),
-    val aiSummary: String = ""
+    val aiSummary: String = "",
+    val warningCards: List<WarningCardItem> = emptyList()
 )
 
 class DashboardViewModel(
@@ -37,6 +39,7 @@ class DashboardViewModel(
         markerCategories = repository.getMarkerCategories(),
         generalMarkerCards = repository.getGeneralMarkerCards(),
         markerSummary = repository.getMarkerSummary(),
-        aiSummary = repository.getAiSummary()
+        aiSummary = repository.getAiSummary(),
+        warningCards = repository.getWarningCards()
     )
 }

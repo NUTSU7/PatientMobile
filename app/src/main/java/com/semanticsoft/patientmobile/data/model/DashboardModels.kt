@@ -59,3 +59,19 @@ data class GeneralMarkerCardItem(
     val borderlineRange: String,
     val attentionRange: String
 )
+
+enum class WarningLevel {
+    HIGH,      // "Atenție!"
+    MODERATE   // "Atenție moderată"
+}
+
+data class WarningIndicatorItem(
+    val name: String,
+    val value: String,
+    val unit: String
+)
+
+data class WarningCardItem(
+    val level: WarningLevel,
+    val indicators: List<WarningIndicatorItem>
+)
