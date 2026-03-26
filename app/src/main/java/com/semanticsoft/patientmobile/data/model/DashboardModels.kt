@@ -75,3 +75,25 @@ data class WarningCardItem(
     val level: WarningLevel,
     val indicators: List<WarningIndicatorItem>
 )
+
+enum class ClinicalPillarType {
+    BLOOD_CELLS,
+    ORGANS_METABOLISM,
+    HEART_CV,
+    HORMONES,
+    ONCOLOGY_MARKERS,
+    NUTRITION_VITAMINS,
+    COAGULATION,
+    INFECTIONS_IMMUNOLOGY
+}
+
+enum class ClinicalPillarAlert {
+    NONE,
+    GOOD,
+    ATTENTION
+}
+
+data class ClinicalPillarCardItem(
+    val type: ClinicalPillarType,
+    val reportCount: Int
+)

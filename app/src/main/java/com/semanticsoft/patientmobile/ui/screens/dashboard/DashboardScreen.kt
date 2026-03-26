@@ -16,12 +16,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,13 +32,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
-import com.semanticsoft.patientmobile.data.model.AttentionItem
 import com.semanticsoft.patientmobile.ui.components.BasicIndicatorsCard
+import com.semanticsoft.patientmobile.ui.components.ClinicalPillarCard
 import com.semanticsoft.patientmobile.ui.components.GeneralMarkersCard
 import com.semanticsoft.patientmobile.ui.components.HealthScoreCard
 import com.semanticsoft.patientmobile.ui.components.MarkerOverviewSection
@@ -48,9 +45,6 @@ import com.semanticsoft.patientmobile.ui.components.ResumeAICard
 import com.semanticsoft.patientmobile.ui.components.WarningCard
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
-import com.semanticsoft.patientmobile.ui.theme.AttentionHigh
-import com.semanticsoft.patientmobile.ui.theme.AttentionModerate
-import com.semanticsoft.patientmobile.ui.theme.SuccessGreen
 
 @Composable
 fun DashboardScreen(
@@ -65,6 +59,7 @@ fun DashboardScreen(
     } else {
         state.generalMarkerCards.filter { it.category.equals(selectedCategoryName, ignoreCase = true) }
     }
+    val visibleClinicalPillars = state.clinicalPillarCards.filter { it.reportCount > 0 }
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val horizontalPadding = when {
@@ -263,20 +258,41 @@ fun DashboardScreen(
                     }
                 }
 
-                item {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = horizontalPadding),
-                        shape = RoundedCornerShape(20.dp)
-                    ) {
+                if (visibleClinicalPillars.isNotEmpty()) {
+                    item {
                         Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = horizontalPadding),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Text("Atenție", style = MaterialTheme.typography.titleMedium)
-                            state.attentionItems.forEach { item ->
-                                AttentionRow(item = item)
+                            Text(
+                                text = "Piloni clinici",
+                                color = Color(0xFF111827),
+                                fontSize = 17.sp,
+                                lineHeight = 28.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            val rows = visibleClinicalPillars.chunked(2)
+                            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                rows.forEach { rowItems ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        rowItems.forEach { item ->
+                                            ClinicalPillarCard(
+                                                item = item,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                        }
+
+                                        if (rowItems.size == 1) {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -285,34 +301,5 @@ fun DashboardScreen(
                 item { Spacer(modifier = Modifier.height(8.dp)) }
             }
         }
-    }
-}
-
-@Composable
-private fun AttentionRow(item: AttentionItem) {
-    val color = when (item.severity) {
-        "Atenție" -> AttentionHigh
-        "Atenție moderată" -> AttentionModerate
-        else -> SuccessGreen
-    }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Spacer(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(color)
-            )
-            Text("${item.marker}: ${item.value} ${item.unit}")
-        }
-        Text(item.severity, color = color)
     }
 }

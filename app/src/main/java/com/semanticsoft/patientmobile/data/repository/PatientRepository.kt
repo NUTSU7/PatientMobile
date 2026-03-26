@@ -2,6 +2,8 @@ package com.semanticsoft.patientmobile.data.repository
 
 import com.semanticsoft.patientmobile.data.model.AttentionItem
 import com.semanticsoft.patientmobile.data.model.BasicIndicatorItem
+import com.semanticsoft.patientmobile.data.model.ClinicalPillarCardItem
+import com.semanticsoft.patientmobile.data.model.ClinicalPillarType
 import com.semanticsoft.patientmobile.data.model.GeneralMarkerCardItem
 import com.semanticsoft.patientmobile.data.model.IndicatorSegments
 import com.semanticsoft.patientmobile.data.model.IndicatorStatus
@@ -21,6 +23,7 @@ interface PatientRepository {
     fun getMarkerSummary(): MarkerSummary
     fun getAiSummary(): String
     fun getWarningCards(): List<WarningCardItem>
+    fun getClinicalPillarCards(): List<ClinicalPillarCardItem>
 }
 
 class MockPatientRepository : PatientRepository {
@@ -140,5 +143,16 @@ class MockPatientRepository : PatientRepository {
                 WarningIndicatorItem("HbA1c", "5.8", "%")
             )
         )
+    )
+
+    override fun getClinicalPillarCards(): List<ClinicalPillarCardItem> = listOf(
+        ClinicalPillarCardItem(type = ClinicalPillarType.BLOOD_CELLS, reportCount = 6),
+        ClinicalPillarCardItem(type = ClinicalPillarType.ORGANS_METABOLISM, reportCount = 14),
+        ClinicalPillarCardItem(type = ClinicalPillarType.HEART_CV, reportCount = 5),
+        ClinicalPillarCardItem(type = ClinicalPillarType.HORMONES, reportCount = 8),
+        ClinicalPillarCardItem(type = ClinicalPillarType.ONCOLOGY_MARKERS, reportCount = 4),
+        ClinicalPillarCardItem(type = ClinicalPillarType.NUTRITION_VITAMINS, reportCount = 3),
+        ClinicalPillarCardItem(type = ClinicalPillarType.COAGULATION, reportCount = 3),
+        ClinicalPillarCardItem(type = ClinicalPillarType.INFECTIONS_IMMUNOLOGY, reportCount = 5)
     )
 }
