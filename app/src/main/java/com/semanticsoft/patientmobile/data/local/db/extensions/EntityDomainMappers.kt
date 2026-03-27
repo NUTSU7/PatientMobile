@@ -1,15 +1,15 @@
-package com.estcomputer.patient.data.local.db.extensions
+package com.semanticsoft.patientmobile.data.local.db.extensions
 
-import com.estcomputer.patient.data.local.db.entity.DocumentEntity
-import com.estcomputer.patient.data.local.db.entity.MedicalReportEntity
-import com.estcomputer.patient.data.local.db.entity.MedicalResultEntity
-import com.estcomputer.patient.data.local.db.entity.SyncStatus as EntitySyncStatus
-import com.estcomputer.patient.data.local.db.entity.UserEntity
-import com.estcomputer.patient.domain.model.MedicalReport
-import com.estcomputer.patient.domain.model.MedicalResult
-import com.estcomputer.patient.domain.model.PatientDocument
-import com.estcomputer.patient.domain.model.SyncStatus as DomainSyncStatus
-import com.estcomputer.patient.domain.model.User
+import com.semanticsoft.patientmobile.data.local.db.entity.DocumentEntity
+import com.semanticsoft.patientmobile.data.local.db.entity.MedicalReportEntity
+import com.semanticsoft.patientmobile.data.local.db.entity.MedicalResultEntity
+import com.semanticsoft.patientmobile.data.local.db.entity.SyncStatus as EntitySyncStatus
+import com.semanticsoft.patientmobile.data.local.db.entity.UserEntity
+import com.semanticsoft.patientmobile.domain.model.MedicalReport
+import com.semanticsoft.patientmobile.domain.model.MedicalResult
+import com.semanticsoft.patientmobile.domain.model.PatientDocument
+import com.semanticsoft.patientmobile.domain.model.SyncStatus as DomainSyncStatus
+import com.semanticsoft.patientmobile.domain.model.User
 import java.time.Instant
 import java.time.LocalDate
 

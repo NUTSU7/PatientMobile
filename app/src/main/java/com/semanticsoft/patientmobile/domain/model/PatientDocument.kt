@@ -1,4 +1,4 @@
-package com.estcomputer.patient.domain.model
+package com.semanticsoft.patientmobile.domain.model
 
 import java.time.Instant
 
