@@ -207,6 +207,45 @@ private fun UploadFileDialogContent(
                 onClick = { viewModel.uploadFile(UploadSource.DROPBOX) }
             )
 
+            if (state.selectedFileName != null) {
+                Spacer(modifier = Modifier.height((12f * scale).dp))
+                Text(
+                    text = "Fișier selectat: ${state.selectedFileName}",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = (11.9f * scale).sp,
+                        lineHeight = (20f * scale).sp
+                    ),
+                    color = Color(0xFF374151),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            if (state.isUploading) {
+                Spacer(modifier = Modifier.height((8f * scale).dp))
+                Text(
+                    text = "Upload în progres: ${(state.uploadProgress * 100).toInt()}%",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = (11.9f * scale).sp,
+                        lineHeight = (20f * scale).sp
+                    ),
+                    color = Color(0xFF5A52E5),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            if (state.errorMessage != null) {
+                Spacer(modifier = Modifier.height((8f * scale).dp))
+                Text(
+                    text = state.errorMessage,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = (11.9f * scale).sp,
+                        lineHeight = (20f * scale).sp
+                    ),
+                    color = Color(0xFFB91C1C),
+                    textAlign = TextAlign.Center
+                )
+            }
+
             Spacer(modifier = Modifier.height((16f * scale).dp))
 
             // Footer info

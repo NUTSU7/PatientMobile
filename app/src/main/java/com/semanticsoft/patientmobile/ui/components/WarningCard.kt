@@ -40,21 +40,19 @@ fun WarningCard(
     BoxWithConstraints(modifier = modifier) {
         val scale = max(0.86f, min(maxWidth.value / 343.2f, 1.06f))
 
-        val (backgroundColor, titleColor, contentColor, borderColor) = when (warningCard.level) {
+        val (backgroundColor, titleColor, contentColor) = when (warningCard.level) {
             WarningLevel.HIGH -> {
-                Tuple4(
+                Tuple3(
                     Color(0xFFFEF2F2),  // light red background
                     Color(0xFFB91C1C),  // dark red title
-                    Color(0xFF7F1D1D),  // darker red for content
-                    Color(0xFFFECACA)   // light red border
+                    Color(0xFF7F1D1D)   // darker red for content
                 )
             }
             WarningLevel.MODERATE -> {
-                Tuple4(
+                Tuple3(
                     Color(0xFFFEFCE8),  // light yellow background
                     Color(0xFFA16207),  // dark orange/brown title
-                    Color(0xFF713F12),  // darker orange/brown for content
-                    Color(0xFFFEF08A)   // light yellow border
+                    Color(0xFF713F12)   // darker orange/brown for content
                 )
             }
         }
@@ -169,9 +167,8 @@ private fun WarningIndicatorRow(
 }
 
 // Helper data class for returning multiple values
-private data class Tuple4(
+private data class Tuple3(
     val first: Color,   // backgroundColor
     val second: Color,  // titleColor
-    val third: Color,   // contentColor
-    val fourth: Color   // borderColor
+    val third: Color    // contentColor
 )

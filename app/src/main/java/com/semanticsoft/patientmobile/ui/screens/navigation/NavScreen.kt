@@ -25,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
@@ -61,6 +62,8 @@ private enum class PostLoginTab {
 @Composable
 fun NavScreen(
     state: DashboardUiState,
+    onRefresh: () -> Unit,
+    onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -95,6 +98,14 @@ fun NavScreen(
                         onSelectHistory = {
                             selectedTab = PostLoginTab.AnalysisHistory
                             scope.launch { drawerState.close() }
+                        },
+                        onRefresh = {
+                            onRefresh()
+                            scope.launch { drawerState.close() }
+                        },
+                        onLogout = {
+                            onLogout()
+                            scope.launch { drawerState.close() }
                         }
                     )
                 }
@@ -110,6 +121,7 @@ fun NavScreen(
 
                 PostLoginTab.AnalysisHistory -> {
                     AnalysisHistoryScreen(
+                        onRetry = onRefresh,
                         onMenuClick = { scope.launch { drawerState.open() } }
                     )
                 }
@@ -127,7 +139,9 @@ private fun PostLoginDrawerContent(
     scale: Float,
     onClose: () -> Unit,
     onSelectDashboard: () -> Unit,
-    onSelectHistory: () -> Unit
+    onSelectHistory: () -> Unit,
+    onRefresh: () -> Unit,
+    onLogout: () -> Unit
 ) {
     val initials = remember(fullName) {
         fullName
@@ -206,6 +220,30 @@ private fun PostLoginDrawerContent(
             activeIcon = Icons.Outlined.Description,
             onClick = onSelectHistory
         )
+
+        Spacer(modifier = Modifier.height((8f * scale).dp))
+
+        TextButton(onClick = onRefresh, modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "Reîmprospătează date",
+                color = Color.White,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = (11.9f * scale).sp,
+                    fontWeight = FontWeight.Medium
+                )
+            )
+        }
+
+        TextButton(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "Deconectare",
+                color = Color(0xFFFCA5A5),
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = (11.9f * scale).sp,
+                    fontWeight = FontWeight.Medium
+                )
+            )
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 

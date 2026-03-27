@@ -37,7 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.semanticsoft.patientmobile.ui.components.BasicIndicatorsCard
 import com.semanticsoft.patientmobile.ui.components.ClinicalPillarCard
 import com.semanticsoft.patientmobile.ui.components.GeneralMarkersCard
@@ -60,7 +60,7 @@ fun DashboardScreen(
     SetStatusBar(color = Color.White, darkIcons = true)
     var selectedCategoryIndex by rememberSaveable { mutableIntStateOf(0) }
     var showUploadModal by rememberSaveable { mutableStateOf(false) }
-    val uploadFileViewModel = androidx.lifecycle.viewmodel.compose.viewModel<UploadFileViewModel>()
+    val uploadFileViewModel: UploadFileViewModel = hiltViewModel()
     val selectedCategoryName = state.markerCategories.getOrNull(selectedCategoryIndex)?.name ?: "Toate"
     val filteredGeneralMarkers = if (selectedCategoryName.equals("Toate", ignoreCase = true)) {
         state.generalMarkerCards
@@ -144,7 +144,10 @@ fun DashboardScreen(
                         }
 
                         IconButton(
-                            onClick = { showUploadModal = true },
+                            onClick = {
+                                showUploadModal = true
+                                onUploadClick()
+                            },
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .offset(x = -horizontalPadding, y = 50.dp)

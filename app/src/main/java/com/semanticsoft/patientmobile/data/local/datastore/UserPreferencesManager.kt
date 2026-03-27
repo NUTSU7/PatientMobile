@@ -1,25 +1,44 @@
 package com.semanticsoft.patientmobile.data.local.datastore
 
-import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 
-class UserPreferencesManager(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+class UserPreferencesManager(
+    private val dataStore: DataStore<Preferences>
+) {
 
     fun setDarkThemeEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_DARK_THEME, enabled).apply()
+        runBlocking {
+            dataStore.edit { prefs ->
+                prefs[KEY_DARK_THEME] = enabled
+            }
+        }
     }
 
-    fun isDarkThemeEnabled(): Boolean = prefs.getBoolean(KEY_DARK_THEME, false)
+    fun isDarkThemeEnabled(): Boolean = runBlocking {
+        dataStore.data.map { prefs -> prefs[KEY_DARK_THEME] ?: false }.first()
+    }
 
     fun setLastSyncEpochMillis(value: Long) {
-        prefs.edit().putLong(KEY_LAST_SYNC_EPOCH_MILLIS, value).apply()
+        runBlocking {
+            dataStore.edit { prefs ->
+                prefs[KEY_LAST_SYNC_EPOCH_MILLIS] = value
+            }
+        }
     }
 
-    fun getLastSyncEpochMillis(): Long = prefs.getLong(KEY_LAST_SYNC_EPOCH_MILLIS, 0L)
+    fun getLastSyncEpochMillis(): Long = runBlocking {
+        dataStore.data.map { prefs -> prefs[KEY_LAST_SYNC_EPOCH_MILLIS] ?: 0L }.first()
+    }
 
     companion object {
-        private const val PREFS_NAME = "user_preferences"
-        private const val KEY_DARK_THEME = "dark_theme_enabled"
-        private const val KEY_LAST_SYNC_EPOCH_MILLIS = "last_sync_epoch_millis"
+        private val KEY_DARK_THEME = booleanPreferencesKey("dark_theme_enabled")
+        private val KEY_LAST_SYNC_EPOCH_MILLIS = longPreferencesKey("last_sync_epoch_millis")
     }
 }
