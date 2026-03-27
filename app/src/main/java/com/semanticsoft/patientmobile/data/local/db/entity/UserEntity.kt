@@ -1,4 +1,4 @@
-package com.estcomputer.patient.data.local.db.entity
+package com.semanticsoft.patientmobile.data.local.db.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

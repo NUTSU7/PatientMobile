@@ -1,11 +1,11 @@
-package com.estcomputer.patient.data.local.dao
+package com.semanticsoft.patientmobile.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.estcomputer.patient.data.local.db.entity.DocumentEntity
+import com.semanticsoft.patientmobile.data.local.db.entity.DocumentEntity
 
 @Dao
 interface DocumentDao {

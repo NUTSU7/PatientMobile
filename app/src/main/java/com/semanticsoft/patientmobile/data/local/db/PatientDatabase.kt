@@ -1,19 +1,19 @@
-package com.estcomputer.patient.data.local.db
+package com.semanticsoft.patientmobile.data.local.db
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.estcomputer.patient.data.local.dao.AuditLogDao
-import com.estcomputer.patient.data.local.dao.DocumentDao
-import com.estcomputer.patient.data.local.dao.MedicalReportDao
-import com.estcomputer.patient.data.local.dao.MedicalResultDao
-import com.estcomputer.patient.data.local.dao.UserDao
-import com.estcomputer.patient.data.local.db.entity.AuditLogEntity
-import com.estcomputer.patient.data.local.db.entity.DocumentEntity
-import com.estcomputer.patient.data.local.db.entity.MedicalReportEntity
-import com.estcomputer.patient.data.local.db.entity.MedicalResultEntity
-import com.estcomputer.patient.data.local.db.entity.UserEntity
+import com.semanticsoft.patientmobile.data.local.dao.AuditLogDao
+import com.semanticsoft.patientmobile.data.local.dao.DocumentDao
+import com.semanticsoft.patientmobile.data.local.dao.MedicalReportDao
+import com.semanticsoft.patientmobile.data.local.dao.MedicalResultDao
+import com.semanticsoft.patientmobile.data.local.dao.UserDao
+import com.semanticsoft.patientmobile.data.local.db.entity.AuditLogEntity
+import com.semanticsoft.patientmobile.data.local.db.entity.DocumentEntity
+import com.semanticsoft.patientmobile.data.local.db.entity.MedicalReportEntity
+import com.semanticsoft.patientmobile.data.local.db.entity.MedicalResultEntity
+import com.semanticsoft.patientmobile.data.local.db.entity.UserEntity
 
 @Database(
     entities = [

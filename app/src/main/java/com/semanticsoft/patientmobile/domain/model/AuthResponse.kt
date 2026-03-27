@@ -1,4 +1,4 @@
-package com.estcomputer.patient.domain.model
+package com.semanticsoft.patientmobile.domain.model
 
 data class AuthResponse(
     val accessToken: String,
