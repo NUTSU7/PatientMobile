@@ -8,9 +8,13 @@ import com.semanticsoft.patientmobile.data.remote.api.dto.LoginRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.RefreshRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.UserDto
+import com.semanticsoft.patientmobile.domain.model.ApiErrorResponse
 import com.semanticsoft.patientmobile.domain.model.AuthResponse
 import com.semanticsoft.patientmobile.domain.model.User
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
+import com.semanticsoft.patientmobile.util.exceptions.ApiException
+import com.semanticsoft.patientmobile.util.exceptions.ApiValidationException
+import com.google.gson.Gson
 import java.time.LocalDate
 
 class AuthRepositoryImpl(
@@ -32,7 +36,22 @@ class AuthRepositoryImpl(
     override suspend fun register(request: RegisterRequest): AuthResponse {
         val response = apiService.register(request)
         if (!response.isSuccessful) {
-            throw IllegalStateException("Registration failed with HTTP ${response.code()}")
+            val bodyText = response.errorBody()?.string().orEmpty()
+            val parsedError = runCatching {
+                Gson().fromJson(bodyText, ApiErrorResponse::class.java)
+            }.getOrNull()
+
+            if (parsedError != null && parsedError.fieldErrors.isNotEmpty()) {
+                throw ApiValidationException(
+                    message = parsedError.message,
+                    fieldErrors = parsedError.fieldErrors
+                )
+            }
+
+            throw ApiException(
+                message = parsedError?.message ?: "Registration failed with HTTP ${response.code()}",
+                code = response.code()
+            )
         }
 
         val body = requireNotNull(response.body()) { "Registration response body is empty" }
