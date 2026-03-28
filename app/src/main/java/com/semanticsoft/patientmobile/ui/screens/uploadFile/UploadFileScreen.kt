@@ -187,6 +187,12 @@ private fun UploadFileDialogContent(
             FilePickerButton(
                 label = "Încărcare fișier",
                 validationMessage = state.errorMessage,
+                leadingIconRes = R.drawable.ic_upload_white,
+                buttonHeight = (47.2f * scale).dp,
+                cornerRadius = (8f * scale).dp,
+                iconSize = (16f * scale).dp,
+                textSize = (11.9f * scale).sp,
+                textLineHeight = (20f * scale).sp,
                 onClick = { viewModel.uploadFile(UploadSource.FILE_PICKER) }
             )
 
