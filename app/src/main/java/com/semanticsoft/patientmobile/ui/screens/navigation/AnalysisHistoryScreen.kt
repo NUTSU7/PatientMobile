@@ -23,8 +23,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.collectAsState
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.common.dashboardSpacing
+import com.semanticsoft.patientmobile.ui.components.DocumentListItem
+import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
 
 @Composable
@@ -43,7 +45,7 @@ fun AnalysisHistoryScreen(
     modifier: Modifier = Modifier
 ) {
     SetStatusBar(color = Color.White, darkIcons = true)
-    val uiState by viewModel.stateFlow.collectAsState()
+    val uiState by viewModel.stateFlow.collectAsStateWithLifecycle()
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val spacing = dashboardSpacing(maxWidth.value)
@@ -96,13 +98,7 @@ fun AnalysisHistoryScreen(
                 ) {
                     when (val state = uiState) {
                         AnalysisHistoryUiState.Loading -> {
-                            CircularProgressIndicator(color = Color(0xFF5A52E5))
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = "Se încarcă istoricul analizelor...",
-                                color = Color(0xFF6B7280),
-                                style = MaterialTheme.typography.bodyLarge
-                            )
+                            LoadingIndicator(message = "Se încarcă istoricul analizelor...")
                         }
 
                         AnalysisHistoryUiState.Empty -> {
@@ -143,11 +139,13 @@ fun AnalysisHistoryScreen(
                                 fontWeight = FontWeight.Medium
                             )
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Rezultate totale: ${state.resultsByDocumentId.values.sumOf { it.size }}",
-                                color = Color(0xFF6B7280),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                            state.documents.forEach { document ->
+                                DocumentListItem(
+                                    fileName = document.originalFileName,
+                                    uploadStatus = document.syncStatus.name,
+                                    resultsCount = state.resultsByDocumentId[document.id]?.size ?: 0
+                                )
+                            }
                             Spacer(modifier = Modifier.height(12.dp))
                             TextButton(onClick = {
                                 onRetry()

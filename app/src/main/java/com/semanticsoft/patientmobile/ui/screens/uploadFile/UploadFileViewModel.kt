@@ -127,7 +127,7 @@ class UploadFileViewModel @Inject constructor(
                     is FileTooLargeException -> "Fișier prea mare (max 10 MB)."
                     is UnsupportedMediaTypeException -> "Format nesuportat (pdf, jpg, jpeg, png)."
                     is MalwareDetectedException -> "Fișierul a eșuat scanarea de securitate."
-                    is DocumentScanningUnavailableException -> "Serviciul de scanare nu este disponibil momentan."
+                    is DocumentScanningUnavailableException -> "Server unavailable, try again later."
                     else -> throwable.message ?: "Upload eșuat. Încearcă din nou."
                 }
                 setError(message)

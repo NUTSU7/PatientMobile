@@ -101,7 +101,6 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
 
             NavScreen(
                 state = vm.state,
-                onRefresh = vm::refresh,
                 onLogout = vm::logout
             )
         }
