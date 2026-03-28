@@ -15,7 +15,17 @@ import org.json.JSONObject
 
 class ErrorInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
-        val response = chain.proceed(chain.request())
+        val request = chain.request()
+        val response = try {
+            chain.proceed(request)
+        } catch (e: Exception) {
+            // Log network errors but don't propagate on OkHttp thread
+            if (BuildConfig.DEBUG) {
+                Log.e(TAG, "Network error", e)
+            }
+            throw e
+        }
+
         if (response.isSuccessful) return response
 
         val bodyText = response.peekBody(MAX_PEEK_BYTES).string()
@@ -24,17 +34,8 @@ class ErrorInterceptor : Interceptor {
             Log.e(TAG, "HTTP ${response.code} traceId=${parsed.traceId} message=${parsed.message}")
         }
 
-        val message = parsed.message ?: "HTTP ${response.code}"
-
-        throw when (response.code) {
-            401 -> InvalidCredentialsException(message)
-            413 -> FileTooLargeException(message)
-            415 -> UnsupportedMediaTypeException(message)
-            422 -> MalwareDetectedException(message)
-            429 -> RateLimitException(message)
-            503 -> DocumentScanningUnavailableException(message)
-            else -> ApiException(message, response.code)
-        }
+        // Return response and let repository handle errors appropriately
+        return response
     }
 
     private fun parseErrorBody(body: String): ParsedError {

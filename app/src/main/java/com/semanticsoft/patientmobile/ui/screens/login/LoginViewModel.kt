@@ -62,9 +62,7 @@ class LoginViewModel @Inject constructor(
         if (state.isLoading) return
 
         if (state.email.isBlank() || state.password.isBlank()) {
-            val message = "Completează emailul și parola."
-            state = state.copy(errorMessage = message)
-            viewModelScope.launch { _events.emit(LoginEvent.LoginFailure(message)) }
+            // Validation for empty fields is handled in UI; do not trigger API call.
             return
         }
 
@@ -84,7 +82,13 @@ class LoginViewModel @Inject constructor(
                     else -> throwable.message ?: "Autentificarea a eșuat."
                 }
 
-                state = state.copy(isLoading = false, errorMessage = message)
+                // Clear password field on error and show error message
+                state = state.copy(
+                    isLoading = false,
+                    errorMessage = message,
+                    password = ""
+                )
+                savedStateHandle[KEY_PASSWORD] = ""
                 _events.emit(LoginEvent.LoginFailure(message))
             }
         }

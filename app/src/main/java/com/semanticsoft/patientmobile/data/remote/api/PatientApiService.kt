@@ -10,6 +10,7 @@ import com.semanticsoft.patientmobile.data.remote.api.dto.RefreshRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Multipart
@@ -23,10 +24,10 @@ interface PatientApiService {
     suspend fun register(@Body request: RegisterRequest): ResponseEntity<AuthResponse>
 
     @POST("auth/login")
-    suspend fun login(@Body request: LoginRequest): AuthResponse
+    suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
 
     @POST("auth/refresh")
-    suspend fun refresh(@Body request: RefreshRequest): AuthResponse
+    suspend fun refresh(@Body request: RefreshRequest): Response<AuthResponse>
 
     @POST("auth/logout")
     suspend fun logout(@Body refreshToken: String): Unit

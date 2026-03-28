@@ -54,7 +54,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.ui.components.ErrorDialog
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 
@@ -67,9 +66,22 @@ fun LoginScreen(
     onGoToRegister: () -> Unit
 ) {
     SetStatusBar(color = Color(0xFF3B82F6), darkIcons = false)
-    val dismissedError = remember { mutableStateOf<String?>(null) }
     var selectedRole by remember { mutableStateOf("Pacient") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var hasAttemptedLogin by remember { mutableStateOf(false) }
+
+    val missingCredentialsMessage = when {
+        state.email.isBlank() && state.password.isBlank() -> "Completeaza emailul si parola"
+        state.email.isBlank() -> "Completeaza emailul"
+        state.password.isBlank() -> "Completeaza parola"
+        else -> null
+    }
+
+    val loginWarningMessage = when {
+        state.errorMessage != null -> "Email sau parola invalida"
+        hasAttemptedLogin -> missingCredentialsMessage
+        else -> null
+    }
 
     BoxWithConstraints(
         modifier = Modifier
@@ -122,7 +134,8 @@ fun LoginScreen(
                 AuthInput(
                     value = state.email,
                     placeholder = "nume@exemplu.com",
-                    onValueChange = onEmailChange
+                    onValueChange = onEmailChange,
+                    isError = state.errorMessage != null || (hasAttemptedLogin && state.email.isBlank())
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -146,6 +159,7 @@ fun LoginScreen(
                     onValueChange = onPasswordChange,
                     isPassword = true,
                     passwordVisible = passwordVisible,
+                    isError = state.errorMessage != null || (hasAttemptedLogin && state.password.isBlank()),
                     trailing = {
                         Icon(
                             imageVector = Icons.Outlined.RemoveRedEye,
@@ -160,7 +174,10 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
                 Button(
-                    onClick = onLoginClick,
+                    onClick = {
+                        hasAttemptedLogin = true
+                        onLoginClick()
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(44.dp),
@@ -182,16 +199,23 @@ fun LoginScreen(
                     )
                 }
 
-                state.errorMessage?.takeIf { it != dismissedError.value }?.let { message ->
-                    ErrorDialog(
-                        message = message,
-                        onDismiss = { dismissedError.value = message },
-                        onRetry = onLoginClick,
-                        title = "Autentificare"
-                    )
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(18.dp),
+                    contentAlignment = Alignment.TopStart
+                ) {
+                    if (!loginWarningMessage.isNullOrBlank()) {
+                        Text(
+                            text = loginWarningMessage,
+                            color = Color(0xFFB91C1C),
+                            fontSize = 12.sp
+                        )
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(0.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
@@ -405,13 +429,18 @@ private fun AuthInput(
     onValueChange: (String) -> Unit,
     isPassword: Boolean = false,
     passwordVisible: Boolean = false,
+    isError: Boolean = false,
     trailing: @Composable (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(44.dp)
-            .border(1.dp, Color(0xFFD1D5DB), RoundedCornerShape(8.dp))
+            .border(
+                width = 1.dp,
+                color = if (isError) Color(0xFFB91C1C) else Color(0xFFD1D5DB),
+                shape = RoundedCornerShape(8.dp)
+            )
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -422,7 +451,7 @@ private fun AuthInput(
             BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
-                textStyle = TextStyle(color = Color(0xFF111827), fontSize = 14.sp),
+                textStyle = TextStyle(color = if (isError) Color(0xFFB91C1C) else Color(0xFF111827), fontSize = 14.sp),
                 singleLine = true,
                 visualTransformation = if (isPassword && !passwordVisible) {
                     PasswordVisualTransformation()

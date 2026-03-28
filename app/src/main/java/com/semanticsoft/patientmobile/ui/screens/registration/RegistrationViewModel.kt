@@ -86,8 +86,8 @@ class RegistrationViewModel @Inject constructor(
 
         val localErrors = validateInputs(state)
         if (localErrors.isNotEmpty()) {
-            state = state.copy(fieldErrors = localErrors, errorMessage = "Corectează câmpurile marcate.")
-            viewModelScope.launch { _events.emit(RegistrationEvent.RegistrationFailure("Corectează câmpurile marcate.")) }
+            // Validation for incomplete/invalid local fields is handled in UI; do not call API.
+            state = state.copy(fieldErrors = localErrors, errorMessage = null)
             return
         }
 
@@ -121,11 +121,16 @@ class RegistrationViewModel @Inject constructor(
                     else -> throwable.message ?: "Înregistrarea a eșuat."
                 }
 
+                // Clear password fields on error
                 state = state.copy(
                     isLoading = false,
                     errorMessage = message,
-                    fieldErrors = fieldErrors
+                    fieldErrors = fieldErrors,
+                    password = "",
+                    confirmPassword = ""
                 )
+                savedStateHandle[KEY_PASSWORD] = ""
+                savedStateHandle[KEY_CONFIRM_PASSWORD] = ""
                 _events.emit(RegistrationEvent.RegistrationFailure(message))
             }
         }
@@ -144,7 +149,7 @@ class RegistrationViewModel @Inject constructor(
             firstName = current.name.substringBefore(" "),
             lastName = current.name.substringAfter(" ", "")
         )) {
-            is PasswordValidator.Result.Error -> errors["password"] = result.message
+            is PasswordValidator.Result.Error -> errors["password"] = translatePasswordMessage(result.message)
             PasswordValidator.Result.Success -> Unit
         }
 
@@ -153,6 +158,14 @@ class RegistrationViewModel @Inject constructor(
         }
 
         return errors
+    }
+
+    private fun translatePasswordMessage(message: String): String {
+        return when (message) {
+            "Password must be at least 15 characters long." -> "Parola trebuie să aibă cel puțin 15 caractere."
+            "Password must not match personal information." -> "Parola nu trebuie să conțină informații personale."
+            else -> message
+        }
     }
 
     companion object {
