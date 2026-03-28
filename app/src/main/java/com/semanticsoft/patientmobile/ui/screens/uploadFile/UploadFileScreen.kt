@@ -44,6 +44,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.semanticsoft.patientmobile.R
+import com.semanticsoft.patientmobile.ui.components.FilePickerButton
+import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import kotlin.math.max
 import kotlin.math.min
@@ -182,10 +184,9 @@ private fun UploadFileDialogContent(
             Spacer(modifier = Modifier.height((16f * scale).dp))
 
             // "Încărcare fișier" button
-            UploadButton(
+            FilePickerButton(
                 label = "Încărcare fișier",
-                icon = R.drawable.ic_upload_white,
-                scale = scale,
+                validationMessage = state.errorMessage,
                 onClick = { viewModel.uploadFile(UploadSource.FILE_PICKER) }
             )
 
@@ -222,15 +223,7 @@ private fun UploadFileDialogContent(
 
             if (state.isUploading) {
                 Spacer(modifier = Modifier.height((8f * scale).dp))
-                Text(
-                    text = "Upload în progres: ${(state.uploadProgress * 100).toInt()}%",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = (11.9f * scale).sp,
-                        lineHeight = (20f * scale).sp
-                    ),
-                    color = Color(0xFF5A52E5),
-                    textAlign = TextAlign.Center
-                )
+                LoadingIndicator(message = "Upload în progres: ${(state.uploadProgress * 100).toInt()}%")
             }
 
             if (state.errorMessage != null) {
@@ -250,7 +243,7 @@ private fun UploadFileDialogContent(
 
             // Footer info
             Text(
-                text = "Poți încărca: PDF, JPG, PNG, DOC, DOCX.",
+                text = "Poți încărca: PDF, JPG, JPEG, PNG.",
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = (10.2f * scale).sp,
                     lineHeight = (16f * scale).sp

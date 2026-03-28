@@ -99,7 +99,7 @@ class AuthRepositoryImpl(
         return AuthResponse(
             accessToken = accessToken,
             refreshToken = refreshToken,
-            tokenType = tokenType.name,
+            tokenType = tokenType?.takeIf { it.isNotBlank() } ?: "Bearer",
             expiresIn = expiresIn,
             refreshExpiresIn = refreshExpiresIn,
             user = user

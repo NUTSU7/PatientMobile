@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -40,8 +41,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.semanticsoft.patientmobile.ui.components.BasicIndicatorsCard
 import com.semanticsoft.patientmobile.ui.components.ClinicalPillarCard
+import com.semanticsoft.patientmobile.ui.components.ErrorDialog
 import com.semanticsoft.patientmobile.ui.components.GeneralMarkersCard
 import com.semanticsoft.patientmobile.ui.components.HealthScoreCard
+import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.components.MarkerOverviewSection
 import com.semanticsoft.patientmobile.ui.components.ResumeAICard
 import com.semanticsoft.patientmobile.ui.components.WarningCard
@@ -58,6 +61,7 @@ fun DashboardScreen(
     onUploadClick: () -> Unit = {}
 ) {
     SetStatusBar(color = Color.White, darkIcons = true)
+    val dismissedError = remember { mutableStateOf<String?>(null) }
     var selectedCategoryIndex by rememberSaveable { mutableIntStateOf(0) }
     var showUploadModal by rememberSaveable { mutableStateOf(false) }
     val uploadFileViewModel: UploadFileViewModel = hiltViewModel()
@@ -319,6 +323,26 @@ fun DashboardScreen(
                 state = uploadFileViewModel.state,
                 viewModel = uploadFileViewModel,
                 onDismiss = { showUploadModal = false }
+            )
+        }
+
+        if (state.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0x80FFFFFF)),
+                contentAlignment = Alignment.Center
+            ) {
+                LoadingIndicator(message = "Se actualizează datele dashboard...")
+            }
+        }
+
+        state.errorMessage?.takeIf { it != dismissedError.value }?.let { message ->
+            ErrorDialog(
+                message = message,
+                onDismiss = { dismissedError.value = message },
+                onRetry = null,
+                title = "Dashboard"
             )
         }
     }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Dashboard
@@ -25,11 +26,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,13 +63,19 @@ private enum class PostLoginTab {
 @Composable
 fun NavScreen(
     state: DashboardUiState,
-    onRefresh: () -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var selectedTab by rememberSaveable { mutableStateOf(PostLoginTab.Dashboard) }
+
+    LaunchedEffect(state.errorMessage) {
+        val message = state.errorMessage?.lowercase().orEmpty()
+        if (message.contains("session expired") || message.contains("unauthorized") || message.contains("401")) {
+            onLogout()
+        }
+    }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val scale = max(0.86f, min(maxWidth.value / 360f, 1.1f))
@@ -99,10 +106,6 @@ fun NavScreen(
                             selectedTab = PostLoginTab.AnalysisHistory
                             scope.launch { drawerState.close() }
                         },
-                        onRefresh = {
-                            onRefresh()
-                            scope.launch { drawerState.close() }
-                        },
                         onLogout = {
                             onLogout()
                             scope.launch { drawerState.close() }
@@ -121,7 +124,7 @@ fun NavScreen(
 
                 PostLoginTab.AnalysisHistory -> {
                     AnalysisHistoryScreen(
-                        onRetry = onRefresh,
+                        onRetry = { },
                         onMenuClick = { scope.launch { drawerState.open() } }
                     )
                 }
@@ -140,7 +143,6 @@ private fun PostLoginDrawerContent(
     onClose: () -> Unit,
     onSelectDashboard: () -> Unit,
     onSelectHistory: () -> Unit,
-    onRefresh: () -> Unit,
     onLogout: () -> Unit
 ) {
     val initials = remember(fullName) {
@@ -221,30 +223,6 @@ private fun PostLoginDrawerContent(
             onClick = onSelectHistory
         )
 
-        Spacer(modifier = Modifier.height((8f * scale).dp))
-
-        TextButton(onClick = onRefresh, modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = "Reîmprospătează date",
-                color = Color.White,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = (11.9f * scale).sp,
-                    fontWeight = FontWeight.Medium
-                )
-            )
-        }
-
-        TextButton(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = "Deconectare",
-                color = Color(0xFFFCA5A5),
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = (11.9f * scale).sp,
-                    fontWeight = FontWeight.Medium
-                )
-            )
-        }
-
         Spacer(modifier = Modifier.weight(1f))
 
         Surface(
@@ -288,7 +266,7 @@ private fun PostLoginDrawerContent(
 
                 Spacer(modifier = Modifier.width((12f * scale).dp))
 
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = fullName,
                         maxLines = 1,
@@ -306,6 +284,18 @@ private fun PostLoginDrawerContent(
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontSize = (10.2f * scale).sp
                         )
+                    )
+                }
+
+                IconButton(
+                    onClick = onLogout,
+                    modifier = Modifier.size((32f * scale).dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.Logout,
+                        contentDescription = "Deconectare",
+                        tint = Color(0xFFFCA5A5),
+                        modifier = Modifier.size((20f * scale).dp)
                     )
                 }
             }

@@ -1,13 +1,9 @@
 package com.semanticsoft.patientmobile.data.remote.api.dto
 
-enum class TokenType {
-    BEARER
-}
-
 data class AuthResponse(
     val accessToken: String,
     val refreshToken: String,
-    val tokenType: TokenType,
+    val tokenType: String?,
     val expiresIn: Long,
     val refreshExpiresIn: Long,
     val user: UserDto

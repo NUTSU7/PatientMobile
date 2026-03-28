@@ -32,6 +32,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -42,6 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.semanticsoft.patientmobile.ui.components.ErrorDialog
+import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 
 @Composable
@@ -53,6 +57,7 @@ fun LoginScreen(
     onGoToRegister: () -> Unit
 ) {
     SetStatusBar(color = Color(0xFF3B82F6), darkIcons = false)
+    val dismissedError = remember { mutableStateOf<String?>(null) }
 
     BoxWithConstraints(
         modifier = Modifier
@@ -144,10 +149,26 @@ fun LoginScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
                 ) {
                     Text(
-                        text = "Accesează contul",
+                        text = if (state.isLoading) "Se autentifică..." else "Accesează contul",
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
+                    )
+                }
+
+                if (state.isLoading) {
+                    LoadingIndicator(
+                        message = "Autentificare în curs...",
+                        modifier = Modifier.padding(top = 10.dp)
+                    )
+                }
+
+                state.errorMessage?.takeIf { it != dismissedError.value }?.let { message ->
+                    ErrorDialog(
+                        message = message,
+                        onDismiss = { dismissedError.value = message },
+                        onRetry = onLoginClick,
+                        title = "Autentificare"
                     )
                 }
 
