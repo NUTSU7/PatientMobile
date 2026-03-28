@@ -14,6 +14,8 @@ import com.semanticsoft.patientmobile.domain.model.User
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.util.exceptions.ApiException
 import com.semanticsoft.patientmobile.util.exceptions.ApiValidationException
+import com.semanticsoft.patientmobile.util.exceptions.InvalidCredentialsException
+import com.semanticsoft.patientmobile.util.exceptions.RateLimitException
 import com.google.gson.Gson
 import java.time.LocalDate
 
@@ -25,12 +27,27 @@ class AuthRepositoryImpl(
 
     override suspend fun login(email: String, password: String): AuthResponse {
         val response = apiService.login(LoginRequest(email = email, password = password))
-        tokenManager.saveTokens(response.accessToken, response.refreshToken)
+        
+        if (!response.isSuccessful) {
+            val errorBody = response.errorBody()?.string() ?: "Unknown error"
+            val errorMessage = runCatching {
+                Gson().fromJson(errorBody, ApiErrorResponse::class.java).message
+            }.getOrNull() ?: "Login failed"
 
-        val domainUser = response.user.toDomain()
+            throw when (response.code()) {
+                401 -> InvalidCredentialsException(errorMessage)
+                429 -> RateLimitException(errorMessage)
+                else -> ApiException(errorMessage, response.code())
+            }
+        }
+
+        val authResponse = response.body() ?: throw ApiException("Empty response body", 500)
+        tokenManager.saveTokens(authResponse.accessToken, authResponse.refreshToken)
+
+        val domainUser = authResponse.user.toDomain()
         userDao.insert(domainUser.toEntity())
 
-        return response.toDomain(domainUser)
+        return authResponse.toDomain(domainUser)
     }
 
     override suspend fun register(request: RegisterRequest): AuthResponse {
@@ -68,12 +85,27 @@ class AuthRepositoryImpl(
             ?: throw IllegalStateException("Missing refresh token")
 
         val response = apiService.refresh(RefreshRequest(refreshToken = refreshToken))
-        tokenManager.saveTokens(response.accessToken, response.refreshToken)
+        
+        if (!response.isSuccessful) {
+            val errorBody = response.errorBody()?.string() ?: "Unknown error"
+            val errorMessage = runCatching {
+                Gson().fromJson(errorBody, ApiErrorResponse::class.java).message
+            }.getOrNull() ?: "Token refresh failed"
 
-        val domainUser = response.user.toDomain()
+            throw when (response.code()) {
+                401 -> InvalidCredentialsException(errorMessage)
+                429 -> RateLimitException(errorMessage)
+                else -> ApiException(errorMessage, response.code())
+            }
+        }
+
+        val authResponse = response.body() ?: throw ApiException("Empty response body", 500)
+        tokenManager.saveTokens(authResponse.accessToken, authResponse.refreshToken)
+
+        val domainUser = authResponse.user.toDomain()
         userDao.insert(domainUser.toEntity())
 
-        return response.toDomain(domainUser)
+        return authResponse.toDomain(domainUser)
     }
 
     override suspend fun logout() {

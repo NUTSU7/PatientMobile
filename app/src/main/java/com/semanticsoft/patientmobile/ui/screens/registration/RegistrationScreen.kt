@@ -52,7 +52,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.ui.components.ErrorDialog
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 
@@ -68,7 +67,6 @@ fun RegistrationScreen(
     onGoToLogin: () -> Unit
 ) {
     SetStatusBar(color = Color(0xFF3B82F6), darkIcons = false)
-    val dismissedError = remember { mutableStateOf<String?>(null) }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
@@ -82,74 +80,104 @@ fun RegistrationScreen(
             maxWidth >= 375.dp -> 20.dp
             else -> 16.dp
         }
+        val isCompactHeight = maxHeight < 780.dp
+        val isVeryCompactHeight = maxHeight < 700.dp
+        val headerHeight = when {
+            isVeryCompactHeight -> 132.dp
+            isCompactHeight -> 144.dp
+            else -> 156.85.dp
+        }
+        val contentVerticalPadding = when {
+            isVeryCompactHeight -> 10.dp
+            isCompactHeight -> 14.dp
+            else -> 20.dp
+        }
+        val sectionSpacing = when {
+            isVeryCompactHeight -> 8.dp
+            isCompactHeight -> 10.dp
+            else -> 12.dp
+        }
+        val tinySpacing = if (isVeryCompactHeight) 4.dp else 6.dp
+        val afterTitleSpacing = if (isVeryCompactHeight) 6.dp else 8.dp
+        val afterSubtitleSpacing = if (isVeryCompactHeight) 10.dp else 16.dp
+        val beforeButtonSpacing = if (isVeryCompactHeight) 10.dp else 16.dp
+        val buttonToFooterSpacing = 0.dp
+        val bottomSpacing = if (isVeryCompactHeight) 8.dp else 14.dp
+        val titleFontSize = if (isVeryCompactHeight) 30.sp else 34.sp
+        val titleLineHeight = if (isVeryCompactHeight) 34.sp else 38.sp
+        val subtitleFontSize = if (isVeryCompactHeight) 13.sp else 14.sp
+        val inputHeight = if (isVeryCompactHeight) 40.dp else 44.dp
+        val buttonHeight = if (isVeryCompactHeight) 40.dp else 44.dp
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
+            modifier = Modifier.fillMaxSize()
         ) {
-            RegistrationTopHeader(sidePadding = sidePadding)
+            RegistrationTopHeader(sidePadding = sidePadding, headerHeight = headerHeight, compact = isCompactHeight)
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = sidePadding, vertical = 20.dp)
+                    .weight(1f)
+                    .padding(horizontal = sidePadding, vertical = contentVerticalPadding)
             ) {
                 Text(
                     text = "Înregistrează-te",
                     color = Color(0xFF111827),
-                    fontSize = 34.sp,
+                    fontSize = titleFontSize,
                     fontWeight = FontWeight.Bold,
-                    lineHeight = 38.sp
+                    lineHeight = titleLineHeight
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(afterTitleSpacing))
                 Text(
                     text = "Completează datele pentru a crea contul tău.",
                     color = Color(0xFF6B7280),
-                    fontSize = 14.sp
+                    fontSize = subtitleFontSize
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(afterSubtitleSpacing))
                 AuthLabel("Mă înregistrez ca...")
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(tinySpacing))
                 RoleField(
                     text = if (state.role.isBlank()) "Selectează rolul..." else state.role,
                     isPlaceholder = state.role.isBlank(),
-                    onRoleChange = onRoleChange
+                    onRoleChange = onRoleChange,
+                    isError = state.fieldErrors.containsKey("role"),
+                    inputHeight = inputHeight
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(sectionSpacing))
                 AuthLabel("Nume sau Pseudonim")
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(tinySpacing))
                 AuthInput(
                     value = state.name,
                     placeholder = "Introdu nume, pseudonim sau orice identificator preferi.",
-                    onValueChange = onNameChange
+                    onValueChange = onNameChange,
+                    isError = state.fieldErrors.containsKey("name"),
+                    inputHeight = inputHeight
                 )
-                state.fieldErrors["name"]?.let {
-                    Text(text = it, color = Color(0xFFB91C1C), fontSize = 12.sp)
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(sectionSpacing))
                 AuthLabel("Adresa de email")
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(tinySpacing))
                 AuthInput(
                     value = state.email,
                     placeholder = "nume@exemplu.com",
-                    onValueChange = onEmailChange
+                    onValueChange = onEmailChange,
+                    isError = state.fieldErrors.containsKey("email"),
+                    inputHeight = inputHeight
                 )
-                state.fieldErrors["email"]?.let {
-                    Text(text = it, color = Color(0xFFB91C1C), fontSize = 12.sp)
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(sectionSpacing))
                 AuthLabel("Parolă")
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(tinySpacing))
                 AuthInput(
                     value = state.password,
                     placeholder = "Min. 15 caractere",
                     onValueChange = onPasswordChange,
                     isPassword = true,
                     passwordVisible = passwordVisible,
+                    isError = state.fieldErrors.containsKey("password"),
+                    inputHeight = inputHeight,
                     trailing = {
                         Icon(
                             imageVector = Icons.Outlined.RemoveRedEye,
@@ -161,19 +189,18 @@ fun RegistrationScreen(
                         )
                     }
                 )
-                state.fieldErrors["password"]?.let {
-                    Text(text = it, color = Color(0xFFB91C1C), fontSize = 12.sp)
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(sectionSpacing))
                 AuthLabel("Confirmă parola")
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(tinySpacing))
                 AuthInput(
                     value = state.confirmPassword,
                     placeholder = "Confirmă parola",
                     onValueChange = onConfirmPasswordChange,
                     isPassword = true,
                     passwordVisible = confirmPasswordVisible,
+                    isError = state.fieldErrors.containsKey("confirmPassword"),
+                    inputHeight = inputHeight,
                     trailing = {
                         Icon(
                             imageVector = Icons.Outlined.RemoveRedEye,
@@ -185,16 +212,13 @@ fun RegistrationScreen(
                         )
                     }
                 )
-                state.fieldErrors["confirmPassword"]?.let {
-                    Text(text = it, color = Color(0xFFB91C1C), fontSize = 12.sp)
-                }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(beforeButtonSpacing))
                 Button(
                     onClick = onRegisterClick,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(44.dp),
+                        .height(buttonHeight),
                     shape = RoundedCornerShape(999.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
                 ) {
@@ -213,16 +237,53 @@ fun RegistrationScreen(
                     )
                 }
 
-                state.errorMessage?.takeIf { it != dismissedError.value }?.let { message ->
-                    ErrorDialog(
-                        message = message,
-                        onDismiss = { dismissedError.value = message },
-                        onRetry = onRegisterClick,
-                        title = "Înregistrare"
-                    )
+                val requiredFieldLabels = listOf(
+                    "role" to "Rolul",
+                    "name" to "Numele",
+                    "email" to "Emailul",
+                    "password" to "Parola",
+                    "confirmPassword" to "Confirmarea parolei"
+                ).mapNotNull { (key, label) ->
+                    state.fieldErrors[key]
+                        ?.takeIf { it.contains("obligatoriu", ignoreCase = true) }
+                        ?.let { label }
+                }
+                val requiredFieldsLine = requiredFieldLabels
+                    .takeIf { it.isNotEmpty() }
+                    ?.joinToString(", ")
+                    ?.plus(" este obligatoriu")
+                val otherValidationMessages = state.fieldErrors
+                    .filterNot { (key, _) ->
+                        key in setOf("role", "name", "email", "password", "confirmPassword") &&
+                            state.fieldErrors[key]?.contains("obligatoriu", ignoreCase = true) == true
+                    }
+                    .values
+                val validationMessages = buildList {
+                    requiredFieldsLine?.let { add(it) }
+                    addAll(otherValidationMessages)
+                    state.errorMessage?.let { add(it) }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                // Show validation errors below button
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(if (isVeryCompactHeight) 24.dp else 28.dp),
+                    contentAlignment = Alignment.TopStart
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        validationMessages.take(2).forEach { message ->
+                            Text(
+                                text = message,
+                                color = Color(0xFFB91C1C),
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(buttonToFooterSpacing))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
@@ -243,28 +304,34 @@ fun RegistrationScreen(
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(bottomSpacing))
             }
         }
     }
 }
 
 @Composable
-private fun RegistrationTopHeader(sidePadding: androidx.compose.ui.unit.Dp) {
+private fun RegistrationTopHeader(
+    sidePadding: androidx.compose.ui.unit.Dp,
+    headerHeight: androidx.compose.ui.unit.Dp,
+    compact: Boolean
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(156.85.dp)
+            .height(headerHeight)
             .background(
                 Brush.linearGradient(
                     colors = listOf(Color(0xFF3B82F6), Color(0xFF6366F1), Color(0xFF9333EA))
                 )
             )
     ) {
-        Column(modifier = Modifier.padding(horizontal = sidePadding, vertical = 20.dp)) {
+        Column(modifier = Modifier.padding(horizontal = sidePadding, vertical = if (compact) 14.dp else 20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(if (compact) 30.dp else 32.dp)
                         .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -272,19 +339,19 @@ private fun RegistrationTopHeader(sidePadding: androidx.compose.ui.unit.Dp) {
                         imageVector = Icons.Outlined.Add,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(if (compact) 14.dp else 16.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = "PATIENT.MD",
                     color = Color.White,
-                    fontSize = 18.sp,
+                    fontSize = if (compact) 16.sp else 18.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(if (compact) 8.dp else 12.dp))
             Text(
                 text = "Bine ai venit!",
                 color = Color.White.copy(alpha = 0.7f),
@@ -294,15 +361,15 @@ private fun RegistrationTopHeader(sidePadding: androidx.compose.ui.unit.Dp) {
             Text(
                 text = "Analizele tale, explicate pe înțelesul tău.",
                 color = Color.White,
-                fontSize = 17.sp,
+                fontSize = if (compact) 15.sp else 17.sp,
                 fontWeight = FontWeight.Bold,
-                lineHeight = 19.sp,
+                lineHeight = if (compact) 17.sp else 19.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Spacer(modifier = Modifier.height(if (compact) 6.dp else 8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)) {
                 HeaderChip(text = "Conform HIPAA", icon = Icons.Outlined.Shield)
                 HeaderChip(text = "Criptare Securizată", icon = Icons.Outlined.Lock)
             }
@@ -341,15 +408,21 @@ private fun AuthLabel(text: String) {
 }
 
 @Composable
-private fun RoleField(text: String, isPlaceholder: Boolean, onRoleChange: (String) -> Unit) {
+private fun RoleField(
+    text: String,
+    isPlaceholder: Boolean,
+    onRoleChange: (String) -> Unit,
+    isError: Boolean = false,
+    inputHeight: androidx.compose.ui.unit.Dp = 44.dp
+) {
     var expanded by remember { mutableStateOf(false) }
     val options = listOf("Pacient", "Doctor")
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(44.dp)
-            .border(1.dp, Color(0xFFD1D5DB), RoundedCornerShape(8.dp))
+            .height(inputHeight)
+            .border(1.dp, if (isError) Color(0xFFB91C1C) else Color(0xFFD1D5DB), RoundedCornerShape(8.dp))
             .padding(horizontal = 12.dp)
             .clickable { expanded = true }
     ) {
@@ -368,7 +441,11 @@ private fun RoleField(text: String, isPlaceholder: Boolean, onRoleChange: (Strin
                 if (text.isNotBlank()) {
                     Text(
                         text = text,
-                        color = if (isPlaceholder) Color(0xFF9CA3AF) else Color(0xFF111827),
+                        color = when {
+                            isError -> Color(0xFFB91C1C)
+                            isPlaceholder -> Color(0xFF9CA3AF)
+                            else -> Color(0xFF111827)
+                        },
                         fontSize = 14.sp
                     )
                 }
@@ -443,13 +520,19 @@ private fun AuthInput(
     onValueChange: (String) -> Unit,
     isPassword: Boolean = false,
     passwordVisible: Boolean = false,
+    isError: Boolean = false,
+    inputHeight: androidx.compose.ui.unit.Dp = 44.dp,
     trailing: @Composable (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(44.dp)
-            .border(1.dp, Color(0xFFD1D5DB), RoundedCornerShape(8.dp))
+            .height(inputHeight)
+            .border(
+                width = 1.dp,
+                color = if (isError) Color(0xFFB91C1C) else Color(0xFFD1D5DB),
+                shape = RoundedCornerShape(8.dp)
+            )
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -460,7 +543,7 @@ private fun AuthInput(
             BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
-                textStyle = TextStyle(color = Color(0xFF111827), fontSize = 14.sp),
+                textStyle = TextStyle(color = if (isError) Color(0xFFB91C1C) else Color(0xFF111827), fontSize = 14.sp),
                 singleLine = true,
                 visualTransformation = if (isPassword && !passwordVisible) {
                     PasswordVisualTransformation()
