@@ -2,6 +2,7 @@ package com.semanticsoft.patientmobile.ui.screens.registration
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -14,11 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
@@ -28,12 +27,19 @@ import androidx.compose.material.icons.outlined.RemoveRedEye
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -41,6 +47,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,6 +69,8 @@ fun RegistrationScreen(
 ) {
     SetStatusBar(color = Color(0xFF3B82F6), darkIcons = false)
     val dismissedError = remember { mutableStateOf<String?>(null) }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     BoxWithConstraints(
         modifier = Modifier
@@ -76,7 +86,6 @@ fun RegistrationScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
         ) {
             RegistrationTopHeader(sidePadding = sidePadding)
 
@@ -139,12 +148,16 @@ fun RegistrationScreen(
                     value = state.password,
                     placeholder = "Min. 15 caractere",
                     onValueChange = onPasswordChange,
+                    isPassword = true,
+                    passwordVisible = passwordVisible,
                     trailing = {
                         Icon(
                             imageVector = Icons.Outlined.RemoveRedEye,
                             contentDescription = "Afișează parola",
                             tint = Color(0xFF9CA3AF),
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clickable { passwordVisible = !passwordVisible }
                         )
                     }
                 )
@@ -159,12 +172,16 @@ fun RegistrationScreen(
                     value = state.confirmPassword,
                     placeholder = "Confirmă parola",
                     onValueChange = onConfirmPasswordChange,
+                    isPassword = true,
+                    passwordVisible = confirmPasswordVisible,
                     trailing = {
                         Icon(
                             imageVector = Icons.Outlined.RemoveRedEye,
                             contentDescription = "Afișează parola",
                             tint = Color(0xFF9CA3AF),
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clickable { confirmPasswordVisible = !confirmPasswordVisible }
                         )
                     }
                 )
@@ -325,43 +342,97 @@ private fun AuthLabel(text: String) {
 
 @Composable
 private fun RoleField(text: String, isPlaceholder: Boolean, onRoleChange: (String) -> Unit) {
-    Row(
+    var expanded by remember { mutableStateOf(false) }
+    val options = listOf("Pacient", "Doctor")
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(44.dp)
             .border(1.dp, Color(0xFFD1D5DB), RoundedCornerShape(8.dp))
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 12.dp)
+            .clickable { expanded = true }
     ) {
-        Icon(
-            imageVector = Icons.Outlined.PersonOutline,
-            contentDescription = null,
-            tint = Color(0xFF9CA3AF),
-            modifier = Modifier.size(16.dp)
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Box(modifier = Modifier.weight(1f)) {
-            if (text.isNotBlank()) {
-                Text(
-                    text = text,
-                    color = if (isPlaceholder) Color(0xFF9CA3AF) else Color(0xFF111827),
-                    fontSize = 14.sp
-                )
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.PersonOutline,
+                contentDescription = null,
+                tint = Color(0xFF9CA3AF),
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Box(modifier = Modifier.weight(1f)) {
+                if (text.isNotBlank()) {
+                    Text(
+                        text = text,
+                        color = if (isPlaceholder) Color(0xFF9CA3AF) else Color(0xFF111827),
+                        fontSize = 14.sp
+                    )
+                }
             }
-            BasicTextField(
-                value = if (isPlaceholder) "" else text,
-                onValueChange = onRoleChange,
-                textStyle = TextStyle(color = Color(0xFF111827), fontSize = 14.sp),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+            Icon(
+                imageVector = Icons.Outlined.KeyboardArrowDown,
+                contentDescription = null,
+                tint = Color(0xFF9CA3AF),
+                modifier = Modifier
+                    .size(16.dp)
+                    .clickable { expanded = true }
             )
         }
-        Icon(
-            imageVector = Icons.Outlined.KeyboardArrowDown,
-            contentDescription = null,
-            tint = Color(0xFF9CA3AF),
-            modifier = Modifier.size(16.dp)
-        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = Color.Transparent,
+            shadowElevation = 0.dp,
+            tonalElevation = 0.dp
+        ) {
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E7EB))
+            ) {
+                Column(modifier = Modifier.width(220.dp)) {
+                    options.forEachIndexed { index, option ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = option,
+                                    color = Color(0xFF111827),
+                                    fontSize = 14.sp,
+                                    fontWeight = if (text == option) FontWeight.SemiBold else FontWeight.Medium
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.PersonOutline,
+                                    contentDescription = null,
+                                    tint = if (text == option) Color(0xFF4F46E5) else Color(0xFF9CA3AF),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            },
+                            onClick = {
+                                onRoleChange(option)
+                                expanded = false
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    if (text == option) Color(0xFFF5F3FF) else Color.Transparent
+                                )
+                        )
+
+                        if (index < options.lastIndex) {
+                            HorizontalDivider(color = Color(0xFFF3F4F6), thickness = 1.dp)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -370,6 +441,8 @@ private fun AuthInput(
     value: String,
     placeholder: String,
     onValueChange: (String) -> Unit,
+    isPassword: Boolean = false,
+    passwordVisible: Boolean = false,
     trailing: @Composable (() -> Unit)? = null
 ) {
     Row(
@@ -389,6 +462,11 @@ private fun AuthInput(
                 onValueChange = onValueChange,
                 textStyle = TextStyle(color = Color(0xFF111827), fontSize = 14.sp),
                 singleLine = true,
+                visualTransformation = if (isPassword && !passwordVisible) {
+                    PasswordVisualTransformation()
+                } else {
+                    VisualTransformation.None
+                },
                 modifier = Modifier.fillMaxWidth()
             )
         }
