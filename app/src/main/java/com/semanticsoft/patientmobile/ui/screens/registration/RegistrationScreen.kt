@@ -422,7 +422,6 @@ private fun RoleField(
         modifier = Modifier
             .fillMaxWidth()
             .height(inputHeight)
-            .border(1.dp, if (isError) Color(0xFFB91C1C) else Color(0xFFD1D5DB), RoundedCornerShape(8.dp))
             .padding(horizontal = 12.dp)
             .clickable { expanded = true }
     ) {
@@ -528,11 +527,6 @@ private fun AuthInput(
         modifier = Modifier
             .fillMaxWidth()
             .height(inputHeight)
-            .border(
-                width = 1.dp,
-                color = if (isError) Color(0xFFB91C1C) else Color(0xFFD1D5DB),
-                shape = RoundedCornerShape(8.dp)
-            )
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
