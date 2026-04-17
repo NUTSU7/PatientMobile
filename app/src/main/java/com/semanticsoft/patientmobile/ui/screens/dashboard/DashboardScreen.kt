@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.semanticsoft.patientmobile.ui.components.BasicIndicatorsCard
 import com.semanticsoft.patientmobile.ui.components.ClinicalPillarCard
+import com.semanticsoft.patientmobile.ui.components.EmptyUploadCard
 import com.semanticsoft.patientmobile.ui.components.ErrorDialog
 import com.semanticsoft.patientmobile.ui.components.GeneralMarkersCard
 import com.semanticsoft.patientmobile.ui.components.HealthScoreCard
@@ -81,93 +82,55 @@ fun DashboardScreen(
             modifier = Modifier.fillMaxSize(),
             color = AppBackground
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(spacing.listItemGap)
-            ) {
-                item {
+            if (!state.hasUploadedDocuments) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    DashboardTopSection(
+                        state = state,
+                        horizontalPadding = horizontalPadding,
+                        onMenuClick = onMenuClick,
+                        onUploadClick = {
+                            showUploadModal = true
+                            onUploadClick()
+                        }
+                    )
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color.White)
-                            .height(141.dp)
+                            .fillMaxSize()
+                            .padding(
+                                start = horizontalPadding,
+                                end = horizontalPadding,
+                                top = 141.dp + spacing.sectionGap,
+                                bottom = spacing.sectionGap
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        IconButton(
-                            onClick = onMenuClick,
-                            modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .offset(x = (horizontalPadding - 8.dp), y = 50.dp)
-                                .size(40.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Menu,
-                                contentDescription = "Meniu",
-                                tint = Color(0xFF6B7280),
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        Column(
-                            modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .padding(start = horizontalPadding + 48.dp, top = 16.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "Bună ziua, ",
-                                    color = Color(0xFF111827),
-                                    fontSize = 20.sp,
-                                    lineHeight = 32.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = state.greetingName,
-                                    color = Color(0xFF111827),
-                                    fontSize = 20.sp,
-                                    lineHeight = 32.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-
-                            Text(
-                                text = "👋",
-                                fontSize = 20.sp,
-                                lineHeight = 32.sp
-                            )
-
-                            Text(
-                                text = "Ultima analiză: ${state.lastAnalysisDate} · ${state.markerSummary.attention} valori",
-                                color = Color(0xFF6B7280),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Text(
-                                text = "necesită atenție",
-                                color = Color(0xFF6B7280),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-
-                        IconButton(
-                            onClick = {
+                        EmptyUploadCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            onUploadClick = {
                                 showUploadModal = true
                                 onUploadClick()
-                            },
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .offset(x = -horizontalPadding, y = 50.dp)
-                                .width(32.dp)
-                                .height(40.dp)
-                                .background(Color(0xFF5A52E5), RoundedCornerShape(8.dp))
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Add,
-                                contentDescription = "Adaugă",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                            }
+                        )
                     }
                 }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(spacing.listItemGap)
+                ) {
+                    item {
+                        DashboardTopSection(
+                            state = state,
+                            horizontalPadding = horizontalPadding,
+                            onMenuClick = onMenuClick,
+                            onUploadClick = {
+                                showUploadModal = true
+                                onUploadClick()
+                            }
+                        )
+                    }
 
                 // Warning Cards - above Health Score
                 items(state.warningCards) { warningCard ->
@@ -313,7 +276,8 @@ fun DashboardScreen(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(spacing.bottomSpacer)) }
+                    item { Spacer(modifier = Modifier.height(spacing.bottomSpacer)) }
+                }
             }
         }
 
@@ -343,6 +307,93 @@ fun DashboardScreen(
                 onDismiss = { dismissedError.value = message },
                 onRetry = null,
                 title = "Dashboard"
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardTopSection(
+    state: DashboardUiState,
+    horizontalPadding: androidx.compose.ui.unit.Dp,
+    onMenuClick: () -> Unit,
+    onUploadClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+            .height(141.dp)
+    ) {
+        IconButton(
+            onClick = onMenuClick,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(x = (horizontalPadding - 8.dp), y = 50.dp)
+                .size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Menu,
+                contentDescription = "Meniu",
+                tint = Color(0xFF6B7280),
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = horizontalPadding + 48.dp, top = 16.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Bună ziua, ",
+                    color = Color(0xFF111827),
+                    fontSize = 20.sp,
+                    lineHeight = 32.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = state.greetingName,
+                    color = Color(0xFF111827),
+                    fontSize = 20.sp,
+                    lineHeight = 32.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Text(
+                text = "👋",
+                fontSize = 20.sp,
+                lineHeight = 32.sp
+            )
+
+            Text(
+                text = "Ultima analiză: ${state.lastAnalysisDate} · ${state.markerSummary.attention} valori",
+                color = Color(0xFF6B7280),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                text = "necesită atenție",
+                color = Color(0xFF6B7280),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        IconButton(
+            onClick = onUploadClick,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = -horizontalPadding, y = 50.dp)
+                .width(32.dp)
+                .height(40.dp)
+                .background(Color(0xFF5A52E5), RoundedCornerShape(8.dp))
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Add,
+                contentDescription = "Adaugă",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
             )
         }
     }
