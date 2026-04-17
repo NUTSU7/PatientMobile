@@ -32,6 +32,7 @@ data class DashboardUiState(
     val fullName: String = "",
     val role: String = "",
     val profilePhotoResId: Int? = null,
+    val hasUploadedDocuments: Boolean = true,
     val lastAnalysisDate: String = "15 Mar 2026",
     val attentionItems: List<AttentionItem> = emptyList(),
     val basicIndicators: List<BasicIndicatorItem> = emptyList(),
@@ -134,6 +135,7 @@ class DashboardViewModel @Inject constructor(
                     savedStateHandle[KEY_ERROR_MESSAGE] = null
 
                     state = state.copy(
+                        hasUploadedDocuments = docs.isNotEmpty(),
                         markerSummary = summary,
                         attentionItems = state.attentionItems.ifEmpty { demoAttentionItems },
                         aiSummary = aiSummary,
