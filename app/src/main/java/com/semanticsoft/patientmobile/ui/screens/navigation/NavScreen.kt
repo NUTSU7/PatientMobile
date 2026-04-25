@@ -51,13 +51,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.Image
 import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardScreen
 import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardUiState
+import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicalHystoryScreen
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 
 private enum class PostLoginTab {
-    Dashboard,
-    AnalysisHistory
+    MedicalHystory,
+    Dashboard
 }
 
 @Composable
@@ -103,7 +104,7 @@ fun NavScreen(
                             scope.launch { drawerState.close() }
                         },
                         onSelectHistory = {
-                            selectedTab = PostLoginTab.AnalysisHistory
+                            selectedTab = PostLoginTab.MedicalHystory
                             scope.launch { drawerState.close() }
                         },
                         onLogout = {
@@ -115,16 +116,17 @@ fun NavScreen(
             }
         ) {
             when (selectedTab) {
-                PostLoginTab.Dashboard -> {
-                    DashboardScreen(
-                        state = state,
-                        onMenuClick = { scope.launch { drawerState.open() } }
+                PostLoginTab.MedicalHystory -> {
+                    MedicalHystoryScreen(
+                        onMenuClick = { scope.launch { drawerState.open() } },
+                        onNotificationsClick = { },
+                        onInfoClick = { }
                     )
                 }
 
-                PostLoginTab.AnalysisHistory -> {
-                    AnalysisHistoryScreen(
-                        onRetry = { },
+                PostLoginTab.Dashboard -> {
+                    DashboardScreen(
+                        state = state,
                         onMenuClick = { scope.launch { drawerState.open() } }
                     )
                 }
@@ -216,8 +218,8 @@ private fun PostLoginDrawerContent(
         Spacer(modifier = Modifier.height((8f * scale).dp))
 
         DrawerMenuItem(
-            label = "Istoric Analize",
-            selected = selectedTab == PostLoginTab.AnalysisHistory,
+            label = "Istoric medical",
+            selected = selectedTab == PostLoginTab.MedicalHystory,
             scale = scale,
             activeIcon = Icons.Outlined.Description,
             onClick = onSelectHistory

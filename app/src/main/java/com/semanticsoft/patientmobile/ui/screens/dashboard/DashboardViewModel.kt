@@ -66,6 +66,96 @@ class DashboardViewModel @Inject constructor(
         AttentionItem("Colesterol LDL", "4.5", "mmol/L", "Atenție")
     )
 
+    private val demoBasicIndicators = listOf(
+        BasicIndicatorItem(
+            title = "Hemoglobină",
+            value = "13.4",
+            unit = "g/dL",
+            status = com.semanticsoft.patientmobile.data.model.IndicatorStatus.NORMAL,
+            trendDirection = com.semanticsoft.patientmobile.data.model.IndicatorTrendDirection.STABLE,
+            trendDelta = "0.0",
+            trendDescription = "stabil față de analiza anterioară",
+            markerPosition = 0.55f
+        ),
+        BasicIndicatorItem(
+            title = "Vitamina D",
+            value = "18",
+            unit = "ng/mL",
+            status = com.semanticsoft.patientmobile.data.model.IndicatorStatus.ATTENTION,
+            trendDirection = com.semanticsoft.patientmobile.data.model.IndicatorTrendDirection.DOWN,
+            trendDelta = "-4",
+            trendDescription = "în scădere în ultimele 30 zile",
+            markerPosition = 0.84f
+        )
+    )
+
+    private val demoMarkerCategories = listOf(
+        MarkerCategoryItem(name = "Toate", count = 8),
+        MarkerCategoryItem(name = "Hormonali", count = 2),
+        MarkerCategoryItem(name = "Metabolism", count = 3),
+        MarkerCategoryItem(name = "Hematologie", count = 3)
+    )
+
+    private val demoGeneralMarkerCards = listOf(
+        GeneralMarkerCardItem(
+            title = "TSH",
+            category = "Hormonali",
+            value = "0.3",
+            unit = "mIU/L",
+            status = com.semanticsoft.patientmobile.data.model.IndicatorStatus.BORDERLINE,
+            normalRange = "0.4 - 4.0",
+            borderlineRange = "0.3 - 0.39",
+            attentionRange = "< 0.3"
+        ),
+        GeneralMarkerCardItem(
+            title = "LDL Colesterol",
+            category = "Metabolism",
+            value = "4.5",
+            unit = "mmol/L",
+            status = com.semanticsoft.patientmobile.data.model.IndicatorStatus.ATTENTION,
+            normalRange = "< 3.0",
+            borderlineRange = "3.0 - 3.9",
+            attentionRange = ">= 4.0"
+        ),
+        GeneralMarkerCardItem(
+            title = "Leucocite",
+            category = "Hematologie",
+            value = "6.2",
+            unit = "10^9/L",
+            status = com.semanticsoft.patientmobile.data.model.IndicatorStatus.NORMAL,
+            normalRange = "4.0 - 10.0",
+            borderlineRange = "3.5 - 3.9",
+            attentionRange = "< 3.5"
+        )
+    )
+
+    private val demoWarningCards = listOf(
+        WarningCardItem(
+            level = com.semanticsoft.patientmobile.data.model.WarningLevel.HIGH,
+            indicators = listOf(
+                com.semanticsoft.patientmobile.data.model.WarningIndicatorItem("Vitamina D", "18", "ng/mL"),
+                com.semanticsoft.patientmobile.data.model.WarningIndicatorItem("LDL", "4.5", "mmol/L")
+            )
+        )
+    )
+
+    private val demoClinicalPillarCards = listOf(
+        ClinicalPillarCardItem(
+            type = com.semanticsoft.patientmobile.data.model.ClinicalPillarType.HEART_CV,
+            reportCount = 2
+        ),
+        ClinicalPillarCardItem(
+            type = com.semanticsoft.patientmobile.data.model.ClinicalPillarType.HORMONES,
+            reportCount = 2
+        ),
+        ClinicalPillarCardItem(
+            type = com.semanticsoft.patientmobile.data.model.ClinicalPillarType.NUTRITION_VITAMINS,
+            reportCount = 1
+        )
+    )
+
+    private val demoSummary = MarkerSummary(normal = 4, borderline = 2, attention = 2, score = 72)
+
 
     private val _events = MutableSharedFlow<DashboardEvent>()
     val events: SharedFlow<DashboardEvent> = _events.asSharedFlow()
@@ -112,6 +202,12 @@ class DashboardViewModel @Inject constructor(
             when (val docsResource = documentRepository.getDocuments().first { it !is Resource.Loading }) {
                 is Resource.Success -> {
                     val docs = docsResource.data
+                    if (docs.isEmpty()) {
+                        applyDemoDashboardState()
+                        _events.emit(DashboardEvent.RefreshCompleted)
+                        return@launch
+                    }
+
                     val allResults = docs.flatMap { document ->
                         when (val resultsResource = medicalResultRepository.getByDocumentId(document.id).first { it !is Resource.Loading }) {
                             is Resource.Success -> resultsResource.data
@@ -137,7 +233,12 @@ class DashboardViewModel @Inject constructor(
                     state = state.copy(
                         hasUploadedDocuments = docs.isNotEmpty(),
                         markerSummary = summary,
-                        attentionItems = state.attentionItems.ifEmpty { demoAttentionItems },
+                        attentionItems = demoAttentionItems,
+                        basicIndicators = state.basicIndicators.ifEmpty { demoBasicIndicators },
+                        markerCategories = state.markerCategories.ifEmpty { demoMarkerCategories },
+                        generalMarkerCards = state.generalMarkerCards.ifEmpty { demoGeneralMarkerCards },
+                        warningCards = state.warningCards.ifEmpty { demoWarningCards },
+                        clinicalPillarCards = state.clinicalPillarCards.ifEmpty { demoClinicalPillarCards },
                         aiSummary = aiSummary,
                         lastAnalysisDate = lastDate,
                         isLoading = false,
@@ -147,17 +248,39 @@ class DashboardViewModel @Inject constructor(
                 }
 
                 is Resource.Error -> {
-                    savedStateHandle[KEY_ERROR_MESSAGE] = docsResource.message
-                    state = state.copy(
-                        isLoading = false,
-                        errorMessage = docsResource.message
-                    )
+                    applyDemoDashboardState()
                     _events.emit(DashboardEvent.RefreshFailed(docsResource.message))
                 }
 
                 Resource.Loading -> Unit
             }
         }
+    }
+
+    private fun applyDemoDashboardState() {
+        val demoAiSummary = "Date demonstrative pentru vizualizarea dashboard-ului. Conectează contul la analize reale pentru rezultate exacte."
+        savedStateHandle[KEY_LAST_ANALYSIS_DATE] = "2026-04-12"
+        savedStateHandle[KEY_SUMMARY_NORMAL] = demoSummary.normal
+        savedStateHandle[KEY_SUMMARY_BORDERLINE] = demoSummary.borderline
+        savedStateHandle[KEY_SUMMARY_ATTENTION] = demoSummary.attention
+        savedStateHandle[KEY_SUMMARY_SCORE] = demoSummary.score
+        savedStateHandle[KEY_AI_SUMMARY] = demoAiSummary
+        savedStateHandle[KEY_ERROR_MESSAGE] = null
+
+        state = state.copy(
+            hasUploadedDocuments = true,
+            lastAnalysisDate = "2026-04-12",
+            attentionItems = demoAttentionItems,
+            basicIndicators = demoBasicIndicators,
+            markerCategories = demoMarkerCategories,
+            generalMarkerCards = demoGeneralMarkerCards,
+            markerSummary = demoSummary,
+            aiSummary = demoAiSummary,
+            warningCards = demoWarningCards,
+            clinicalPillarCards = demoClinicalPillarCards,
+            isLoading = false,
+            errorMessage = null
+        )
     }
 
     private fun refreshUserProfile() {
