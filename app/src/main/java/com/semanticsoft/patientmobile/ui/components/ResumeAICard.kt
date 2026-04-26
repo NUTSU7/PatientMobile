@@ -2,6 +2,7 @@ package com.semanticsoft.patientmobile.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -22,8 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,74 +41,68 @@ fun ResumeAICard(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFEEF2FF).copy(alpha = 0.5f)),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFE9EDFF)),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .drawBehind {
-                        val radiusPx = (64f * scale).dp.toPx()
-                        val insetPx = (24.8f * scale).dp.toPx()
-                        drawCircle(
-                            color = Color(0xFFE0E7FF).copy(alpha = 0.5f),
-                            radius = radiusPx,
-                            center = Offset(x = size.width - insetPx, y = insetPx)
-                        )
-                    }
+                    .padding(horizontal = (24.8f * scale).dp, vertical = (24.8f * scale).dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = (24.8f * scale).dp, vertical = (24.8f * scale).dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size((29.6f * scale).dp)
-                                .border(1.dp, Color(0xFFEEF2FF), RoundedCornerShape(6.dp))
-                                .background(Color.White, RoundedCornerShape(6.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.AutoAwesome,
-                                contentDescription = null,
-                                tint = Color(0xFF5A52E5),
-                                modifier = Modifier.size((16f * scale).dp)
-                            )
-                        }
-
-                        Text(
-                            text = "AI · Rezumat pe înțelesul tău",
-                            color = Color(0xFF5A52E5),
-                            fontSize = 11.9.sp * scale,
-                            lineHeight = 20.sp * scale,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height((22f * scale).dp))
-
-                    Text(
-                        text = summaryText,
-                        color = Color(0xFF1F2937),
-                        fontSize = 15.3.sp * scale,
-                        lineHeight = 28.8.sp * scale
+                    Icon(
+                        imageVector = Icons.Outlined.AutoAwesome,
+                        contentDescription = null,
+                        tint = Color(0xFF4F46E5),
+                        modifier = Modifier.size((20f * scale).dp)
                     )
 
-                    Spacer(modifier = Modifier.height((18f * scale).dp))
-
                     Text(
-                        text = "Consultați medicul pentru interpretare medicală.",
-                        color = Color(0xFF9CA3AF),
-                        fontSize = 10.2.sp * scale,
-                        lineHeight = 16.sp * scale
+                        text = "Rezumat AI",
+                        color = Color(0xFF312E81),
+                        fontSize = 18.sp * scale,
+                        lineHeight = 22.sp * scale,
+                        fontWeight = FontWeight.Bold
                     )
                 }
+
+                Spacer(modifier = Modifier.height((14f * scale).dp))
+
+                Text(
+                    text = summaryText,
+                    color = Color(0xFF312E81),
+                    fontSize = 15.3.sp * scale,
+                    lineHeight = 26.sp * scale
+                )
+
+                Spacer(modifier = Modifier.height((16f * scale).dp))
+
+                Text(
+                    text = "Consultă doctorul pentru mai multe detalii.",
+                    color = Color(0xFF4F46E5),
+                    fontSize = 13.sp * scale,
+                    lineHeight = 16.sp * scale,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height((10f * scale).dp))
+
+                Text(
+                    text = "Vezi raport detaliat AI →",
+                    color = Color(0xFF4F46E5),
+                    fontSize = 13.sp * scale,
+                    lineHeight = 18.sp * scale,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .border(1.dp, Color(0xFFC7D2FE), RoundedCornerShape(999.dp))
+                        .clip(RoundedCornerShape(999.dp))
+                        .clickable { }
+                        .padding(horizontal = (18f * scale).dp, vertical = (9f * scale).dp)
+                )
             }
         }
     }
