@@ -1,6 +1,7 @@
 package com.semanticsoft.patientmobile.ui.screens.navigation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,15 +13,16 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,13 +44,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.DrawerValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.Brush
+import com.semanticsoft.patientmobile.R
 import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardScreen
 import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardUiState
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicalHystoryScreen
@@ -79,8 +85,8 @@ fun NavScreen(
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val scale = max(0.86f, min(maxWidth.value / 360f, 1.1f))
-        val drawerWidth = min(maxWidth.value * 0.8f, 300f).dp
+        val scale = max(0.84f, min(maxWidth.value / 375f, 1.1f))
+        val drawerWidth = min(max(maxWidth.value * 0.84f, 248f), 320f).dp
 
         ModalNavigationDrawer(
             drawerState = drawerState,
@@ -88,8 +94,17 @@ fun NavScreen(
                 ModalDrawerSheet(
                     modifier = Modifier
                         .width(drawerWidth)
-                        .fillMaxHeight(),
-                    drawerContainerColor = Color(0xFF1E1B4B),
+                        .fillMaxHeight()
+                        .drawBehind {
+                            drawRect(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(Color(0xFF4F46E5), Color(0xFF7C3AED)),
+                                    startY = 0f,
+                                    endY = size.height
+                                )
+                            )
+                        },
+                    drawerContainerColor = Color.Transparent,
                     drawerContentColor = Color.White
                 ) {
                     PostLoginDrawerContent(
@@ -159,8 +174,9 @@ private fun PostLoginDrawerContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1E1B4B))
-            .padding(horizontal = (16f * scale).dp, vertical = (24f * scale).dp)
+            .background(Color.Transparent)
+            .navigationBarsPadding()
+            .padding(horizontal = (16f * scale).dp, vertical = (18f * scale).dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -171,14 +187,14 @@ private fun PostLoginDrawerContent(
                 Box(
                     modifier = Modifier
                         .size((36f * scale).dp)
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape((6f * scale).dp))
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape((10f * scale).dp))
                         .background(Color.White.copy(alpha = 0.1f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.Add,
+                        painter = painterResource(id = R.drawable.ic_sidebar_pulse),
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = Color.Unspecified,
                         modifier = Modifier.size((20f * scale).dp)
                     )
                 }
@@ -186,11 +202,13 @@ private fun PostLoginDrawerContent(
                 Spacer(modifier = Modifier.width((12f * scale).dp))
 
                 Text(
-                    text = "PACIENT.MD",
+                    text = "Patient.md",
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = (11.9f * scale).sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = (24f * scale).sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.SansSerif,
+                        letterSpacing = (-0.2).sp
                     )
                 )
             }
@@ -205,14 +223,24 @@ private fun PostLoginDrawerContent(
             }
         }
 
-        Spacer(modifier = Modifier.height((24f * scale).dp))
+        Spacer(modifier = Modifier.height((26f * scale).dp))
 
         DrawerMenuItem(
             label = "Panou principal",
             selected = selectedTab == PostLoginTab.Dashboard,
             scale = scale,
-            activeIcon = Icons.Outlined.Dashboard,
+            activeIcon = Icons.Outlined.GridView,
             onClick = onSelectDashboard
+        )
+
+        Spacer(modifier = Modifier.height((8f * scale).dp))
+
+        DrawerMenuItem(
+            label = "Analize încărcate",
+            selected = false,
+            scale = scale,
+            activeIcon = Icons.Outlined.Description,
+            onClick = { }
         )
 
         Spacer(modifier = Modifier.height((8f * scale).dp))
@@ -230,14 +258,14 @@ private fun PostLoginDrawerContent(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height((72f * scale).dp),
-            color = Color.White.copy(alpha = 0.05f),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape((12f * scale).dp)
+                .height((76f * scale).dp),
+            color = Color.White.copy(alpha = 0.12f),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape((14f * scale).dp)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = (16f * scale).dp),
+                    .padding(horizontal = (14f * scale).dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
@@ -270,7 +298,7 @@ private fun PostLoginDrawerContent(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = fullName,
+                        text = fullName.split(" ").firstOrNull().orEmpty().ifBlank { "Diana" },
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         color = Color.White,
@@ -294,9 +322,9 @@ private fun PostLoginDrawerContent(
                     modifier = Modifier.size((32f * scale).dp)
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.Logout,
-                        contentDescription = "Deconectare",
-                        tint = Color(0xFFFCA5A5),
+                        imageVector = Icons.Outlined.MoreVert,
+                        contentDescription = "Mai multe opțiuni",
+                        tint = Color.White.copy(alpha = 0.9f),
                         modifier = Modifier.size((20f * scale).dp)
                     )
                 }
@@ -313,17 +341,19 @@ private fun DrawerMenuItem(
     activeIcon: androidx.compose.ui.graphics.vector.ImageVector,
     onClick: () -> Unit
 ) {
-    val backgroundColor = if (selected) Color.White.copy(alpha = 0.1f) else Color.Transparent
-    val foregroundColor = if (selected) Color.White else Color(0xFFA5B4FC)
+    val backgroundColor = if (selected) Color.White.copy(alpha = 0.2f) else Color.Transparent
+    val foregroundColor = if (selected) Color.White else Color.White.copy(alpha = 0.82f)
+    val borderColor = if (selected) Color.White.copy(alpha = 0.32f) else Color.Transparent
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height((44f * scale).dp)
-            .clip(androidx.compose.foundation.shape.RoundedCornerShape((8f * scale).dp))
+            .height((46f * scale).dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape((12f * scale).dp))
             .background(backgroundColor)
+            .border(1.dp, borderColor, androidx.compose.foundation.shape.RoundedCornerShape((12f * scale).dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = (16f * scale).dp),
+            .padding(horizontal = (14f * scale).dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
@@ -339,7 +369,7 @@ private fun DrawerMenuItem(
             text = label,
             color = foregroundColor,
             style = MaterialTheme.typography.bodyMedium.copy(
-                fontSize = (11.9f * scale).sp,
+                fontSize = (12.2f * scale).sp,
                 fontWeight = FontWeight.Medium
             )
         )
