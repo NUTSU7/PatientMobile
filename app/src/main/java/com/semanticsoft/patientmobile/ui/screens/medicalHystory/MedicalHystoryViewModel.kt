@@ -1,13 +1,16 @@
 package com.semanticsoft.patientmobile.ui.screens.medicalHystory
 
+import com.semanticsoft.patientmobile.BuildConfig
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
 import com.semanticsoft.patientmobile.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.DayOfWeek
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,45 +36,30 @@ enum class NoteSeverity {
     BAD
 }
 
-private val DEMO_MEDICINES = listOf(
-    MedicineItem(
-        name = "Augmentin 1000mg",
-        schedule = "1 tabletă · De 2 ori pe zi (08:00, 20:00)",
-        daysRemaining = 3
-    ),
-    MedicineItem(
-        name = "Magnerot 500mg",
-        schedule = "1 tabletă · O dată pe zi (seara)",
-        daysRemaining = 15
-    ),
-    MedicineItem(
-        name = "Vitamina D3 2000 UI",
-        schedule = "1 capsulă · Dimineața după masă",
-        daysRemaining = 30
-    )
+private val DEMO_MEDICINES = emptyList<MedicineItem>()
+
+private val DEMO_NOTES = emptyList<PersonalNoteItem>()
+
+private val DEMO_MEDICINES_POPULATED = listOf(
+    MedicineItem(name = "Paracetamol", schedule = "08:00 · 20:00", daysRemaining = 5),
+    MedicineItem(name = "Amoxicillin", schedule = "09:00 · 15:00 · 21:00", daysRemaining = 3),
+    MedicineItem(name = "Vitamin D", schedule = "08:00", daysRemaining = 30)
 )
 
-private val DEMO_NOTES = listOf(
+private val DEMO_NOTES_POPULATED = listOf(
     PersonalNoteItem(
-        title = "ANALIZĂ SÂNGE (12 MAI)",
-        content = "Valorile indică o ușoară carență de fier și magneziu. Se recomandă suplimentarea dietei și reevaluare peste 3 luni.",
-        author = "Dr. Andrei Popescu",
-        dateLabel = "16 martie 2026",
-        severity = NoteSeverity.BAD
-    ),
-    PersonalNoteItem(
-        title = "ECOGRAFIE ABDOMINALĂ",
-        content = "Structură hepatică normală. Fără modificări patologice vizibile. Pacientul va continua monitorizarea anuală standard.",
-        author = "Dr. Marcel Iureș",
-        dateLabel = "14 martie 2026",
-        severity = NoteSeverity.GOOD
-    ),
-    PersonalNoteItem(
-        title = "RECOMANDARE GENERALĂ",
-        content = "Monitorizarea tensiunii arteriale de două ori pe zi pe durata tratamentului cu Augmentin.",
-        author = "Clinica Sanitar",
-        dateLabel = "20 mai 2026",
+        title = "Follow-up",
+        content = "Patient to follow up in two weeks regarding blood pressure.",
+        author = "Dr. Demo",
+        dateLabel = LocalDate.now().toString(),
         severity = NoteSeverity.OK
+    ),
+    PersonalNoteItem(
+        title = "Allergy note",
+        content = "Allergic to penicillin - flag on record.",
+        author = "Nurse Demo",
+        dateLabel = LocalDate.now().minusDays(3).toString(),
+        severity = NoteSeverity.BAD
     )
 )
 
@@ -79,28 +67,10 @@ private val DEMO_ANALYSIS_DOCUMENTS = listOf(
     PatientDocument(
         id = "demo-doc-1",
         ownerUserId = "demo-user",
-        originalFileName = "Analize sânge (profil complet).pdf",
+        originalFileName = "Patient 1-1.pdf",
         mimeType = "application/pdf",
         fileSizeBytes = 1_245_338,
-        uploadedAt = Instant.parse("2026-04-12T09:30:00Z"),
-        syncStatus = com.semanticsoft.patientmobile.domain.model.SyncStatus.SYNCED
-    ),
-    PatientDocument(
-        id = "demo-doc-2",
-        ownerUserId = "demo-user",
-        originalFileName = "Panel hormonal complet.pdf",
-        mimeType = "application/pdf",
-        fileSizeBytes = 937_128,
-        uploadedAt = Instant.parse("2026-04-09T08:15:00Z"),
-        syncStatus = com.semanticsoft.patientmobile.domain.model.SyncStatus.SYNCED
-    ),
-    PatientDocument(
-        id = "demo-doc-3",
-        ownerUserId = "demo-user",
-        originalFileName = "Ecografie abdominală.png",
-        mimeType = "image/png",
-        fileSizeBytes = 523_014,
-        uploadedAt = Instant.parse("2026-04-02T11:20:00Z"),
+        uploadedAt = Instant.parse("2024-07-11T13:23:00Z"),
         syncStatus = com.semanticsoft.patientmobile.domain.model.SyncStatus.SYNCED
     )
 )
@@ -114,18 +84,23 @@ data class PersonalNoteItem(
 )
 
 data class MedicalHystoryUiState(
+    val greetingName: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val allDocuments: List<PatientDocument> = emptyList(),
     val availableYears: List<Int> = emptyList(),
-    val selectedYear: Int = java.time.LocalDate.now().year,
+    val selectedYear: Int = 2024,
     val timelineMode: MedicalTimelineMode = MedicalTimelineMode.MONTHS,
     val selectedTimelineValue: Int? = null,
     val medicines: List<MedicineItem> = DEMO_MEDICINES,
     val notes: List<PersonalNoteItem> = DEMO_NOTES
 ) {
     val analysisDocuments: List<PatientDocument>
-        get() = if (allDocuments.isEmpty()) DEMO_ANALYSIS_DOCUMENTS else allDocuments
+        get() = when {
+            allDocuments.isNotEmpty() -> allDocuments
+            BuildConfig.DEBUG -> DEMO_ANALYSIS_DOCUMENTS
+            else -> emptyList()
+        }
 
     val timelineValuesForSelectedYear: List<Int>
         get() = when (timelineMode) {
@@ -169,6 +144,7 @@ data class MedicalHystoryUiState(
 
 @HiltViewModel
 class MedicalHystoryViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
     private val documentRepository: DocumentRepository
 ) : ViewModel() {
 
@@ -176,7 +152,14 @@ class MedicalHystoryViewModel @Inject constructor(
     val stateFlow: StateFlow<MedicalHystoryUiState> = _stateFlow.asStateFlow()
 
     init {
+        refreshUserProfile()
         refreshDocuments()
+        if (BuildConfig.DEBUG) {
+            _stateFlow.value = _stateFlow.value.copy(
+                medicines = DEMO_MEDICINES_POPULATED,
+                notes = DEMO_NOTES_POPULATED
+            )
+        }
     }
 
     fun refreshDocuments() {
@@ -190,7 +173,12 @@ class MedicalHystoryViewModel @Inject constructor(
                     )
                 }
                 is Resource.Success -> {
-                    val years = result.data
+                    val data = if (result.data.isNotEmpty() || !BuildConfig.DEBUG) {
+                        result.data
+                    } else {
+                        DEMO_ANALYSIS_DOCUMENTS
+                    }
+                    val years = data
                         .map { it.uploadedAt.atZone(ZoneId.systemDefault()).year }
                         .distinct()
                         .sortedDescending()
@@ -205,7 +193,7 @@ class MedicalHystoryViewModel @Inject constructor(
                     val updatedState = _stateFlow.value.copy(
                         isLoading = false,
                         errorMessage = null,
-                        allDocuments = result.data,
+                        allDocuments = data,
                         availableYears = years,
                         selectedYear = selectedYear
                     )
@@ -255,6 +243,59 @@ class MedicalHystoryViewModel @Inject constructor(
 
     fun onTimelineValueSelected(value: Int?) {
         _stateFlow.value = _stateFlow.value.copy(selectedTimelineValue = value)
+    }
+
+    fun addMedicine(name: String, schedule: String, daysRemaining: Int) {
+        val current = _stateFlow.value.medicines.toMutableList()
+        current.add(0, MedicineItem(name = name, schedule = schedule, daysRemaining = daysRemaining))
+        _stateFlow.value = _stateFlow.value.copy(medicines = current)
+    }
+
+    fun addNote(title: String, content: String, author: String = "Me", severity: NoteSeverity = NoteSeverity.OK) {
+        val note = PersonalNoteItem(
+            title = title,
+            content = content,
+            author = author,
+            dateLabel = LocalDate.now().toString(),
+            severity = severity
+        )
+        val current = _stateFlow.value.notes.toMutableList()
+        current.add(0, note)
+        _stateFlow.value = _stateFlow.value.copy(notes = current)
+    }
+
+    fun attachFile(document: PatientDocument) {
+        val current = listOf(document) + _stateFlow.value.allDocuments
+        val years = current
+            .map { it.uploadedAt.atZone(ZoneId.systemDefault()).year }
+            .distinct()
+            .sortedDescending()
+        val currentYear = java.time.LocalDate.now().year
+        val selectedYear = when {
+            years.contains(_stateFlow.value.selectedYear) -> _stateFlow.value.selectedYear
+            years.contains(currentYear) -> currentYear
+            years.isNotEmpty() -> years.first()
+            else -> currentYear
+        }
+
+        val updatedState = _stateFlow.value.copy(
+            allDocuments = current,
+            availableYears = years,
+            selectedYear = selectedYear
+        )
+        _stateFlow.value = updatedState.copy(
+            selectedTimelineValue = updatedState.timelineValuesForSelectedYear.firstOrNull()
+        )
+    }
+
+    private fun refreshUserProfile() {
+        viewModelScope.launch {
+            runCatching { authRepository.getCurrentUser() }
+                .onSuccess { user ->
+                    val greetingName = user.firstName.ifBlank { user.email.substringBefore("@") }
+                    _stateFlow.value = _stateFlow.value.copy(greetingName = greetingName)
+                }
+        }
     }
 }
 
