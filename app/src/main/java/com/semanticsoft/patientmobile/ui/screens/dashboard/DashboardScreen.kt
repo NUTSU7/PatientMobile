@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -26,7 +25,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
-import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
@@ -57,11 +56,14 @@ import com.semanticsoft.patientmobile.ui.components.GeneralMarkersCard
 import com.semanticsoft.patientmobile.ui.components.HealthScoreCard
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.components.ResumeAICard
+import com.semanticsoft.patientmobile.ui.components.ScreenTopBar
 import com.semanticsoft.patientmobile.ui.common.dashboardSpacing
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.screens.uploadFile.UploadFileScreen
 import com.semanticsoft.patientmobile.ui.screens.uploadFile.UploadFileViewModel
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
+import com.semanticsoft.patientmobile.ui.theme.Indigo600
+import com.semanticsoft.patientmobile.ui.theme.Purple500
 import com.semanticsoft.patientmobile.data.model.IndicatorStatus
 
 @Composable
@@ -396,168 +398,84 @@ private fun DashboardTopSection(
     onMenuClick: () -> Unit,
     onUploadClick: () -> Unit
 ) {
-    val topInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White),
-        color = Color.White
-    ) {
-        BoxWithConstraints {
-            val isNarrow = maxWidth < 340.dp
-            val isWide = maxWidth >= 430.dp
-            val greetingSize = when {
-                isNarrow -> 21.sp
-                isWide -> 25.sp
-                else -> 24.sp
-            }
-            val greetingLine = when {
-                isNarrow -> 27.sp
-                isWide -> 31.sp
-                else -> 30.sp
-            }
-            val menuSize = when {
-                isNarrow -> 34.dp
-                isWide -> 38.dp
-                else -> 36.dp
-            }
-            val menuIconSize = when {
-                isNarrow -> 22.dp
-                isWide -> 25.dp
-                else -> 24.dp
-            }
-            val actionIconButtonSize = when {
-                isNarrow -> 32.dp
-                isWide -> 36.dp
-                else -> 34.dp
-            }
-            val actionIconSize = when {
-                isNarrow -> 17.dp
-                isWide -> 19.dp
-                else -> 18.dp
-            }
-            val uploadWidth = when {
-                isNarrow -> maxWidth * 0.48f
-                isWide -> maxWidth * 0.52f
-                else -> maxWidth * 0.5f
-            }
-            val uploadFont = when {
-                isNarrow -> 14.sp
-                isWide -> 16.sp
-                else -> 15.sp
+    ScreenTopBar(
+        horizontalPadding = horizontalPadding,
+        onMenuClick = onMenuClick,
+        titleContent = { dimensions ->
+            Text(
+                text = "Salut ",
+                color = Color(0xFF111827),
+                fontSize = dimensions.titleSize,
+                lineHeight = dimensions.titleLineHeight,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = state.greetingName,
+                color = Color(0xFF4F46E5),
+                fontSize = dimensions.titleSize,
+                lineHeight = dimensions.titleLineHeight,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = ",",
+                color = Color(0xFF111827),
+                fontSize = dimensions.titleSize,
+                lineHeight = dimensions.titleLineHeight,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        titleTrailingContent = { dimensions ->
+            IconButton(
+                onClick = { },
+                modifier = Modifier.size(dimensions.actionButtonSize)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.NotificationsNone,
+                    contentDescription = "Notificări",
+                    tint = Color(0xFF4B5563),
+                    modifier = Modifier.size(dimensions.actionIconSize)
+                )
             }
 
-            Column(
+            Spacer(modifier = Modifier.width(8.dp))
+
+            IconButton(
+                onClick = { },
+                modifier = Modifier.size(dimensions.actionButtonSize)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
+                    contentDescription = "Ajutor",
+                    tint = Color(0xFF4B5563),
+                    modifier = Modifier.size(dimensions.actionIconSize)
+                )
+            }
+        },
+        subtitleContent = {
+            Text(
+                text = "Se pare că ai făcut ultimele analize pe ${state.lastAnalysisDate}",
+                color = Color(0xFF6B7280),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        actionsContent = { dimensions ->
+            Text(
+                text = "Încarcă analize",
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Medium,
+                fontSize = dimensions.primaryActionTextSize,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = horizontalPadding, end = horizontalPadding, top = topInset + 8.dp, bottom = 14.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = onMenuClick,
-                        modifier = Modifier.size(menuSize)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Menu,
-                            contentDescription = "Meniu",
-                            tint = Color(0xFF4B5563),
-                            modifier = Modifier.size(menuIconSize)
-                        )
-                    }
-
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(
-                                text = "Salut ",
-                                color = Color(0xFF111827),
-                                fontSize = greetingSize,
-                                lineHeight = greetingLine,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = state.greetingName,
-                                color = Color(0xFF4F46E5),
-                                fontSize = greetingSize,
-                                lineHeight = greetingLine,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Text(
-                                text = ",",
-                                color = Color(0xFF111827),
-                                fontSize = greetingSize,
-                                lineHeight = greetingLine,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        Text(
-                            text = "Se pare că ai făcut ultimele analize pe ${state.lastAnalysisDate}",
-                            color = Color(0xFF6B7280),
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 6.dp),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(
-                                onClick = { },
-                                modifier = Modifier.size(actionIconButtonSize)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.NotificationsNone,
-                                    contentDescription = "Notificări",
-                                    tint = Color(0xFF4B5563),
-                                    modifier = Modifier.size(actionIconSize)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            IconButton(
-                                onClick = { },
-                                modifier = Modifier.size(actionIconButtonSize)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                                    contentDescription = "Ajutor",
-                                    tint = Color(0xFF4B5563),
-                                    modifier = Modifier.size(actionIconSize)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(10.dp))
-
-                            Text(
-                                text = "Încarcă analize",
-                                color = Color.White,
-                                textAlign = TextAlign.Center,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = uploadFont,
-                                modifier = Modifier
-                                    .width(uploadWidth)
-                                    .clip(RoundedCornerShape(999.dp))
-                                    .background(Color(0xFF4F46E5))
-                                    .clickable(onClick = onUploadClick)
-                                    .padding(vertical = 12.dp)
-                            )
-                        }
-                    }
-                }
-            }
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(Brush.horizontalGradient(listOf(Indigo600, Purple500)))
+                    .clickable(onClick = onUploadClick)
+                    .padding(vertical = 12.dp)
+            )
         }
-    }
+    )
 }

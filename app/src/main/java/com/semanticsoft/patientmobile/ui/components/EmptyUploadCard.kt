@@ -28,6 +28,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.semanticsoft.patientmobile.ui.theme.Gray100
+import com.semanticsoft.patientmobile.ui.theme.Gray500
+import com.semanticsoft.patientmobile.ui.theme.Gray900
+import com.semanticsoft.patientmobile.ui.theme.Indigo200
+import com.semanticsoft.patientmobile.ui.theme.Indigo600
+import com.semanticsoft.patientmobile.ui.theme.Purple500
 
 @Composable
 fun EmptyUploadCard(
@@ -60,22 +66,22 @@ fun EmptyUploadCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White, RoundedCornerShape(20.dp))
-                .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(20.dp))
+                .background(Color.White, RoundedCornerShape(28.dp))
+                .border(1.dp, Gray100, RoundedCornerShape(28.dp))
                 .padding(cardPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
                     .size(if (isCompact) 40.dp else 48.dp)
-                    .border(2.dp, Color(0xFF8B5CF6), RoundedCornerShape(12.dp))
-                    .background(Color(0xFFF8F9FF), RoundedCornerShape(12.dp)),
+                    .border(2.dp, Indigo200, RoundedCornerShape(12.dp))
+                    .background(Color(0xFFF8FAFF), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Filled.Add,
                     contentDescription = null,
-                    tint = Color(0xFF8B5CF6),
+                    tint = Indigo600,
                     modifier = Modifier.size(if (isCompact) 24.dp else 28.dp)
                 )
             }
@@ -83,7 +89,7 @@ fun EmptyUploadCard(
             Spacer(modifier = Modifier.height(if (isCompact) 16.dp else 20.dp))
             Text(
                 text = "Începe prin a-ți încărca prima analiză\nde laborator",
-                color = Color(0xFF1F2937),
+                color = Gray900,
                 fontWeight = FontWeight.Bold,
                 fontSize = titleFontSize,
                 lineHeight = titleLineHeight,
@@ -93,7 +99,7 @@ fun EmptyUploadCard(
             Spacer(modifier = Modifier.height(if (isCompact) 16.dp else 20.dp))
             Text(
                 text = "Încarcă un fișier PDF, JPG sau PNG și AI-ul nostru va extrage automat datele pentru a-ți oferi o imagine clară asupra sănătății tale.",
-                color = Color(0xFF6B7280),
+                color = Gray500,
                 fontSize = bodyFontSize,
                 lineHeight = bodyLineHeight,
                 textAlign = TextAlign.Center
@@ -105,8 +111,8 @@ fun EmptyUploadCard(
                     .fillMaxWidth(0.9f)
                     .height(buttonHeight)
                     .background(
-                        Brush.horizontalGradient(listOf(Color(0xFF8B5CF6), Color(0xFF3B82F6))),
-                        RoundedCornerShape(12.dp)
+                        Brush.horizontalGradient(listOf(Indigo600, Purple500)),
+                        RoundedCornerShape(16.dp)
                     )
                     .clickable(onClick = onUploadClick),
                 contentAlignment = Alignment.Center
@@ -137,15 +143,15 @@ fun EmptyUploadCard(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "🔒 Date securizate", color = Color(0xFF6B7280), fontSize = if (isCompact) 13.sp else 14.sp)
-                Text(text = "🤖 Extracție prin AI", color = Color(0xFF6B7280), fontSize = if (isCompact) 13.sp else 14.sp)
-                Text(text = "📊 Istoric vizual", color = Color(0xFF6B7280), fontSize = if (isCompact) 13.sp else 14.sp)
+                Text(text = "🔒 Date securizate", color = Gray500, fontSize = if (isCompact) 13.sp else 14.sp)
+                Text(text = "🤖 Extracție prin AI", color = Gray500, fontSize = if (isCompact) 13.sp else 14.sp)
+                Text(text = "📊 Istoric vizual", color = Gray500, fontSize = if (isCompact) 13.sp else 14.sp)
             }
 
             Spacer(modifier = Modifier.height(if (isCompact) 18.dp else 22.dp))
             Text(
                 text = "Nu ai documente la îndemână? Utilizează aplicația când ești gata.",
-                color = Color(0xFF9CA3AF),
+                color = Gray500,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center
             )
