@@ -19,66 +19,62 @@ val AppLogoIcon: ImageVector
             viewportWidth = 24f,
             viewportHeight = 24f
         ).apply {
-            // Opaque rounded background box (Replaced the transparent white)
             path(
-                fill = SolidColor(Color(0xFF709DF7)), // <-- Solid blue color here!
+                fill = SolidColor(Color(0xFF709DF7)),
                 pathFillType = PathFillType.NonZero
             ) {
-                moveTo(7f, 4f)
-                lineTo(17f, 4f)
-                curveTo(18.657f, 4f, 20f, 5.343f, 20f, 7f)
-                lineTo(20f, 17f)
-                curveTo(20f, 18.657f, 18.657f, 20f, 17f, 20f)
-                lineTo(7f, 20f)
-                curveTo(5.343f, 20f, 4f, 18.657f, 4f, 17f)
-                lineTo(4f, 7f)
-                curveTo(4f, 5.343f, 5.343f, 4f, 7f, 4f)
+                moveTo(3f, 4f)
+                lineTo(13f, 4f)
+                curveTo(14.657f, 4f, 16f, 5.343f, 16f, 7f)
+                lineTo(16f, 17f)
+                curveTo(16f, 18.657f, 14.657f, 20f, 13f, 20f)
+                lineTo(3f, 20f)
+                curveTo(1.343f, 20f, 0f, 18.657f, 0f, 17f)
+                lineTo(0f, 7f)
+                curveTo(0f, 5.343f, 1.343f, 4f, 3f, 4f)
                 close()
             }
-            
-            // Plus Sign
+
             path(
                 fill = SolidColor(Color(0xFFFFFFFF)),
                 pathFillType = PathFillType.NonZero
             ) {
-                moveTo(13f, 8f)
-                lineTo(11f, 8f)
-                lineTo(11f, 11f)
-                lineTo(8f, 11f)
-                lineTo(8f, 13f)
-                lineTo(11f, 13f)
-                lineTo(11f, 16f)
-                lineTo(13f, 16f)
-                lineTo(13f, 13f)
-                lineTo(16f, 13f)
-                lineTo(16f, 11f)
-                lineTo(13f, 11f)
+                moveTo(9f, 8f)
+                lineTo(7f, 8f)
+                lineTo(7f, 11f)
+                lineTo(4f, 11f)
+                lineTo(4f, 13f)
+                lineTo(7f, 13f)
+                lineTo(7f, 16f)
+                lineTo(9f, 16f)
+                lineTo(9f, 13f)
+                lineTo(12f, 13f)
+                lineTo(12f, 11f)
+                lineTo(9f, 11f)
                 close()
             }
-            
-            // Main Sparkle (Top Right)
+
             path(
                 fill = SolidColor(Color(0xFFFFFFFF)),
                 pathFillType = PathFillType.NonZero
             ) {
-                moveTo(18.5f, 2f)
-                quadTo(18.5f, 5.5f, 22f, 5.5f)
-                quadTo(18.5f, 5.5f, 18.5f, 9f)
-                quadTo(18.5f, 5.5f, 15f, 5.5f)
-                quadTo(18.5f, 5.5f, 18.5f, 2f)
+                moveTo(14.5f, 2f)
+                quadTo(14.5f, 5.5f, 18f, 5.5f)
+                quadTo(14.5f, 5.5f, 14.5f, 9f)
+                quadTo(14.5f, 5.5f, 11f, 5.5f)
+                quadTo(14.5f, 5.5f, 14.5f, 2f)
                 close()
             }
-            
-            // Smaller Secondary Sparkle
+
             path(
                 fill = SolidColor(Color(0xFFFFFFFF)),
                 pathFillType = PathFillType.NonZero
             ) {
-                moveTo(22f, 1f)
-                quadTo(22f, 2.5f, 23.5f, 2.5f)
-                quadTo(22f, 2.5f, 22f, 4f)
-                quadTo(22f, 2.5f, 20.5f, 2.5f)
-                quadTo(22f, 2.5f, 22f, 1f)
+                moveTo(18f, 1f)
+                quadTo(18f, 2.5f, 19.5f, 2.5f)
+                quadTo(18f, 2.5f, 18f, 4f)
+                quadTo(18f, 2.5f, 16.5f, 2.5f)
+                quadTo(18f, 2.5f, 18f, 1f)
                 close()
             }
         }.build()
