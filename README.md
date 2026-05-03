@@ -13,6 +13,7 @@ PatientMobile is an Android application for patients to manage their medical doc
 - [Build Variants](#build-variants)
 - [Testing](#testing)
 - [Documentation](#documentation)
+- [Agent Guidelines](#agent-guidelines)
 - [Getting Started](#getting-started)
 
 ---
@@ -68,6 +69,18 @@ The app follows **Clean Architecture** with three main layers:
 - **Dependency Injection**: All modules wired via Hilt (`di/`).
 - **Unidirectional Data Flow**: UI emits actions → ViewModel processes → State updates → UI recomposes.
 
+### UI Organization — Feature-by-Package
+
+The `ui/screens/` layer follows a strict **Feature-by-Package** structure:
+
+- Every feature folder contains its `Screen`, `ViewModel`, and a nested `components/` folder for feature-specific widgets.
+- **Global Design System** (`ui/components/`): Only shared, generic primitives (e.g. `LoadingIndicator`, `ScreenTopBar`) live here.
+- **Shared cross-feature components** (like `ui/screens/auth/components/`) exist for composables shared by multiple features that are not universal enough for the global bucket.
+- **Icons**: All custom icons are Kotlin `ImageVector` files in `ui/theme/icons/`. No XML drawables for custom icons.
+- **Theme tokens**: `Color.kt` (palette), `Dimens.kt` (padding/gaps/heights), `Shapes.kt` (corner radii), `Type.kt` (text styles).
+
+Full guidelines in `RULES.md`.
+
 ---
 
 ## Project Structure
@@ -80,8 +93,16 @@ PatientMobile/
 │   │   │   ├── java/com/semanticsoft/patientmobile/
 │   │   │   │   ├── data/              # Data Layer
 │   │   │   │   │   ├── local/         # Room DB, DataStore, DAOs
+│   │   │   │   │   │   ├── dao/
+│   │   │   │   │   │   ├── datastore/
+│   │   │   │   │   │   └── db/
+│   │   │   │   │   │       ├── entity/
+│   │   │   │   │   │       └── extensions/
 │   │   │   │   │   ├── model/         # Data-layer models (dashboard DTOs)
 │   │   │   │   │   ├── remote/        # API service, interceptors, DTOs
+│   │   │   │   │   │   ├── api/
+│   │   │   │   │   │   │   └── dto/
+│   │   │   │   │   │   └── interceptors/
 │   │   │   │   │   └── repository/    # Repository implementations
 │   │   │   │   ├── domain/            # Domain Layer
 │   │   │   │   │   ├── model/         # Domain entities (User, MedicalResult, etc.)
@@ -89,15 +110,36 @@ PatientMobile/
 │   │   │   │   ├── di/                # Hilt Modules
 │   │   │   │   ├── ui/                # Presentation Layer
 │   │   │   │   │   ├── common/        # Shared UI utilities (spacing, system bars)
-│   │   │   │   │   ├── components/    # Reusable Compose components
-│   │   │   │   │   ├── navigation/    # Navigation destinations
-│   │   │   │   │   ├── screens/       # Feature screens + ViewModels
-│   │   │   │   │   └── theme/         # Colors, Typography, Theme
+│   │   │   │   │   ├── components/    # Global Design System (7 shared widgets)
+│   │   │   │   │   ├── navigation/    # AppDestination route definitions
+│   │   │   │   │   ├── screens/       # Feature packages
+│   │   │   │   │   │   ├── auth/
+│   │   │   │   │   │   │   └── components/ # Shared auth primitives (AuthLabel, AuthInput)
+│   │   │   │   │   │   ├── dashboard/
+│   │   │   │   │   │   │   └── components/ # Dashboard-specific widgets
+│   │   │   │   │   │   ├── login/
+│   │   │   │   │   │   │   └── components/ # Login-specific widgets
+│   │   │   │   │   │   ├── medicalHystory/
+│   │   │   │   │   │   │   └── components/ # Medical-history-specific widgets
+│   │   │   │   │   │   ├── navigation/
+│   │   │   │   │   │   │   └── components/ # Drawer shell widgets (PostLoginDrawer, DrawerMenuItem)
+│   │   │   │   │   │   ├── registration/
+│   │   │   │   │   │   │   └── components/ # Registration-specific widgets
+│   │   │   │   │   │   └── uploadFile/
+│   │   │   │   │   │       └── components/ # Upload-specific widgets
+│   │   │   │   │   └── theme/         # Colors, Typography, Theme, Icons
+│   │   │   │   │       ├── icons/     # Kotlin ImageVector icons (all custom icons)
+│   │   │   │   │       ├── Color.kt   # Color palette
+│   │   │   │   │       ├── Dimens.kt  # Sizes, paddings, gaps, heights
+│   │   │   │   │       ├── Shapes.kt  # Corner radius tokens
+│   │   │   │   │       ├── Type.kt    # Text style tokens
+│   │   │   │   │       └── Theme.kt   # MaterialTheme wiring
 │   │   │   │   ├── util/              # Utilities & exceptions
 │   │   │   │   ├── MainActivity.kt    # Entry activity
 │   │   │   │   ├── PatientMobileApp.kt # Root navigation host
 │   │   │   │   └── PatientApplication.kt # Application class (Hilt)
-│   │   │   └── res/                   # Android resources (drawables, mipmap, values, xml)
+│   │   │   └── res/                   # Android resources (mipmap, values, xml)
+│   │   │       └── drawable/          # Only launcher icons remain
 │   │   ├── test/                      # Unit tests
 │   │   └── androidTest/               # Instrumented tests
 │   ├── build.gradle.kts               # App-level build config
@@ -107,7 +149,8 @@ PatientMobile/
 │   └── libs.versions.toml             # Version catalog
 ├── build.gradle.kts                   # Root build config
 ├── settings.gradle.kts
-└── gradle.properties
+├── gradle.properties
+└── RULES.md                           # Agent guidelines (local-only)
 ```
 
 ### Where to Find Key Components
@@ -126,9 +169,37 @@ PatientMobile/
 | **Repository Implementations** | `data/repository/` |
 | **DI Modules** | `di/` |
 | **UI Screens** | `ui/screens/{feature}/` |
-| **Shared Components** | `ui/components/` |
+| **Global Design System** | `ui/components/` |
+| **Feature Components** | `ui/screens/{feature}/components/` |
+| **Icons** | `ui/theme/icons/` |
 | **Theme** | `ui/theme/` |
 | **Custom Exceptions** | `util/exceptions/` |
+
+### Global Design System (`ui/components/`)
+
+These 7 shared primitives are consumed by 2+ features:
+
+| Component | Used By |
+|-----------|---------|
+| `ErrorDialog` | Dashboard |
+| `FilePickerButton` | MedicalHistory, UploadFile |
+| `LoadingIndicator` | Dashboard, Login, Registration, UploadFile |
+| `PasswordField` | (unused — reserved) |
+| `PasswordInputField` | (unused — reserved) |
+| `ProgressIndicator` | (unused — reserved) |
+| `ScreenTopBar` | Dashboard, MedicalHistory |
+
+### Feature Components
+
+| Feature | Components Folder | Files |
+|---------|-------------------|-------|
+| `auth` | `screens/auth/components/` | `AuthLabel`, `AuthInput` |
+| `dashboard` | `screens/dashboard/components/` | `BasicIndicatorsCard`, `DashboardTopSection`, `EmptyUploadCard`, `GeneralMarkersCard`, `HealthScoreCard`, `MarkerOverviewSection`, `ResumeAICard`, `WarningCard` |
+| `login` | `screens/login/components/` | (uses `auth/components/`) |
+| `medicalHystory` | `screens/medicalHystory/components/` | `DocumentList`, `DocumentListItem`, `MedicalHistoryAnalysisSection`, `MedicalHistoryFiltersCard`, `MedicalHistoryTopBar`, `MedicinesSection`, `PersonalNotesSection` |
+| `navigation` | `screens/navigation/components/` | `PostLoginDrawerContent`, `DrawerMenuItem` |
+| `registration` | `screens/registration/components/` | (uses `auth/components/`) |
+| `uploadFile` | `screens/uploadFile/components/` | `DragDropArea`, `DropboxButton`, `ExternalSourceButton`, `FileUploadComponent`, `UploadButton`, `UploadFileDialogContent` |
 
 ---
 
@@ -152,6 +223,9 @@ PatientMobile/
   - `RegistrationViewModel.kt` — Validates input and calls `AuthRepository.register()`.
   - On success, navigates to Dashboard.
 
+- **Shared Auth Components** (`ui/screens/auth/components/`)
+  - `AuthLabel` and `AuthInput` are shared primitives used by both Login and Registration screens to avoid duplication.
+
 ### Post-Login Navigation
 
 `NavScreen.kt` provides a **Modal Navigation Drawer** with tabs:
@@ -161,7 +235,7 @@ PatientMobile/
 | Panou principal | Dashboard | `DashboardScreen.kt` |
 | Istoric medical | Medical History | `MedicalHystoryScreen.kt` |
 
-The drawer shows the user's profile, role, and a logout button.
+The drawer shows the user's profile, role, and a logout button. Drawer content is extracted into `navigation/components/PostLoginDrawerContent.kt`.
 
 ### Dashboard (`ui/screens/dashboard/`)
 
@@ -176,20 +250,44 @@ The drawer shows the user's profile, role, and a logout button.
   - Clinical pillar cards
 - **Demo Mode**: If no documents are uploaded or the API fails, the dashboard falls back to **demo data** so the UI is always usable.
 - `DashboardViewModel.kt` fetches documents and medical results, computes summaries, and builds an AI summary string.
+- Dashboard-specific widgets live in `ui/screens/dashboard/components/`.
 
 ### Medical History (`ui/screens/medicalHystory/`)
 
 - Lists uploaded documents and their analysis history.
 - `MedicalHystoryViewModel.kt` manages the state.
+- Feature-specific widgets live in `ui/screens/medicalHystory/components/`.
 
 ### File Upload (`ui/screens/uploadFile/`)
 
 - Dialog-style overlay for uploading medical documents (PDF, JPG, PNG).
 - `UploadFileViewModel.kt` handles file selection and multipart upload via `DocumentRepository`.
+- Upload-specific widgets (dialog content, drag-drop area, source buttons) live in `ui/screens/uploadFile/components/`.
 
-### Analysis History (`ui/screens/navigation/`)
+### Theme System (`ui/theme/`)
 
-- `AnalysisHistoryScreen.kt` — Dedicated screen for viewing past analyses.
+| File | Purpose |
+|------|---------|
+| `Color.kt` | Color palette — **read-only**, add only |
+| `Dimens.kt` | `AppDimens` object — padding, gaps, button/input heights, corner radii |
+| `Shapes.kt` | `AppShapes` — wired into `MaterialTheme` |
+| `Type.kt` | `Typography` — text styles for headlines, titles, body, labels |
+| `Theme.kt` | `PatientMobileTheme` — wires `LightColors`, `Typography`, `AppShapes` |
+| `icons/` | 9 Kotlin `ImageVector` files (all custom icons) + `PathHelper.kt` SVG parser |
+
+---
+
+## Navigation Flow
+
+```
+Login ──success──▶ Dashboard (drawer)
+  │                    │
+  │                    ├── Panou principal → DashboardScreen
+  │                    ├── Istoric medical → MedicalHystoryScreen
+  │                    └── Logout → Login
+  │
+  └──▶ Registration ──success──▶ Dashboard
+```
 
 ---
 
@@ -266,9 +364,9 @@ Configured in `app/build.gradle.kts`:
 | `dev` | `https://dev-api.example.com/api/v1/` | Shared dev backend |
 | `release` | `https://api.example.com/api/v1/` | Production |
 
-**Compile SDK**: `34`  
-**Min SDK**: `29` (Android 10+)  
-**Target SDK**: `34`  
+**Compile SDK**: `34`
+**Min SDK**: `29` (Android 10+)
+**Target SDK**: `34`
 **Java/Kotlin Target**: `11`
 
 ---
@@ -301,6 +399,36 @@ Configured in `app/build.gradle.kts`:
 ./gradlew connectedAndroidTest
 ```
 
+---
+
+## Documentation
+
+Additional documentation lives in the `docs/` folder:
+
+| File | Content |
+|------|---------|
+| `API_CONTRACT_V1.md` | Full REST API contract with request/response examples |
+| `openapi-v1.yaml` | OpenAPI specification |
+| `FRONTEND_IMPLEMENTATION_GUIDE.md` | Frontend integration guide |
+| `KOTLIN_MOBILE_IMPLEMENTATION_GUIDE.md` | Kotlin-specific implementation notes |
+| `AUTH_SECURITY_AND_KEY_ROTATION.md` | Authentication and security details |
+| `UPLOAD_SECURITY_HARDENING.md` | Upload security measures |
+| `MEDICAL_RESULTS_DB_MODEL_V1.md` | Database model documentation |
+| `PROJECT_MAP.md` | Quick-reference project map |
+| `PRODUCTION_DEPLOYMENT_CHECKLIST.md` | Pre-release checklist |
+
+## Agent Guidelines
+
+When working on this project with an AI agent, reference `RULES.md` (kept local via `.gitignore`) for:
+
+- UI component classification rules (global vs. feature)
+- Feature package structure conventions
+- Icon and theme token guidelines
+- Backend/logic layer organization
+- Data flow patterns (MVVM, Repository, `Resource<T>`)
+- New feature checklist
+
+---
 
 ## Getting Started
 
@@ -336,44 +464,56 @@ Install the debug APK:
 com.semanticsoft.patientmobile
 ├── data
 │   ├── local
-│   │   ├── dao/          # Room DAOs
-│   │   ├── datastore/    # Encrypted tokens & preferences
-│   │   └── db/           # Database, entities, mappers
+│   │   ├── dao/          # Room DAOs (UserDao, DocumentDao, MedicalResultDao, etc.)
+│   │   ├── datastore/    # EncryptedTokenManager, TokenManager, UserPreferencesManager
+│   │   └── db/           # PatientDatabase, entities, EntityDomainMappers
 │   ├── model/            # Data-layer UI models (DashboardModels)
 │   ├── remote
-│   │   ├── api/          # Retrofit service, DTOs, response wrapper
-│   │   └── interceptors/ # Auth & error interceptors
-│   └── repository/       # Repository implementations
+│   │   ├── api/          # PatientApiService, ResponseEntity, DTOs
+│   │   └── interceptors/ # AuthInterceptor, ErrorInterceptor
+│   └── repository/       # Repository impls (Auth, Document, MedicalResult, Audit, NetworkState)
 ├── domain
-│   ├── model/            # Pure domain entities
-│   └── repository/       # Repository contracts
+│   ├── model/            # Pure domain entities (User, MedicalResult, PatientDocument, etc.)
+│   └── repository/       # Repository contracts (Auth, Document, MedicalResult, Audit)
 ├── di
 │   ├── DatabaseModule.kt
 │   ├── DataStoreModule.kt
 │   ├── NetworkModule.kt
 │   └── RepositoryModule.kt
 ├── ui
-│   ├── common/           # Shared UI helpers
-│   ├── components/       # Reusable Compose widgets
+│   ├── common/           # DashboardSpacing, SetStatusBar
+│   ├── components/       # Global Design System (7 shared widgets)
 │   ├── navigation/       # AppDestination sealed class
-│   ├── screens/          # Feature screens + ViewModels
+│   ├── screens/
+│   │   ├── auth/
+│   │   │   └── components/    # AuthInput, AuthLabel (shared by login + registration)
 │   │   ├── dashboard/
-│   │   ├── login/
-│   │   ├── medicalHystory/
-│   │   ├── navigation/   # NavScreen, AnalysisHistoryScreen
-│   │   ├── registration/
-│   │   └── uploadFile/
-│   └── theme/            # Material 3 theme, colors, typography
+│   │   │   └── components/    # BasicIndicatorsCard, DashboardTopSection, EmptyUploadCard, etc.
+│   │   ├── login/             # LoginScreen, LoginViewModel
+│   │   │   └── components/    # (uses auth/components/)
+│   │   ├── medicalHystory/     # MedicalHystoryScreen, MedicalHystoryViewModel
+│   │   │   └── components/    # DocumentList, MedicalHistoryAnalysisSection, etc.
+│   │   ├── navigation/        # NavScreen, PostLoginTab
+│   │   │   └── components/    # PostLoginDrawerContent, DrawerMenuItem
+│   │   ├── registration/      # RegistrationScreen, RegistrationViewModel
+│   │   │   └── components/    # (uses auth/components/)
+│   │   └── uploadFile/        # UploadFileScreen, UploadFileViewModel, UploadFileModels
+│   │       └── components/    # DragDropArea, UploadFileDialogContent, etc.
+│   └── theme/
+│       ├── icons/         # Kotlin ImageVector files (CloseIcon, WarningIcon, etc.)
+│       ├── Color.kt       # Color palette
+│       ├── Dimens.kt      # AppDimens (paddings, gaps, heights, radii)
+│       ├── Shapes.kt      # AppShapes (corner radii tokens)
+│       ├── Type.kt        # Typography (text style tokens)
+│       └── Theme.kt       # PatientMobileTheme
 ├── util
-│   ├── exceptions/       # Typed exceptions
+│   ├── exceptions/       # ApiException, InvalidCredentialsException, etc.
 │   ├── ApiExceptionMessageMapper.kt
 │   ├── PasswordValidator.kt
-│   └── Resource.kt
+│   └── Resource.kt       # Resource<T> sealed class (Loading, Success, Error)
 ├── MainActivity.kt
-├── PatientMobileApp.kt
-└── PatientApplication.kt
+├── PatientMobileApp.kt   # Root NavHost with Login, Registration, Dashboard routes
+└── PatientApplication.kt # @HiltAndroidApp
 ```
 
 ---
-
-*Generated for PatientMobile — com.semanticsoft.patientmobile*

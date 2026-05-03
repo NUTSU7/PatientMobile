@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.ui.components
+package com.semanticsoft.patientmobile.ui.screens.dashboard.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +29,7 @@ import com.semanticsoft.patientmobile.R
 import com.semanticsoft.patientmobile.data.model.WarningCardItem
 import com.semanticsoft.patientmobile.data.model.WarningIndicatorItem
 import com.semanticsoft.patientmobile.data.model.WarningLevel
+import com.semanticsoft.patientmobile.ui.theme.icons.WarningIcon
 import kotlin.math.max
 import kotlin.math.min
 
@@ -41,20 +42,16 @@ fun WarningCard(
         val scale = max(0.86f, min(maxWidth.value / 343.2f, 1.06f))
 
         val (backgroundColor, titleColor, contentColor) = when (warningCard.level) {
-            WarningLevel.HIGH -> {
-                Tuple3(
-                    Color(0xFFFEF2F2),  // light red background
-                    Color(0xFFB91C1C),  // dark red title
-                    Color(0xFF7F1D1D)   // darker red for content
-                )
-            }
-            WarningLevel.MODERATE -> {
-                Tuple3(
-                    Color(0xFFFEFCE8),  // light yellow background
-                    Color(0xFFA16207),  // dark orange/brown title
-                    Color(0xFF713F12)   // darker orange/brown for content
-                )
-            }
+            WarningLevel.HIGH -> Triple(
+                Color(0xFFFEF2F2),
+                Color(0xFFB91C1C),
+                Color(0xFF7F1D1D)
+            )
+            WarningLevel.MODERATE -> Triple(
+                Color(0xFFFEFCE8),
+                Color(0xFFA16207),
+                Color(0xFF713F12)
+            )
         }
 
         val title = when (warningCard.level) {
@@ -84,7 +81,7 @@ fun WarningCard(
                     horizontalArrangement = Arrangement.spacedBy((8f * scale).dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_warning),
+                        imageVector = WarningIcon,
                         contentDescription = "Warning Icon",
                         tint = titleColor,
                         modifier = Modifier.size((20f * scale).dp)
@@ -165,10 +162,3 @@ private fun WarningIndicatorRow(
         )
     }
 }
-
-// Helper data class for returning multiple values
-private data class Tuple3(
-    val first: Color,   // backgroundColor
-    val second: Color,  // titleColor
-    val third: Color    // contentColor
-)

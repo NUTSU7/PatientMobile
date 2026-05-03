@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.ui.components
+package com.semanticsoft.patientmobile.ui.screens.medicalHystory.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background

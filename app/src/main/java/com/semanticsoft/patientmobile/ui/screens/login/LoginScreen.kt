@@ -47,15 +47,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
+import com.semanticsoft.patientmobile.ui.screens.auth.components.AuthInput
+import com.semanticsoft.patientmobile.ui.screens.auth.components.AuthLabel
 
 @Composable
 fun LoginScreen(
@@ -107,7 +106,7 @@ fun LoginScreen(
                     .padding(horizontal = sidePadding, vertical = 20.dp)
             ) {
                 Text(
-                    text = "Accesează contul tău",
+                    text = "Acceseaz\u0103 contul t\u0103u",
                     color = Color(0xFF111827),
                     fontSize = 34.sp,
                     fontWeight = FontWeight.Bold,
@@ -121,7 +120,7 @@ fun LoginScreen(
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
-                AuthLabel("Mă loghez ca")
+                AuthLabel("M\u0103 loghez ca")
                 Spacer(modifier = Modifier.height(6.dp))
                 RoleField(
                     text = selectedRole,
@@ -144,7 +143,7 @@ fun LoginScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AuthLabel("Parolă")
+                    AuthLabel("Parol\u0103")
                     Text(
                         text = "Ai uitat parola?",
                         color = Color(0xFF4F46E5),
@@ -163,7 +162,7 @@ fun LoginScreen(
                     trailing = {
                         Icon(
                             imageVector = Icons.Outlined.RemoveRedEye,
-                            contentDescription = if (passwordVisible) "Ascunde parola" else "Afișează parola",
+                            contentDescription = if (passwordVisible) "Ascunde parola" else "Afi\u0219eaz\u0103 parola",
                             tint = if (passwordVisible) Color(0xFF4F46E5) else Color(0xFF9CA3AF),
                             modifier = Modifier
                                 .size(16.dp)
@@ -185,7 +184,7 @@ fun LoginScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
                 ) {
                     Text(
-                        text = if (state.isLoading) "Se autentifică..." else "Accesează contul",
+                        text = if (state.isLoading) "Se autentific\u0103..." else "Acceseaz\u0103 contul",
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
@@ -194,7 +193,7 @@ fun LoginScreen(
 
                 if (state.isLoading) {
                     LoadingIndicator(
-                        message = "Autentificare în curs...",
+                        message = "Autentificare \u00EEn curs...",
                         modifier = Modifier.padding(top = 10.dp)
                     )
                 }
@@ -229,7 +228,7 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.width(6.dp))
                     TextButton(onClick = onGoToRegister, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
                         Text(
-                            text = "Înregistrează-te aici.",
+                            text = "\u00CEnregistreaz\u0103-te aici.",
                             color = Color(0xFF4F46E5),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
@@ -285,7 +284,7 @@ private fun AuthTopHeader(sidePadding: androidx.compose.ui.unit.Dp) {
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "Analizele tale, explicate pe înțelesul tău.",
+                text = "Analizele tale, explicate pe \u00EEn\u021Belesul t\u0103u.",
                 color = Color.White,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
@@ -297,7 +296,7 @@ private fun AuthTopHeader(sidePadding: androidx.compose.ui.unit.Dp) {
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 HeaderChip(text = "Conform HIPAA", icon = Icons.Outlined.Shield)
-                HeaderChip(text = "Criptare Securizată", icon = Icons.Outlined.Lock)
+                HeaderChip(text = "Criptare Securizat\u0103", icon = Icons.Outlined.Lock)
             }
         }
     }
@@ -321,16 +320,6 @@ private fun HeaderChip(text: String, icon: ImageVector) {
         )
         Text(text = text, color = Color.White.copy(alpha = 0.8f), fontSize = 11.sp)
     }
-}
-
-@Composable
-private fun AuthLabel(text: String) {
-    Text(
-        text = text,
-        color = Color(0xFF111827),
-        fontSize = 14.sp,
-        fontWeight = FontWeight.SemiBold
-    )
 }
 
 @Composable
@@ -418,43 +407,5 @@ private fun RoleField(text: String, onRoleChange: (String) -> Unit) {
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun AuthInput(
-    value: String,
-    placeholder: String,
-    onValueChange: (String) -> Unit,
-    isPassword: Boolean = false,
-    passwordVisible: Boolean = false,
-    isError: Boolean = false,
-    trailing: @Composable (() -> Unit)? = null
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(44.dp)
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(modifier = Modifier.weight(1f)) {
-            if (value.isEmpty()) {
-                Text(text = placeholder, color = Color(0xFFCCCCCC), fontSize = 14.sp)
-            }
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                textStyle = TextStyle(color = if (isError) Color(0xFFB91C1C) else Color(0xFF111827), fontSize = 14.sp),
-                singleLine = true,
-                visualTransformation = if (isPassword && !passwordVisible) {
-                    PasswordVisualTransformation()
-                } else {
-                    VisualTransformation.None
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        trailing?.invoke()
     }
 }
