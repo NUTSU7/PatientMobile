@@ -45,7 +45,6 @@ import com.semanticsoft.patientmobile.ui.theme.Purple500
 @Composable
 fun RegistrationScreen(
     state: RegistrationUiState,
-    onRoleChange: (String) -> Unit,
     onNameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
