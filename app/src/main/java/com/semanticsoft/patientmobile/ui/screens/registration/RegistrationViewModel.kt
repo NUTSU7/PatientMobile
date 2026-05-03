@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 data class RegistrationUiState(
-    val role: String = "",
     val name: String = "",
     val email: String = "",
     val password: String = "",
@@ -48,17 +47,11 @@ class RegistrationViewModel @Inject constructor(
 
     init {
         state = state.copy(
-            role = savedStateHandle[KEY_ROLE] ?: "",
             name = savedStateHandle[KEY_NAME] ?: "",
             email = savedStateHandle[KEY_EMAIL] ?: "",
             password = savedStateHandle[KEY_PASSWORD] ?: "",
             confirmPassword = savedStateHandle[KEY_CONFIRM_PASSWORD] ?: ""
         )
-    }
-
-    fun onRoleChange(value: String) {
-        state = state.copy(role = value, fieldErrors = state.fieldErrors - "role", errorMessage = null)
-        savedStateHandle[KEY_ROLE] = value
     }
 
     fun onNameChange(value: String) {
@@ -139,7 +132,6 @@ class RegistrationViewModel @Inject constructor(
     private fun validateInputs(current: RegistrationUiState): Map<String, String> {
         val errors = mutableMapOf<String, String>()
 
-        if (current.role.isBlank()) errors["role"] = "Rolul este obligatoriu."
         if (current.name.isBlank()) errors["name"] = "Numele este obligatoriu."
         if (current.email.isBlank()) errors["email"] = "Emailul este obligatoriu."
 
@@ -169,7 +161,6 @@ class RegistrationViewModel @Inject constructor(
     }
 
     companion object {
-        private const val KEY_ROLE = "registration_role"
         private const val KEY_NAME = "registration_name"
         private const val KEY_EMAIL = "registration_email"
         private const val KEY_PASSWORD = "registration_password"

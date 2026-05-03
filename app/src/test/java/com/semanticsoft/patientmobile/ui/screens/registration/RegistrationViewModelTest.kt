@@ -42,7 +42,6 @@ class RegistrationViewModelTest {
             fieldErrors = listOf(FieldError("email", "Already used", "john@example.com"))
         )
         val vm = RegistrationViewModel(FakeAuthRepository(throwOnRegister = apiEx), SavedStateHandle())
-        vm.onRoleChange("Pacient")
         vm.onNameChange("John Doe")
         vm.onEmailChange("john@example.com")
         vm.onPasswordChange("Sup3rStrongPassword!")
@@ -58,7 +57,6 @@ class RegistrationViewModelTest {
     @Test
     fun register_success_clearsErrors() = runTest {
         val vm = RegistrationViewModel(FakeAuthRepository(), SavedStateHandle())
-        vm.onRoleChange("Pacient")
         vm.onNameChange("John Doe")
         vm.onEmailChange("john@example.com")
         vm.onPasswordChange("Sup3rStrongPassword!")

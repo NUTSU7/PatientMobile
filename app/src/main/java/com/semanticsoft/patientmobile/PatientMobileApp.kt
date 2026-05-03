@@ -70,7 +70,6 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
 
             RegistrationScreen(
                 state = vm.state,
-                onRoleChange = vm::onRoleChange,
                 onNameChange = vm::onNameChange,
                 onEmailChange = vm::onEmailChange,
                 onPasswordChange = vm::onPasswordChange,

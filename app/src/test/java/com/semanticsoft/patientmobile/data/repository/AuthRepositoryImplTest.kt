@@ -43,7 +43,7 @@ class AuthRepositoryImplTest {
             refreshExpiresIn = 7200,
             user = UserDto("u1", "john@example.com", "John", "Doe", "1990-01-01")
         )
-        whenever(apiService.login(LoginRequest("john@example.com", "password"))).thenReturn(dto)
+        whenever(apiService.login(LoginRequest("john@example.com", "password"))).thenReturn(Response.success(dto))
 
         val repository = AuthRepositoryImpl(apiService, userDao, tokenManager)
         val result = repository.login("john@example.com", "password")
@@ -95,7 +95,7 @@ class AuthRepositoryImplTest {
             refreshExpiresIn = 7200,
             user = UserDto("u1", "john@example.com", "John", "Doe", "1990-01-01")
         )
-        whenever(apiService.refresh(RefreshRequest("r1"))).thenReturn(dto)
+        whenever(apiService.refresh(RefreshRequest("r1"))).thenReturn(Response.success(dto))
 
         val repository = AuthRepositoryImpl(apiService, userDao, tokenManager)
         repository.refresh()
