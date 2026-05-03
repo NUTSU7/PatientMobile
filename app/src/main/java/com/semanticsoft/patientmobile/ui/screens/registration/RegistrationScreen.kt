@@ -17,22 +17,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import com.semanticsoft.patientmobile.ui.theme.icons.AppLogoIcon
 import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.PersonOutline
-import androidx.compose.material.icons.outlined.RemoveRedEye
-import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -44,12 +37,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
@@ -83,31 +75,28 @@ fun RegistrationScreen(
         val isCompactHeight = maxHeight < 780.dp
         val isVeryCompactHeight = maxHeight < 700.dp
         val headerHeight = when {
-            isVeryCompactHeight -> 132.dp
-            isCompactHeight -> 144.dp
-            else -> 156.85.dp
+            isVeryCompactHeight -> 240.dp
+            isCompactHeight -> 270.dp
+            else -> 320.dp
         }
         val contentVerticalPadding = when {
-            isVeryCompactHeight -> 10.dp
-            isCompactHeight -> 14.dp
-            else -> 20.dp
+            isVeryCompactHeight -> 6.dp
+            isCompactHeight -> 8.dp
+            else -> 10.dp
         }
         val sectionSpacing = when {
-            isVeryCompactHeight -> 8.dp
-            isCompactHeight -> 10.dp
-            else -> 12.dp
+            isVeryCompactHeight -> 10.dp
+            isCompactHeight -> 12.dp
+            else -> 16.dp
         }
-        val tinySpacing = if (isVeryCompactHeight) 4.dp else 6.dp
-        val afterTitleSpacing = if (isVeryCompactHeight) 6.dp else 8.dp
-        val afterSubtitleSpacing = if (isVeryCompactHeight) 10.dp else 16.dp
-        val beforeButtonSpacing = if (isVeryCompactHeight) 10.dp else 16.dp
-        val buttonToFooterSpacing = 0.dp
-        val bottomSpacing = if (isVeryCompactHeight) 8.dp else 14.dp
-        val titleFontSize = if (isVeryCompactHeight) 30.sp else 34.sp
-        val titleLineHeight = if (isVeryCompactHeight) 34.sp else 38.sp
-        val subtitleFontSize = if (isVeryCompactHeight) 13.sp else 14.sp
-        val inputHeight = if (isVeryCompactHeight) 40.dp else 44.dp
-        val buttonHeight = if (isVeryCompactHeight) 40.dp else 44.dp
+        val tinySpacing = if (isVeryCompactHeight) 3.dp else 4.dp
+        val beforeButtonSpacing = if (isVeryCompactHeight) 10.dp else 14.dp
+        val buttonToFooterSpacing = 2.dp
+        val bottomSpacing = 0.dp
+        val titleFontSize = if (isVeryCompactHeight) 20.sp else 24.sp
+        val titleLineHeight = if (isVeryCompactHeight) 24.sp else 28.sp
+        val inputHeight = if (isVeryCompactHeight) 38.dp else 42.dp
+        val buttonHeight = if (isVeryCompactHeight) 42.dp else 46.dp
 
         Column(
             modifier = Modifier.fillMaxSize()
@@ -120,39 +109,31 @@ fun RegistrationScreen(
                     .weight(1f)
                     .padding(horizontal = sidePadding, vertical = contentVerticalPadding)
             ) {
+                Spacer(modifier = Modifier.height(if (isVeryCompactHeight) 8.dp else 12.dp))
                 Text(
-                    text = "Înregistrează-te",
+                    text = "Introdu datele tale mai jos",
                     color = Color(0xFF111827),
                     fontSize = titleFontSize,
                     fontWeight = FontWeight.Bold,
                     lineHeight = titleLineHeight
                 )
-                Spacer(modifier = Modifier.height(afterTitleSpacing))
                 Text(
-                    text = "Completează datele pentru a crea contul tău.",
-                    color = Color(0xFF6B7280),
-                    fontSize = subtitleFontSize
+                    text = "pentru a-ți crea contul",
+                    color = Color(0xFF111827),
+                    fontSize = titleFontSize,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = titleLineHeight
                 )
 
-                Spacer(modifier = Modifier.height(afterSubtitleSpacing))
-                AuthLabel("Mă înregistrez ca...")
-                Spacer(modifier = Modifier.height(tinySpacing))
-                RoleField(
-                    text = if (state.role.isBlank()) "Selectează rolul..." else state.role,
-                    isPlaceholder = state.role.isBlank(),
-                    onRoleChange = onRoleChange,
-                    isError = state.fieldErrors.containsKey("role"),
-                    inputHeight = inputHeight
-                )
-
-                Spacer(modifier = Modifier.height(sectionSpacing))
-                AuthLabel("Nume sau Pseudonim")
+                Spacer(modifier = Modifier.height(if (isVeryCompactHeight) 20.dp else 28.dp))
+                AuthLabel("Scrie un nume sau un pseudonim")
                 Spacer(modifier = Modifier.height(tinySpacing))
                 AuthInput(
                     value = state.name,
-                    placeholder = "Introdu nume, pseudonim sau orice identificator preferi.",
+                    placeholder = "Introdu nume",
                     onValueChange = onNameChange,
                     isError = state.fieldErrors.containsKey("name"),
+                    errorMessage = state.fieldErrors["name"],
                     inputHeight = inputHeight
                 )
 
@@ -164,6 +145,7 @@ fun RegistrationScreen(
                     placeholder = "nume@exemplu.com",
                     onValueChange = onEmailChange,
                     isError = state.fieldErrors.containsKey("email"),
+                    errorMessage = state.fieldErrors["email"],
                     inputHeight = inputHeight
                 )
 
@@ -177,16 +159,17 @@ fun RegistrationScreen(
                     isPassword = true,
                     passwordVisible = passwordVisible,
                     isError = state.fieldErrors.containsKey("password"),
+                    errorMessage = state.fieldErrors["password"],
                     inputHeight = inputHeight,
                     trailing = {
-                        Icon(
-                            imageVector = Icons.Outlined.RemoveRedEye,
-                            contentDescription = "Afișează parola",
-                            tint = Color(0xFF9CA3AF),
-                            modifier = Modifier
-                                .size(16.dp)
-                                .clickable { passwordVisible = !passwordVisible }
-                        )
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                                contentDescription = if (passwordVisible) "Ascunde parola" else "Afișează parola",
+                                tint = Color(0xFF9CA3AF),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 )
 
@@ -200,16 +183,17 @@ fun RegistrationScreen(
                     isPassword = true,
                     passwordVisible = confirmPasswordVisible,
                     isError = state.fieldErrors.containsKey("confirmPassword"),
+                    errorMessage = state.fieldErrors["confirmPassword"],
                     inputHeight = inputHeight,
                     trailing = {
-                        Icon(
-                            imageVector = Icons.Outlined.RemoveRedEye,
-                            contentDescription = "Afișează parola",
-                            tint = Color(0xFF9CA3AF),
-                            modifier = Modifier
-                                .size(16.dp)
-                                .clickable { confirmPasswordVisible = !confirmPasswordVisible }
-                        )
+                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                            Icon(
+                                imageVector = if (confirmPasswordVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                                contentDescription = if (confirmPasswordVisible) "Ascunde parola" else "Afișează parola",
+                                tint = Color(0xFF9CA3AF),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 )
 
@@ -223,7 +207,7 @@ fun RegistrationScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
                 ) {
                     Text(
-                        text = if (state.isLoading) "Se procesează..." else "Creează contul",
+                        text = if (state.isLoading) "Se procesează..." else "Creează",
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
@@ -235,52 +219,6 @@ fun RegistrationScreen(
                         message = "Înregistrare în curs...",
                         modifier = Modifier.padding(top = 10.dp)
                     )
-                }
-
-                val requiredFieldLabels = listOf(
-                    "role" to "Rolul",
-                    "name" to "Numele",
-                    "email" to "Emailul",
-                    "password" to "Parola",
-                    "confirmPassword" to "Confirmarea parolei"
-                ).mapNotNull { (key, label) ->
-                    state.fieldErrors[key]
-                        ?.takeIf { it.contains("obligatoriu", ignoreCase = true) }
-                        ?.let { label }
-                }
-                val requiredFieldsLine = requiredFieldLabels
-                    .takeIf { it.isNotEmpty() }
-                    ?.joinToString(", ")
-                    ?.plus(" este obligatoriu")
-                val otherValidationMessages = state.fieldErrors
-                    .filterNot { (key, _) ->
-                        key in setOf("role", "name", "email", "password", "confirmPassword") &&
-                            state.fieldErrors[key]?.contains("obligatoriu", ignoreCase = true) == true
-                    }
-                    .values
-                val validationMessages = buildList {
-                    requiredFieldsLine?.let { add(it) }
-                    addAll(otherValidationMessages)
-                    state.errorMessage?.let { add(it) }
-                }
-
-                // Show validation errors below button
-                Spacer(modifier = Modifier.height(12.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(if (isVeryCompactHeight) 24.dp else 28.dp),
-                    contentAlignment = Alignment.TopStart
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        validationMessages.take(2).forEach { message ->
-                            Text(
-                                text = message,
-                                color = Color(0xFFB91C1C),
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
                 }
 
                 Spacer(modifier = Modifier.height(buttonToFooterSpacing))
@@ -327,73 +265,96 @@ private fun RegistrationTopHeader(
                 )
             )
     ) {
-        Column(modifier = Modifier.padding(horizontal = sidePadding, vertical = if (compact) 14.dp else 20.dp)) {
+        Column(modifier = Modifier.padding(horizontal = sidePadding).padding(top = if (compact) 12.dp else 16.dp, bottom = if (compact) 14.dp else 20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(if (compact) 30.dp else 32.dp)
-                        .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Add,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(if (compact) 14.dp else 16.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(10.dp))
+                Icon(
+                    imageVector = AppLogoIcon,
+                    contentDescription = null,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(if (compact) 48.dp else 56.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "PATIENT.MD",
+                    text = "Patient.md",
                     color = Color.White,
-                    fontSize = if (compact) 16.sp else 18.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = if (compact) 22.sp else 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontStyle = FontStyle.Italic
                 )
             }
 
-            Spacer(modifier = Modifier.height(if (compact) 8.dp else 12.dp))
+            Spacer(modifier = Modifier.height(if (compact) 14.dp else 18.dp))
             Text(
-                text = "Bine ai venit!",
-                color = Color.White.copy(alpha = 0.7f),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = "Analizele tale, explicate pe înțelesul tău.",
+                text = "Patient.md este un portal care te poate ajuta să ai grijă de sănătatea ta.",
                 color = Color.White,
-                fontSize = if (compact) 15.sp else 17.sp,
+                fontSize = if (compact) 18.sp else 22.sp,
                 fontWeight = FontWeight.Bold,
-                lineHeight = if (compact) 17.sp else 19.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                lineHeight = if (compact) 22.sp else 27.sp
+            )
+
+            Spacer(modifier = Modifier.height(if (compact) 10.dp else 14.dp))
+            Text(
+                text = "Acum poți:",
+                color = Color.White,
+                fontSize = if (compact) 15.sp else 16.sp,
+                fontWeight = FontWeight.SemiBold
             )
 
             Spacer(modifier = Modifier.height(if (compact) 6.dp else 8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)) {
-                HeaderChip(text = "Conform HIPAA", icon = Icons.Outlined.Shield)
-                HeaderChip(text = "Criptare Securizată", icon = Icons.Outlined.Lock)
+            Column(verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 7.dp)) {
+                BulletItem("Încărca analizele tale medicale", compact)
+                BulletItem("Vizualiza analizele încărcate de tine", compact)
+                BulletItem("Păstra și monitoriza analizele", compact)
+            }
+
+            Spacer(modifier = Modifier.height(if (compact) 12.dp else 16.dp))
+            Box(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Row(
+                modifier = Modifier
+                    .height(if (compact) 30.dp else 34.dp)
+                    .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(999.dp))
+                    .border(1.dp, Color.White.copy(alpha = 0.25f), RoundedCornerShape(999.dp))
+                    .padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Lock,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(14.dp)
+                )
+                Text(
+                    text = "Toate datele încărcate sunt criptate",
+                    color = Color.White,
+                    fontSize = if (compact) 12.sp else 13.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
             }
         }
     }
 }
 
 @Composable
-private fun HeaderChip(text: String, icon: ImageVector) {
+private fun BulletItem(text: String, compact: Boolean) {
     Row(
-        modifier = Modifier
-            .height(24.6.dp)
-            .background(Color.White.copy(alpha = 0.10f), RoundedCornerShape(6.dp))
-            .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color.White.copy(alpha = 0.8f),
-            modifier = Modifier.size(12.dp)
+        Box(
+            modifier = Modifier
+                .size(if (compact) 7.dp else 8.dp)
+                .background(Color.White, CircleShape)
         )
-        Text(text = text, color = Color.White.copy(alpha = 0.8f), fontSize = 11.sp)
+        Text(
+            text = text,
+            color = Color.White,
+            fontSize = if (compact) 13.sp else 14.sp
+        )
     }
 }
 
@@ -402,114 +363,9 @@ private fun AuthLabel(text: String) {
     Text(
         text = text,
         color = Color(0xFF111827),
-        fontSize = 14.sp,
+        fontSize = 15.sp,
         fontWeight = FontWeight.SemiBold
     )
-}
-
-@Composable
-private fun RoleField(
-    text: String,
-    isPlaceholder: Boolean,
-    onRoleChange: (String) -> Unit,
-    isError: Boolean = false,
-    inputHeight: androidx.compose.ui.unit.Dp = 44.dp
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val options = listOf("Pacient", "Doctor")
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(inputHeight)
-            .padding(horizontal = 12.dp)
-            .clickable { expanded = true }
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.PersonOutline,
-                contentDescription = null,
-                tint = Color(0xFF9CA3AF),
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Box(modifier = Modifier.weight(1f)) {
-                if (text.isNotBlank()) {
-                    Text(
-                        text = text,
-                        color = when {
-                            isError -> Color(0xFFB91C1C)
-                            isPlaceholder -> Color(0xFF9CA3AF)
-                            else -> Color(0xFF111827)
-                        },
-                        fontSize = 14.sp
-                    )
-                }
-            }
-            Icon(
-                imageVector = Icons.Outlined.KeyboardArrowDown,
-                contentDescription = null,
-                tint = Color(0xFF9CA3AF),
-                modifier = Modifier
-                    .size(16.dp)
-                    .clickable { expanded = true }
-            )
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            containerColor = Color.Transparent,
-            shadowElevation = 0.dp,
-            tonalElevation = 0.dp
-        ) {
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E7EB))
-            ) {
-                Column(modifier = Modifier.width(220.dp)) {
-                    options.forEachIndexed { index, option ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = option,
-                                    color = Color(0xFF111827),
-                                    fontSize = 14.sp,
-                                    fontWeight = if (text == option) FontWeight.SemiBold else FontWeight.Medium
-                                )
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.PersonOutline,
-                                    contentDescription = null,
-                                    tint = if (text == option) Color(0xFF4F46E5) else Color(0xFF9CA3AF),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            },
-                            onClick = {
-                                onRoleChange(option)
-                                expanded = false
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    if (text == option) Color(0xFFF5F3FF) else Color.Transparent
-                                )
-                        )
-
-                        if (index < options.lastIndex) {
-                            HorizontalDivider(color = Color(0xFFF3F4F6), thickness = 1.dp)
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 @Composable
@@ -520,6 +376,7 @@ private fun AuthInput(
     isPassword: Boolean = false,
     passwordVisible: Boolean = false,
     isError: Boolean = false,
+    errorMessage: String? = null,
     inputHeight: androidx.compose.ui.unit.Dp = 44.dp,
     trailing: @Composable (() -> Unit)? = null
 ) {
@@ -527,14 +384,19 @@ private fun AuthInput(
         modifier = Modifier
             .fillMaxWidth()
             .height(inputHeight)
+            .background(if (isError) Color(0xFFFEE2E2) else Color(0xFFEFF4FA), RoundedCornerShape(8.dp))
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(modifier = Modifier.weight(1f)) {
             if (value.isEmpty()) {
-                Text(text = placeholder, color = Color(0xFFCCCCCC), fontSize = 14.sp)
+                Text(
+                    text = if (isError && !errorMessage.isNullOrBlank()) errorMessage else placeholder,
+                    color = if (isError) Color(0xFFB91C1C) else Color(0xFF9CA3AF),
+                    fontSize = 14.sp
+                )
             }
-            BasicTextField(
+            androidx.compose.foundation.text.BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
                 textStyle = TextStyle(color = if (isError) Color(0xFFB91C1C) else Color(0xFF111827), fontSize = 14.sp),
@@ -550,3 +412,4 @@ private fun AuthInput(
         trailing?.invoke()
     }
 }
+
