@@ -42,14 +42,15 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
-import com.semanticsoft.patientmobile.ui.components.DocumentList
-import com.semanticsoft.patientmobile.ui.components.DocumentListEntry
+import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.DocumentList
+import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.DocumentListEntry
 import com.semanticsoft.patientmobile.ui.components.FilePickerButton
 import com.semanticsoft.patientmobile.ui.components.ScreenTopBar
-import com.semanticsoft.patientmobile.ui.components.MedicalHistoryFiltersCard
-import com.semanticsoft.patientmobile.ui.components.MedicalHistoryAnalysisSection
-import com.semanticsoft.patientmobile.ui.components.MedicinesSection
-import com.semanticsoft.patientmobile.ui.components.PersonalNotesSection
+import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.MedicalHistoryFiltersCard
+import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.MedicalHistoryAnalysisSection
+import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.MedicalHistoryTopBar
+import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.MedicinesSection
+import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.PersonalNotesSection
 import com.semanticsoft.patientmobile.ui.common.DashboardSpacing
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.common.dashboardSpacing
@@ -178,108 +179,5 @@ fun MedicalHystoryScreen(
             }
         }
     }
-}
-
-@Composable
-private fun MedicalHistoryTopBar(
-    state: MedicalHystoryUiState,
-    horizontalPadding: androidx.compose.ui.unit.Dp,
-    onMenuClick: () -> Unit,
-    onNotificationsClick: () -> Unit,
-    onInfoClick: () -> Unit,
-    viewModel: MedicalHystoryViewModel
-) {
-    val lastAnalysisDate = state.analysisDocuments
-        .maxByOrNull { it.uploadedAt }
-        ?.uploadedAt
-        ?.toString()
-        ?.substringBefore("T")
-
-    ScreenTopBar(
-        horizontalPadding = horizontalPadding,
-        onMenuClick = onMenuClick,
-        titleContent = { dimensions ->
-            Text(
-                text = "Istoric ",
-                color = Color(0xFF111827),
-                fontSize = dimensions.titleSize,
-                lineHeight = dimensions.titleLineHeight,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "medical",
-                color = Color(0xFF4F46E5),
-                fontSize = dimensions.titleSize,
-                lineHeight = dimensions.titleLineHeight,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
-        titleTrailingContent = { dimensions ->
-            IconButton(
-                onClick = onNotificationsClick,
-                modifier = Modifier.size(dimensions.actionButtonSize)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.NotificationsNone,
-                    contentDescription = "Notificări",
-                    tint = Color(0xFF4B5563),
-                    modifier = Modifier.size(dimensions.actionIconSize)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            IconButton(
-                onClick = onInfoClick,
-                modifier = Modifier.size(dimensions.actionButtonSize)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                    contentDescription = "Ajutor",
-                    tint = Color(0xFF4B5563),
-                    modifier = Modifier.size(dimensions.actionIconSize)
-                )
-            }
-        },
-        subtitleContent = {
-            Text(
-                text = lastAnalysisDate?.let { "Se pare că ai făcut ultimele analize pe $it" }
-                    ?: "Se pare că ai făcut ultimele analize.",
-                color = Color(0xFF6B7280),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
-        actionsContent = { dimensions ->
-            Text(
-                text = "Încarcă analize",
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Medium,
-                fontSize = dimensions.primaryActionTextSize,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(Brush.horizontalGradient(listOf(Indigo600, Purple500)))
-                    .clickable {
-                        viewModel.attachFile(
-                            PatientDocument(
-                                id = "demo-new-${System.currentTimeMillis()}",
-                                ownerUserId = "demo-user",
-                                originalFileName = "Analiză noua.pdf",
-                                mimeType = "application/pdf",
-                                fileSizeBytes = 500_000,
-                                uploadedAt = java.time.Instant.now(),
-                                syncStatus = com.semanticsoft.patientmobile.domain.model.SyncStatus.SYNCED
-                            )
-                        )
-                    }
-                    .padding(vertical = 12.dp)
-            )
-        }
-    )
 }
 

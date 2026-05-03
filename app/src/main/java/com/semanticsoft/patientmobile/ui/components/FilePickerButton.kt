@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
@@ -36,7 +37,7 @@ fun FilePickerButton(
     label: String,
     onClick: () -> Unit,
     validationMessage: String? = null,
-    leadingIconRes: Int? = null,
+    leadingIcon: ImageVector? = null,
     buttonHeight: Dp = 48.dp,
     cornerRadius: Dp = 8.dp,
     iconSize: Dp = 20.dp,
@@ -91,9 +92,9 @@ fun FilePickerButton(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                leadingIconRes?.let { iconRes ->
+                leadingIcon?.let { icon ->
                     Icon(
-                        painter = painterResource(id = iconRes),
+                        imageVector = icon,
                         contentDescription = null,
                         tint = Color.Unspecified,
                         modifier = Modifier.size(iconSize)

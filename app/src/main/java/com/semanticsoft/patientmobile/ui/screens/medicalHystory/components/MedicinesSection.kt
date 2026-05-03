@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.ui.components
+package com.semanticsoft.patientmobile.ui.screens.medicalHystory.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.semanticsoft.patientmobile.ui.components.FilePickerButton
 import com.semanticsoft.patientmobile.ui.common.DashboardSpacing
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicalHystoryUiState
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicineItem

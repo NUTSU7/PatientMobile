@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.ui.components
+package com.semanticsoft.patientmobile.ui.screens.dashboard.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

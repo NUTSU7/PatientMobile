@@ -49,13 +49,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.semanticsoft.patientmobile.ui.components.BasicIndicatorsCard
-import com.semanticsoft.patientmobile.ui.components.EmptyUploadCard
+import com.semanticsoft.patientmobile.ui.screens.dashboard.components.BasicIndicatorsCard
+import com.semanticsoft.patientmobile.ui.screens.dashboard.components.EmptyUploadCard
+import com.semanticsoft.patientmobile.ui.screens.dashboard.components.GeneralMarkersCard
+import com.semanticsoft.patientmobile.ui.screens.dashboard.components.HealthScoreCard
+import com.semanticsoft.patientmobile.ui.screens.dashboard.components.ResumeAICard
+import com.semanticsoft.patientmobile.ui.screens.dashboard.components.DashboardTopSection
 import com.semanticsoft.patientmobile.ui.components.ErrorDialog
-import com.semanticsoft.patientmobile.ui.components.GeneralMarkersCard
-import com.semanticsoft.patientmobile.ui.components.HealthScoreCard
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
-import com.semanticsoft.patientmobile.ui.components.ResumeAICard
 import com.semanticsoft.patientmobile.ui.components.ScreenTopBar
 import com.semanticsoft.patientmobile.ui.common.dashboardSpacing
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
@@ -389,93 +390,4 @@ fun DashboardScreen(
             )
         }
     }
-}
-
-@Composable
-private fun DashboardTopSection(
-    state: DashboardUiState,
-    horizontalPadding: androidx.compose.ui.unit.Dp,
-    onMenuClick: () -> Unit,
-    onUploadClick: () -> Unit
-) {
-    ScreenTopBar(
-        horizontalPadding = horizontalPadding,
-        onMenuClick = onMenuClick,
-        titleContent = { dimensions ->
-            Text(
-                text = "Salut ",
-                color = Color(0xFF111827),
-                fontSize = dimensions.titleSize,
-                lineHeight = dimensions.titleLineHeight,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = state.greetingName,
-                color = Color(0xFF4F46E5),
-                fontSize = dimensions.titleSize,
-                lineHeight = dimensions.titleLineHeight,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = ",",
-                color = Color(0xFF111827),
-                fontSize = dimensions.titleSize,
-                lineHeight = dimensions.titleLineHeight,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        titleTrailingContent = { dimensions ->
-            IconButton(
-                onClick = { },
-                modifier = Modifier.size(dimensions.actionButtonSize)
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.NotificationsNone,
-                    contentDescription = "Notificări",
-                    tint = Color(0xFF4B5563),
-                    modifier = Modifier.size(dimensions.actionIconSize)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            IconButton(
-                onClick = { },
-                modifier = Modifier.size(dimensions.actionButtonSize)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
-                    contentDescription = "Ajutor",
-                    tint = Color(0xFF4B5563),
-                    modifier = Modifier.size(dimensions.actionIconSize)
-                )
-            }
-        },
-        subtitleContent = {
-            Text(
-                text = "Se pare că ai făcut ultimele analize pe ${state.lastAnalysisDate}",
-                color = Color(0xFF6B7280),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
-        actionsContent = { dimensions ->
-            Text(
-                text = "Încarcă analize",
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Medium,
-                fontSize = dimensions.primaryActionTextSize,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(Brush.horizontalGradient(listOf(Indigo600, Purple500)))
-                    .clickable(onClick = onUploadClick)
-                    .padding(vertical = 12.dp)
-            )
-        }
-    )
 }

@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.semanticsoft.patientmobile.ui.components
 
 import androidx.compose.runtime.Composable

@@ -1,4 +1,6 @@
-package com.semanticsoft.patientmobile.ui.components
+@file:Suppress("unused")
+
+package com.semanticsoft.patientmobile.ui.screens.uploadFile.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.semanticsoft.patientmobile.ui.components.FilePickerButton
 
 @Composable
 fun FileUploadComponent(
