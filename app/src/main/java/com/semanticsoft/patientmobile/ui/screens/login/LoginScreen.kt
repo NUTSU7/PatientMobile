@@ -2,6 +2,7 @@ package com.semanticsoft.patientmobile.ui.screens.login
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -28,21 +29,32 @@ import androidx.compose.material.icons.outlined.RemoveRedEye
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
+import com.semanticsoft.patientmobile.ui.screens.auth.components.AuthInput
+import com.semanticsoft.patientmobile.ui.screens.auth.components.AuthLabel
 
 @Composable
 fun LoginScreen(
@@ -53,6 +65,22 @@ fun LoginScreen(
     onGoToRegister: () -> Unit
 ) {
     SetStatusBar(color = Color(0xFF3B82F6), darkIcons = false)
+    var selectedRole by remember { mutableStateOf("Pacient") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var hasAttemptedLogin by remember { mutableStateOf(false) }
+
+    val missingCredentialsMessage = when {
+        state.email.isBlank() && state.password.isBlank() -> "Completeaza emailul si parola"
+        state.email.isBlank() -> "Completeaza emailul"
+        state.password.isBlank() -> "Completeaza parola"
+        else -> null
+    }
+
+    val loginWarningMessage = when {
+        state.errorMessage != null -> "Email sau parola invalida"
+        hasAttemptedLogin -> missingCredentialsMessage
+        else -> null
+    }
 
     BoxWithConstraints(
         modifier = Modifier
@@ -78,7 +106,7 @@ fun LoginScreen(
                     .padding(horizontal = sidePadding, vertical = 20.dp)
             ) {
                 Text(
-                    text = "Accesează contul tău",
+                    text = "Acceseaz\u0103 contul t\u0103u",
                     color = Color(0xFF111827),
                     fontSize = 34.sp,
                     fontWeight = FontWeight.Bold,
@@ -92,9 +120,12 @@ fun LoginScreen(
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
-                AuthLabel("Mă loghez ca")
+                AuthLabel("M\u0103 loghez ca")
                 Spacer(modifier = Modifier.height(6.dp))
-                RoleField(text = "Pacient")
+                RoleField(
+                    text = selectedRole,
+                    onRoleChange = { selectedRole = it }
+                )
 
                 Spacer(modifier = Modifier.height(14.dp))
                 AuthLabel("Adresa de email")
@@ -102,7 +133,8 @@ fun LoginScreen(
                 AuthInput(
                     value = state.email,
                     placeholder = "nume@exemplu.com",
-                    onValueChange = onEmailChange
+                    onValueChange = onEmailChange,
+                    isError = state.errorMessage != null || (hasAttemptedLogin && state.email.isBlank())
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
@@ -111,7 +143,7 @@ fun LoginScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AuthLabel("Parolă")
+                    AuthLabel("Parol\u0103")
                     Text(
                         text = "Ai uitat parola?",
                         color = Color(0xFF4F46E5),
@@ -124,19 +156,27 @@ fun LoginScreen(
                     value = state.password,
                     placeholder = "Introdu parola ta",
                     onValueChange = onPasswordChange,
+                    isPassword = true,
+                    passwordVisible = passwordVisible,
+                    isError = state.errorMessage != null || (hasAttemptedLogin && state.password.isBlank()),
                     trailing = {
                         Icon(
                             imageVector = Icons.Outlined.RemoveRedEye,
-                            contentDescription = "Afișează parola",
-                            tint = Color(0xFF9CA3AF),
-                            modifier = Modifier.size(16.dp)
+                            contentDescription = if (passwordVisible) "Ascunde parola" else "Afi\u0219eaz\u0103 parola",
+                            tint = if (passwordVisible) Color(0xFF4F46E5) else Color(0xFF9CA3AF),
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clickable { passwordVisible = !passwordVisible }
                         )
                     }
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
                 Button(
-                    onClick = onLoginClick,
+                    onClick = {
+                        hasAttemptedLogin = true
+                        onLoginClick()
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(44.dp),
@@ -144,14 +184,37 @@ fun LoginScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))
                 ) {
                     Text(
-                        text = "Accesează contul",
+                        text = if (state.isLoading) "Se autentific\u0103..." else "Acceseaz\u0103 contul",
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 14.sp
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                if (state.isLoading) {
+                    LoadingIndicator(
+                        message = "Autentificare \u00EEn curs...",
+                        modifier = Modifier.padding(top = 10.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(18.dp),
+                    contentAlignment = Alignment.TopStart
+                ) {
+                    if (!loginWarningMessage.isNullOrBlank()) {
+                        Text(
+                            text = loginWarningMessage,
+                            color = Color(0xFFB91C1C),
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(0.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
@@ -165,7 +228,7 @@ fun LoginScreen(
                     Spacer(modifier = Modifier.width(6.dp))
                     TextButton(onClick = onGoToRegister, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
                         Text(
-                            text = "Înregistrează-te aici.",
+                            text = "\u00CEnregistreaz\u0103-te aici.",
                             color = Color(0xFF4F46E5),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
@@ -221,7 +284,7 @@ private fun AuthTopHeader(sidePadding: androidx.compose.ui.unit.Dp) {
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "Analizele tale, explicate pe înțelesul tău.",
+                text = "Analizele tale, explicate pe \u00EEn\u021Belesul t\u0103u.",
                 color = Color.White,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
@@ -233,7 +296,7 @@ private fun AuthTopHeader(sidePadding: androidx.compose.ui.unit.Dp) {
             Spacer(modifier = Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 HeaderChip(text = "Conform HIPAA", icon = Icons.Outlined.Shield)
-                HeaderChip(text = "Criptare Securizată", icon = Icons.Outlined.Lock)
+                HeaderChip(text = "Criptare Securizat\u0103", icon = Icons.Outlined.Lock)
             }
         }
     }
@@ -260,70 +323,89 @@ private fun HeaderChip(text: String, icon: ImageVector) {
 }
 
 @Composable
-private fun AuthLabel(text: String) {
-    Text(
-        text = text,
-        color = Color(0xFF111827),
-        fontSize = 14.sp,
-        fontWeight = FontWeight.SemiBold
-    )
-}
+private fun RoleField(text: String, onRoleChange: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val options = listOf("Pacient", "Doctor")
 
-@Composable
-private fun RoleField(text: String) {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(44.dp)
-            .border(1.dp, Color(0xFFD1D5DB), RoundedCornerShape(8.dp))
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 12.dp)
+            .clickable { expanded = true }
     ) {
-        Icon(
-            imageVector = Icons.Outlined.PersonOutline,
-            contentDescription = null,
-            tint = Color(0xFF9CA3AF),
-            modifier = Modifier.size(16.dp)
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(text = text, color = Color(0xFF111827), fontSize = 14.sp)
-        Spacer(modifier = Modifier.weight(1f))
-        Icon(
-            imageVector = Icons.Outlined.KeyboardArrowDown,
-            contentDescription = null,
-            tint = Color(0xFF9CA3AF),
-            modifier = Modifier.size(16.dp)
-        )
-    }
-}
-
-@Composable
-private fun AuthInput(
-    value: String,
-    placeholder: String,
-    onValueChange: (String) -> Unit,
-    trailing: @Composable (() -> Unit)? = null
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(44.dp)
-            .border(1.dp, Color(0xFFD1D5DB), RoundedCornerShape(8.dp))
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(modifier = Modifier.weight(1f)) {
-            if (value.isEmpty()) {
-                Text(text = placeholder, color = Color(0xFFCCCCCC), fontSize = 14.sp)
-            }
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                textStyle = TextStyle(color = Color(0xFF111827), fontSize = 14.sp),
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.PersonOutline,
+                contentDescription = null,
+                tint = Color(0xFF9CA3AF),
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(text = text, color = Color(0xFF111827), fontSize = 14.sp)
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                imageVector = Icons.Outlined.KeyboardArrowDown,
+                contentDescription = null,
+                tint = Color(0xFF9CA3AF),
+                modifier = Modifier
+                    .size(16.dp)
+                    .clickable { expanded = true }
             )
         }
-        trailing?.invoke()
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = Color.Transparent,
+            shadowElevation = 0.dp,
+            tonalElevation = 0.dp
+        ) {
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E7EB))
+            ) {
+                Column(modifier = Modifier.width(220.dp)) {
+                    options.forEachIndexed { index, option ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = option,
+                                    color = Color(0xFF111827),
+                                    fontSize = 14.sp,
+                                    fontWeight = if (text == option) FontWeight.SemiBold else FontWeight.Medium
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.PersonOutline,
+                                    contentDescription = null,
+                                    tint = if (text == option) Color(0xFF4F46E5) else Color(0xFF9CA3AF),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            },
+                            onClick = {
+                                onRoleChange(option)
+                                expanded = false
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    if (text == option) Color(0xFFF5F3FF) else Color.Transparent
+                                )
+                        )
+
+                        if (index < options.lastIndex) {
+                            HorizontalDivider(color = Color(0xFFF3F4F6), thickness = 1.dp)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
