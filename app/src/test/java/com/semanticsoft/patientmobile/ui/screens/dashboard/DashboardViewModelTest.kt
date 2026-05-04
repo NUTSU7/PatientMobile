@@ -3,6 +3,7 @@ package com.semanticsoft.patientmobile.ui.screens.dashboard
 import androidx.lifecycle.SavedStateHandle
 import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
 import com.semanticsoft.patientmobile.domain.model.AuthResponse
+import com.semanticsoft.patientmobile.domain.model.DocumentDuplicateInfo
 import com.semanticsoft.patientmobile.domain.model.MedicalResult
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.domain.model.SyncStatus
@@ -89,6 +90,7 @@ class DashboardViewModelTest {
         private val result: Resource<List<PatientDocument>>
     ) : DocumentRepository {
         override suspend fun uploadDocument(file: File): PatientDocument = throw UnsupportedOperationException()
+        override suspend fun checkDuplicates(checksums: List<String>): List<DocumentDuplicateInfo> = emptyList()
         override fun getDocuments(): Flow<Resource<List<PatientDocument>>> = flowOf(Resource.Loading, result)
         override fun getDocumentById(id: String): Flow<Resource<PatientDocument>> = throw UnsupportedOperationException()
         override suspend fun downloadDocument(id: String): File = throw UnsupportedOperationException()

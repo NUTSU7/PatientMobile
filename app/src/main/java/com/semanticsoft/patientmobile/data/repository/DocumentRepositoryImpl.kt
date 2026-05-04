@@ -5,17 +5,21 @@ import com.semanticsoft.patientmobile.data.local.dao.DocumentDao
 import com.semanticsoft.patientmobile.data.local.db.extensions.toDomain
 import com.semanticsoft.patientmobile.data.local.db.extensions.toEntity
 import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
+import com.semanticsoft.patientmobile.data.remote.api.dto.DuplicateCheckRequest
+import com.semanticsoft.patientmobile.domain.model.DocumentDuplicateInfo
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.domain.model.SyncStatus
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
 import com.semanticsoft.patientmobile.util.Resource
 import com.semanticsoft.patientmobile.util.toUserMessage
+import com.semanticsoft.patientmobile.util.exceptions.DuplicateDocumentException
 import com.semanticsoft.patientmobile.util.exceptions.FileTooLargeException
 import com.semanticsoft.patientmobile.util.exceptions.FileUploadException
+import com.semanticsoft.patientmobile.util.exceptions.MalwareDetectedException
+import com.semanticsoft.patientmobile.util.exceptions.NoInternetException
 import com.semanticsoft.patientmobile.util.exceptions.UnsupportedMediaTypeException
+import com.semanticsoft.patientmobile.util.exceptions.DocumentScanningUnavailableException
 import java.io.File
-import java.time.Instant
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import okhttp3.MediaType.Companion.toMediaType
@@ -29,22 +33,29 @@ class DocumentRepositoryImpl(
     private val networkStateProvider: NetworkStateProvider = AlwaysOnlineStateProvider
 ) : DocumentRepository {
 
+    override suspend fun checkDuplicates(checksums: List<String>): List<DocumentDuplicateInfo> {
+        if (checksums.isEmpty()) return emptyList()
+        if (!networkStateProvider.isOnline()) return emptyList()
+
+        return try {
+            val request = DuplicateCheckRequest(checksums)
+            val response = apiService.checkDuplicates(request)
+            response.matches.map { match ->
+                DocumentDuplicateInfo(
+                    checksum = match.checksum,
+                    existingFileName = match.existingFileName
+                )
+            }
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
     override suspend fun uploadDocument(file: File): PatientDocument {
         validateFile(file)
 
         if (!networkStateProvider.isOnline()) {
-            val pending = PatientDocument(
-                id = UUID.randomUUID().toString(),
-                ownerUserId = "local-user",
-                originalFileName = file.name,
-                mimeType = resolveMimeType(file),
-                fileSizeBytes = file.length(),
-                uploadedAt = Instant.now(),
-                localFilePath = file.absolutePath,
-                syncStatus = SyncStatus.PENDING
-            )
-            documentDao.insert(pending.toEntity())
-            return pending
+            throw NoInternetException("Nu exist\u0103 conexiune la internet.")
         }
 
         return try {
@@ -59,11 +70,23 @@ class DocumentRepositoryImpl(
             documentDao.insert(cached.toEntity())
             cached
         } catch (t: Throwable) {
-            throw if (t is FileTooLargeException || t is UnsupportedMediaTypeException) {
-                t
-            } else {
-                FileUploadException(t.toUserMessage(), t)
+            if (!networkStateProvider.isOnline()) {
+                throw NoInternetException("Nu exist\u0103 conexiune la internet.")
             }
+            if (t is FileTooLargeException || t is UnsupportedMediaTypeException) {
+                throw t
+            }
+            if (t is retrofit2.HttpException) {
+                throw when (t.code()) {
+                    409 -> DuplicateDocumentException(t.message(), t)
+                    413 -> FileTooLargeException("File too large (max 10 MB).")
+                    415 -> UnsupportedMediaTypeException("Unsupported file format.")
+                    422 -> MalwareDetectedException("File failed security scan.")
+                    503 -> DocumentScanningUnavailableException("Scanner unavailable. Please try again later.")
+                    else -> FileUploadException(t.message(), t)
+                }
+            }
+            throw FileUploadException(t.toUserMessage(), t)
         }
     }
 

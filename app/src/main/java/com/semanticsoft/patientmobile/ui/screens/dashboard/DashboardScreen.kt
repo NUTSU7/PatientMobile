@@ -47,6 +47,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.BasicIndicatorsCard
@@ -60,8 +69,16 @@ import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.components.ScreenTopBar
 import com.semanticsoft.patientmobile.ui.common.dashboardSpacing
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
-import com.semanticsoft.patientmobile.ui.screens.uploadFile.UploadFileScreen
-import com.semanticsoft.patientmobile.ui.screens.uploadFile.UploadFileViewModel
+import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileEvent
+import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileScreen
+import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileViewModel
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarData
+import androidx.core.content.FileProvider
+import java.io.File
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
 import com.semanticsoft.patientmobile.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.ui.theme.Purple500
@@ -76,6 +93,7 @@ fun DashboardScreen(
     SetStatusBar(color = Color.White, darkIcons = true)
     val dismissedError = remember { mutableStateOf<String?>(null) }
     var showUploadModal by rememberSaveable { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
     var activeStatusFilter by rememberSaveable { mutableStateOf("Toate") }
     var visibleAdditionalCount by rememberSaveable { mutableStateOf(6) }
 
@@ -84,6 +102,54 @@ fun DashboardScreen(
     }
 
     val uploadFileViewModel: UploadFileViewModel = hiltViewModel()
+    val context = LocalContext.current
+    var pendingCameraFile by remember { mutableStateOf<File?>(null) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            pendingCameraFile?.let { file ->
+                if (file.exists()) {
+                    uploadFileViewModel.onFilesSelected(listOf(file.absolutePath))
+                }
+            }
+        }
+        pendingCameraFile = null
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetMultipleContents()
+    ) { uris ->
+        val paths = uris.mapNotNull { uri -> copyUriToCache(context, uri) }
+        if (paths.isNotEmpty()) {
+            uploadFileViewModel.onFilesSelected(paths)
+        }
+    }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        val paths = uris.mapNotNull { uri -> copyUriToCache(context, uri) }
+        if (paths.isNotEmpty()) {
+            uploadFileViewModel.onFilesSelected(paths)
+        }
+    }
+
+    LaunchedEffect(uploadFileViewModel) {
+        uploadFileViewModel.events.collect { event ->
+            when (event) {
+                is UploadFileEvent.AllFilesUploaded -> {
+                    showUploadModal = false
+                    snackbarHostState.showSnackbar(
+                        message = "Analize \u00EEnc\u0103rcate cu succes.",
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
+        }
+    }
+
     val filteredGeneralMarkers = when (activeStatusFilter) {
         "Atenție" -> state.generalMarkerCards.filter { it.status == IndicatorStatus.ATTENTION }
         "La limită" -> state.generalMarkerCards.filter { it.status == IndicatorStatus.BORDERLINE }
@@ -362,11 +428,36 @@ fun DashboardScreen(
         }
 
         // Upload File Modal
-        if (showUploadModal) {
+        AnimatedVisibility(
+            visible = showUploadModal,
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut()
+        ) {
             UploadFileScreen(
                 state = uploadFileViewModel.state,
                 viewModel = uploadFileViewModel,
-                onDismiss = { showUploadModal = false }
+                onDismiss = {
+                    uploadFileViewModel.reset()
+                    showUploadModal = false
+                },
+                onCameraClick = {
+                    val file = File(context.cacheDir, "camera/IMG_${System.currentTimeMillis()}.jpg").apply {
+                        parentFile?.mkdirs()
+                    }
+                    val uri = FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        file
+                    )
+                    pendingCameraFile = file
+                    cameraLauncher.launch(uri)
+                },
+                onGalleryClick = {
+                    galleryLauncher.launch("image/*")
+                },
+                onFilePickerClick = {
+                    filePickerLauncher.launch(arrayOf("application/pdf", "image/jpeg", "image/png"))
+                }
             )
         }
 
@@ -389,5 +480,52 @@ fun DashboardScreen(
                 title = "Dashboard"
             )
         }
+
+        // Snackbar overlay for upload completion
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
+        ) { data: SnackbarData ->
+            Snackbar(data)
+        }
+    }
+}
+
+private fun copyUriToCache(context: android.content.Context, uri: Uri): String? {
+    return try {
+        val contentResolver = context.contentResolver
+        val mimeType = contentResolver.getType(uri) ?: "application/octet-stream"
+        val ext = when {
+            mimeType.contains("pdf") -> ".pdf"
+            mimeType.contains("jpeg") || mimeType.contains("jpg") -> ".jpg"
+            mimeType.contains("png") -> ".png"
+            else -> ".tmp"
+        }
+        val fileName = getFileName(context, uri) ?: "upload_${System.currentTimeMillis()}$ext"
+        val outFile = File(context.cacheDir, "uploads/$fileName").apply {
+            parentFile?.mkdirs()
+        }
+        contentResolver.openInputStream(uri)?.use { input ->
+            outFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+        outFile.absolutePath
+    } catch (_: Exception) {
+        null
+    }
+}
+
+private fun getFileName(context: android.content.Context, uri: Uri): String? {
+    return try {
+        val cursor = context.contentResolver.query(uri, null, null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val idx = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (idx >= 0) it.getString(idx) else null
+            } else null
+        }
+    } catch (_: Exception) {
+        null
     }
 }

@@ -5,6 +5,8 @@ import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.domain.model.User
 import com.semanticsoft.patientmobile.data.remote.api.dto.AuthResponse
 import com.semanticsoft.patientmobile.data.remote.api.dto.LoginRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.DuplicateCheckRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.DuplicateCheckResponse
 import com.semanticsoft.patientmobile.data.remote.api.dto.PaginatedResponse
 import com.semanticsoft.patientmobile.data.remote.api.dto.RefreshRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
@@ -50,6 +52,9 @@ interface PatientApiService {
 
     @GET("patient/documents/{documentId}/file")
     suspend fun downloadDocument(@Path("documentId") id: String): ResponseBody
+
+    @POST("patient/documents/duplicate-check")
+    suspend fun checkDuplicates(@Body request: DuplicateCheckRequest): DuplicateCheckResponse
 
     @GET("patient/documents/{documentId}/results")
     suspend fun getMedicalResults(@Path("documentId") documentId: String): List<MedicalResult>
