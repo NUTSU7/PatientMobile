@@ -59,13 +59,15 @@ import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardScreen
 import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardUiState
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicalHystoryScreen
 import com.semanticsoft.patientmobile.ui.screens.navigation.components.PostLoginDrawerContent
+import com.semanticsoft.patientmobile.ui.screens.uploadedAnalyses.UploadedAnalysesScreen
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 
 internal enum class PostLoginTab {
     MedicalHystory,
-    Dashboard
+    Dashboard,
+    UploadedAnalyses
 }
 
 @Composable
@@ -123,6 +125,10 @@ fun NavScreen(
                             selectedTab = PostLoginTab.MedicalHystory
                             scope.launch { drawerState.close() }
                         },
+                        onSelectUploadedAnalyses = {
+                            selectedTab = PostLoginTab.UploadedAnalyses
+                            scope.launch { drawerState.close() }
+                        },
                         onLogout = {
                             onLogout()
                             scope.launch { drawerState.close() }
@@ -144,6 +150,14 @@ fun NavScreen(
                     DashboardScreen(
                         state = state,
                         onMenuClick = { scope.launch { drawerState.open() } }
+                    )
+                }
+
+                PostLoginTab.UploadedAnalyses -> {
+                    UploadedAnalysesScreen(
+                        onMenuClick = { scope.launch { drawerState.open() } },
+                        onNotificationsClick = { },
+                        onInfoClick = { }
                     )
                 }
             }

@@ -401,37 +401,6 @@ Configured in `app/build.gradle.kts`:
 ./gradlew connectedAndroidTest
 ```
 
----
-
-## Documentation
-
-Additional documentation lives in the `docs/` folder:
-
-| File | Content |
-|------|---------|
-| `API_CONTRACT_V1.md` | Full REST API contract with request/response examples |
-| `openapi-v1.yaml` | OpenAPI specification |
-| `FRONTEND_IMPLEMENTATION_GUIDE.md` | Frontend integration guide |
-| `KOTLIN_MOBILE_IMPLEMENTATION_GUIDE.md` | Kotlin-specific implementation notes |
-| `AUTH_SECURITY_AND_KEY_ROTATION.md` | Authentication and security details |
-| `UPLOAD_SECURITY_HARDENING.md` | Upload security measures |
-| `MEDICAL_RESULTS_DB_MODEL_V1.md` | Database model documentation |
-| `PROJECT_MAP.md` | Quick-reference project map |
-| `PRODUCTION_DEPLOYMENT_CHECKLIST.md` | Pre-release checklist |
-
-## Agent Guidelines
-
-When working on this project with an AI agent, reference `RULES.md` (kept local via `.gitignore`) for:
-
-- UI component classification rules (global vs. feature)
-- Feature package structure conventions
-- Icon and theme token guidelines
-- Backend/logic layer organization
-- Data flow patterns (MVVM, Repository, `Resource<T>`)
-- New feature checklist
-
----
-
 ## Getting Started
 
 ### Prerequisites

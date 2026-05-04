@@ -15,9 +15,11 @@ val SuccessGreen = Color(0xFF2B8A3E)
 
 // React design palette
 val Indigo200 = Color(0xFFC7D2FE)
+val Indigo500 = Color(0xFF6366F1)
 val Indigo600 = Color(0xFF4F46E5)
 val Indigo700 = Color(0xFF4338CA)
 val Purple500 = Color(0xFF8B5CF6)
+val Purple400 = Color(0xFFA78BFA)
 val Purple600 = Color(0xFF7C3AED)
 val Gray50 = Color(0xFFFAFAFA)
 val Gray100 = Color(0xFFF3F4F6)
