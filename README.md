@@ -125,8 +125,9 @@ PatientMobile/
 │   │   │   │   │   │   │   └── components/ # Drawer shell widgets (PostLoginDrawer, DrawerMenuItem)
 │   │   │   │   │   │   ├── registration/
 │   │   │   │   │   │   │   └── components/ # Registration-specific widgets
-│   │   │   │   │   │   └── uploadFile/
-│   │   │   │   │   │       └── components/ # Upload-specific widgets
+│   │   │   │   │   │   ├── shared/
+│   │   │   │   │   │   │   └── upload/
+│   │   │   │   │   │   │       └── components/ # Upload-specific widgets
 │   │   │   │   │   └── theme/         # Colors, Typography, Theme, Icons
 │   │   │   │   │       ├── icons/     # Kotlin ImageVector icons (all custom icons)
 │   │   │   │   │       ├── Color.kt   # Color palette
@@ -199,7 +200,7 @@ These 7 shared primitives are consumed by 2+ features:
 | `medicalHystory` | `screens/medicalHystory/components/` | `DocumentList`, `DocumentListItem`, `MedicalHistoryAnalysisSection`, `MedicalHistoryFiltersCard`, `MedicalHistoryTopBar`, `MedicinesSection`, `PersonalNotesSection` |
 | `navigation` | `screens/navigation/components/` | `PostLoginDrawerContent`, `DrawerMenuItem` |
 | `registration` | `screens/registration/components/` | (uses `auth/components/`) |
-| `uploadFile` | `screens/uploadFile/components/` | `DragDropArea`, `DropboxButton`, `ExternalSourceButton`, `FileUploadComponent`, `UploadButton`, `UploadFileDialogContent` |
+| `upload` | `shared/upload/components/` | `DragDropArea`, `DropboxButton`, `ExternalSourceButton`, `FileUploadComponent`, `UploadButton`, `UploadFileDialogContent` |
 
 ---
 
@@ -258,11 +259,12 @@ The drawer shows the user's profile, role, and a logout button. Drawer content i
 - `MedicalHystoryViewModel.kt` manages the state.
 - Feature-specific widgets live in `ui/screens/medicalHystory/components/`.
 
-### File Upload (`ui/screens/uploadFile/`)
+### File Upload (`ui/shared/upload/`)
 
 - Dialog-style overlay for uploading medical documents (PDF, JPG, PNG).
+- Used by multiple screens (Dashboard, MedicalHistory) as a shared feature.
 - `UploadFileViewModel.kt` handles file selection and multipart upload via `DocumentRepository`.
-- Upload-specific widgets (dialog content, drag-drop area, source buttons) live in `ui/screens/uploadFile/components/`.
+- Upload-specific widgets (dialog content, drag-drop area, source buttons) live in `ui/shared/upload/components/`.
 
 ### Theme System (`ui/theme/`)
 
@@ -497,8 +499,9 @@ com.semanticsoft.patientmobile
 │   │   │   └── components/    # PostLoginDrawerContent, DrawerMenuItem
 │   │   ├── registration/      # RegistrationScreen, RegistrationViewModel
 │   │   │   └── components/    # (uses auth/components/)
-│   │   └── uploadFile/        # UploadFileScreen, UploadFileViewModel, UploadFileModels
-│   │       └── components/    # DragDropArea, UploadFileDialogContent, etc.
+│   │   ├── shared/
+│   │   │   └── upload/         # UploadFileScreen, UploadFileViewModel, UploadFileModels
+│   │   │       └── components/ # DragDropArea, UploadFileDialogContent, etc.
 │   └── theme/
 │       ├── icons/         # Kotlin ImageVector files (CloseIcon, WarningIcon, etc.)
 │       ├── Color.kt       # Color palette

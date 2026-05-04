@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.ui.screens.uploadFile.components
+package com.semanticsoft.patientmobile.ui.shared.upload.components
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
