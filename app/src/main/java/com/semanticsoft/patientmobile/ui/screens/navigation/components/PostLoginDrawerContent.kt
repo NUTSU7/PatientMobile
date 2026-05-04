@@ -51,6 +51,7 @@ internal fun PostLoginDrawerContent(
     onClose: () -> Unit,
     onSelectDashboard: () -> Unit,
     onSelectHistory: () -> Unit,
+    onSelectUploadedAnalyses: () -> Unit,
     onLogout: () -> Unit
 ) {
     val initials = remember(fullName) {
@@ -128,10 +129,10 @@ internal fun PostLoginDrawerContent(
 
         DrawerMenuItem(
             label = "Analize \u00EEnc\u0103rcate",
-            selected = false,
+            selected = selectedTab == PostLoginTab.UploadedAnalyses,
             scale = scale,
             activeIcon = Icons.Outlined.Description,
-            onClick = { }
+            onClick = onSelectUploadedAnalyses
         )
 
         Spacer(modifier = Modifier.height((8f * scale).dp))
