@@ -1,14 +1,13 @@
 package com.semanticsoft.patientmobile.ui.screens.medicalHystory.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -17,32 +16,28 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.ui.theme.Gray100
 import com.semanticsoft.patientmobile.ui.theme.Gray200
 import com.semanticsoft.patientmobile.ui.theme.Gray500
-import com.semanticsoft.patientmobile.ui.theme.Gray50
 import com.semanticsoft.patientmobile.ui.theme.Gray900
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.MoreVert
+import com.semanticsoft.patientmobile.ui.theme.icons.MoreHorizontalIcon
 
 @Composable
 fun DocumentListItem(
     fileName: String,
     uploadStatus: String,
-    resultsCount: Int,
+    @Suppress("UNUSED_PARAMETER") resultsCount: Int,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth(),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Gray100)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
@@ -74,14 +69,14 @@ fun DocumentListItem(
 
             Card(
                 modifier = Modifier.size(36.dp),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(999.dp),
+                shape = RoundedCornerShape(999.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Gray200),
+                border = BorderStroke(1.dp, Gray200),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 IconButton(onClick = { }, modifier = Modifier.size(36.dp)) {
                     Icon(
-                        imageVector = Icons.Outlined.MoreVert,
+                        imageVector = MoreHorizontalIcon,
                         contentDescription = null,
                         tint = Gray500
                     )

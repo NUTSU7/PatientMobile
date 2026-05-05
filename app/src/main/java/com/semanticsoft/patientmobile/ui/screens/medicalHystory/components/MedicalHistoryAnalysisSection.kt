@@ -1,6 +1,5 @@
 package com.semanticsoft.patientmobile.ui.screens.medicalHystory.components
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -13,15 +12,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -33,8 +30,8 @@ import com.semanticsoft.patientmobile.ui.theme.Gray50
 import com.semanticsoft.patientmobile.ui.theme.Gray900
 import com.semanticsoft.patientmobile.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.ui.theme.TextSecondary
+import com.semanticsoft.patientmobile.ui.theme.icons.CalendarIcon
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun MedicalHistoryAnalysisSection(
@@ -44,6 +41,7 @@ fun MedicalHistoryAnalysisSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(1.dp, RoundedCornerShape(24.dp))
             .background(Color.White, RoundedCornerShape(24.dp))
             .border(1.dp, Color(0xFFF3F4F6), RoundedCornerShape(24.dp))
             .padding(16.dp),
@@ -53,7 +51,12 @@ fun MedicalHistoryAnalysisSection(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(spacing.markerHeaderGap)
         ) {
-            CalendarIcon()
+            Icon(
+                imageVector = CalendarIcon,
+                contentDescription = "Analize",
+                modifier = Modifier.size(20.dp),
+                tint = Indigo600
+            )
             Text(
                 text = "Analize",
                 color = Gray900,
@@ -86,7 +89,7 @@ fun MedicalHistoryAnalysisSection(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Nu există analize disponibile pentru filtrul selectat.",
+                        text = "Nu exist\u0103 analize disponibile pentru filtrul selectat.",
                         color = TextSecondary,
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center
@@ -109,45 +112,6 @@ fun MedicalHistoryAnalysisSection(
     }
 }
 
-@Composable
-fun CalendarIcon() {
-    Canvas(modifier = Modifier.size(20.dp)) {
-        val strokeWidth = 1.8f
-        val iconColor = Indigo600
-        val w = size.width
-        val h = size.height
-
-        drawRoundRect(
-            color = iconColor,
-            topLeft = Offset(w * 0.12f, h * 0.18f),
-            size = androidx.compose.ui.geometry.Size(w * 0.76f, h * 0.68f),
-            cornerRadius = CornerRadius(w * 0.08f, w * 0.08f),
-            style = Stroke(strokeWidth)
-        )
-        drawLine(
-            color = iconColor,
-            start = Offset(w * 0.12f, h * 0.38f),
-            end = Offset(w * 0.88f, h * 0.38f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = iconColor,
-            start = Offset(w * 0.32f, h * 0.1f),
-            end = Offset(w * 0.32f, h * 0.24f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-        drawLine(
-            color = iconColor,
-            start = Offset(w * 0.68f, h * 0.1f),
-            end = Offset(w * 0.68f, h * 0.24f),
-            strokeWidth = strokeWidth,
-            cap = StrokeCap.Round
-        )
-    }
-}
-
 private fun displayDocumentName(document: PatientDocument): String {
     val originalName = document.originalFileName
     val dotIndex = originalName.lastIndexOf('.')
@@ -155,6 +119,22 @@ private fun displayDocumentName(document: PatientDocument): String {
 }
 
 private fun formatAnalysisDate(document: PatientDocument): String {
-    val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
-    return "Analiza din ${document.uploadedAt.atZone(ZoneId.systemDefault()).format(formatter)}"
+    val localDate = document.uploadedAt.atZone(ZoneId.systemDefault()).toLocalDate()
+    val day = localDate.dayOfMonth
+    val monthName = when (localDate.monthValue) {
+        1 -> "ianuarie"
+        2 -> "februarie"
+        3 -> "martie"
+        4 -> "aprilie"
+        5 -> "mai"
+        6 -> "iunie"
+        7 -> "iulie"
+        8 -> "august"
+        9 -> "septembrie"
+        10 -> "octombrie"
+        11 -> "noiembrie"
+        12 -> "decembrie"
+        else -> ""
+    }
+    return "$day $monthName ${localDate.year}"
 }
