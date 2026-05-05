@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
+import androidx.compose.ui.graphics.Color
 import com.semanticsoft.patientmobile.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.DayOfWeek
@@ -24,10 +25,21 @@ enum class MedicalTimelineMode {
     WEEK_DAYS
 }
 
+enum class MedicineIconType {
+    PILL,
+    CAPSULE,
+    SPRAY,
+    SYRUP,
+    INJECTION,
+    DROPS
+}
+
 data class MedicineItem(
     val name: String,
+    val dosage: String,
     val schedule: String,
-    val daysRemaining: Int
+    val daysRemaining: Int,
+    val iconType: MedicineIconType = MedicineIconType.PILL
 )
 
 enum class NoteSeverity {
@@ -41,25 +53,32 @@ private val DEMO_MEDICINES = emptyList<MedicineItem>()
 private val DEMO_NOTES = emptyList<PersonalNoteItem>()
 
 private val DEMO_MEDICINES_POPULATED = listOf(
-    MedicineItem(name = "Paracetamol", schedule = "08:00 · 20:00", daysRemaining = 5),
-    MedicineItem(name = "Amoxicillin", schedule = "09:00 · 15:00 · 21:00", daysRemaining = 3),
-    MedicineItem(name = "Vitamin D", schedule = "08:00", daysRemaining = 30)
+    MedicineItem(name = "Augmentin 1g", dosage = "1 tablet\u0103 \u2022 De 2 ori pe zi (8:00, 20:00)", schedule = "08:00 \u00B7 20:00", daysRemaining = 7, iconType = MedicineIconType.PILL),
+    MedicineItem(name = "Magnerot 500mg", dosage = "1 tablet\u0103 \u2022 De 3 ori pe zi (8:00, 14:00, 20:00)", schedule = "08:00 \u00B7 14:00 \u00B7 20:00", daysRemaining = 14, iconType = MedicineIconType.PILL),
+    MedicineItem(name = "Vitamina D3 2000 UI", dosage = "1 capsul\u0103 \u2022 O dat\u0103 pe zi (8:00)", schedule = "08:00", daysRemaining = 30, iconType = MedicineIconType.CAPSULE)
 )
 
 private val DEMO_NOTES_POPULATED = listOf(
     PersonalNoteItem(
-        title = "Follow-up",
-        content = "Patient to follow up in two weeks regarding blood pressure.",
-        author = "Dr. Demo",
-        dateLabel = LocalDate.now().toString(),
+        title = "ALERGIE",
+        content = "Alergie la penicilin\u0103 \u2014 reac\u021Bie sever\u0103 documentat\u0103 \u00EEn 2019.",
+        author = "Dr. Popescu",
+        dateLabel = "15 mar. 2026",
+        severity = NoteSeverity.BAD
+    ),
+    PersonalNoteItem(
+        title = "INTERVEN\u021AIE",
+        content = "Apendicectomie laparoscopic\u0103 efectuat\u0103 \u00EEn 2018. F\u0103r\u0103 complica\u021Bii postoperatorii.",
+        author = "Dr. Ionescu",
+        dateLabel = "03 ian. 2018",
         severity = NoteSeverity.OK
     ),
     PersonalNoteItem(
-        title = "Allergy note",
-        content = "Allergic to penicillin - flag on record.",
-        author = "Nurse Demo",
-        dateLabel = LocalDate.now().minusDays(3).toString(),
-        severity = NoteSeverity.BAD
+        title = "VACCINARE",
+        content = "Vaccinare antigripal\u0103 sezonier\u0103 2025-2026. Reac\u021Bii adverse minore raportate.",
+        author = "Dr. Marinescu",
+        dateLabel = "10 nov. 2025",
+        severity = NoteSeverity.GOOD
     )
 )
 
@@ -80,7 +99,8 @@ data class PersonalNoteItem(
     val content: String,
     val author: String,
     val dateLabel: String,
-    val severity: NoteSeverity
+    val severity: NoteSeverity,
+    val accentColor: Color? = null
 )
 
 data class MedicalHystoryUiState(
@@ -154,12 +174,6 @@ class MedicalHystoryViewModel @Inject constructor(
     init {
         refreshUserProfile()
         refreshDocuments()
-        if (BuildConfig.DEBUG) {
-            _stateFlow.value = _stateFlow.value.copy(
-                medicines = DEMO_MEDICINES_POPULATED,
-                notes = DEMO_NOTES_POPULATED
-            )
-        }
     }
 
     fun refreshDocuments() {
@@ -198,8 +212,16 @@ class MedicalHystoryViewModel @Inject constructor(
                         selectedYear = selectedYear
                     )
 
+                    val latestMonthInYear = data
+                        .filter { it.uploadedAt.atZone(ZoneId.systemDefault()).year == selectedYear }
+                        .maxByOrNull { it.uploadedAt }
+                        ?.uploadedAt
+                        ?.atZone(ZoneId.systemDefault())
+                        ?.monthValue
+
                     _stateFlow.value = updatedState.copy(
-                        selectedTimelineValue = updatedState.timelineValuesForSelectedYear.firstOrNull()
+                        selectedTimelineValue = latestMonthInYear
+                            ?: updatedState.timelineValuesForSelectedYear.firstOrNull()
                     )
                 }
                 Resource.Loading -> Unit
@@ -245,9 +267,9 @@ class MedicalHystoryViewModel @Inject constructor(
         _stateFlow.value = _stateFlow.value.copy(selectedTimelineValue = value)
     }
 
-    fun addMedicine(name: String, schedule: String, daysRemaining: Int) {
+    fun addMedicine(name: String, dosage: String, schedule: String, daysRemaining: Int, iconType: MedicineIconType = MedicineIconType.PILL) {
         val current = _stateFlow.value.medicines.toMutableList()
-        current.add(0, MedicineItem(name = name, schedule = schedule, daysRemaining = daysRemaining))
+        current.add(0, MedicineItem(name = name, dosage = dosage, schedule = schedule, daysRemaining = daysRemaining, iconType = iconType))
         _stateFlow.value = _stateFlow.value.copy(medicines = current)
     }
 

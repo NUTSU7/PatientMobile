@@ -1,38 +1,30 @@
 package com.semanticsoft.patientmobile.ui.screens.medicalHystory.components
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.ui.components.FilePickerButton
 import com.semanticsoft.patientmobile.ui.common.DashboardSpacing
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicalHystoryUiState
+import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicineIconType
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicineItem
 import com.semanticsoft.patientmobile.ui.theme.Gray50
 import com.semanticsoft.patientmobile.ui.theme.Gray500
@@ -40,7 +32,7 @@ import com.semanticsoft.patientmobile.ui.theme.Gray900
 import com.semanticsoft.patientmobile.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.ui.theme.Purple500
 import com.semanticsoft.patientmobile.ui.theme.SuccessGreen
-import com.semanticsoft.patientmobile.ui.theme.TextSecondary
+import com.semanticsoft.patientmobile.ui.theme.icons.PillIcon
 
 @Composable
 fun MedicinesSection(
@@ -51,47 +43,90 @@ fun MedicinesSection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(1.dp, RoundedCornerShape(24.dp))
             .background(Color.White, RoundedCornerShape(24.dp))
             .border(1.dp, Color(0xFFF3F4F6), RoundedCornerShape(24.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(spacing.markerHeaderGap)
     ) {
         Row(
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(spacing.markerHeaderGap)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            PillIcon(isVertical = true)
-            Text(
-                text = "Medicamente",
-                color = Gray900,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(spacing.markerHeaderGap)
+            ) {
+                PillIcon(
+                    modifier = Modifier.size(16.dp),
+                    color = Indigo600
+                )
+                Text(
+                    text = "Medicamente",
+                    color = Gray900,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            if (state.medicines.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .border(1.dp, Indigo600, RoundedCornerShape(999.dp))
+                        .clickable(onClick = onAddClick)
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "+ Adaug\u0103",
+                        color = Indigo600,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
         }
 
-        FilePickerButton(
-            label = "+ Adaugă medicament",
-            onClick = onAddClick,
-            buttonHeight = 44.dp,
-            cornerRadius = 999.dp,
-            textSize = 13.sp,
-            backgroundBrush = Brush.horizontalGradient(listOf(Indigo600, Purple500))
-        )
-
         if (state.medicines.isEmpty()) {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Gray50, RoundedCornerShape(18.dp))
                     .padding(spacing.sectionGap),
-                contentAlignment = Alignment.Center
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(Purple500.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    PillIcon(
+                        modifier = Modifier.size(24.dp),
+                        color = Purple500
+                    )
+                }
                 Text(
-                    text = "Nu există medicamente adăugate.",
-                    color = TextSecondary,
-                    fontSize = 14.sp,
-                    textAlign = TextAlign.Center
+                    text = "Adaug\u0103 medicament",
+                    color = Gray900,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
                 )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .height(48.dp)
+                        .background(Purple500, RoundedCornerShape(16.dp))
+                        .clickable(onClick = onAddClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "+ Adaug\u0103 medicament",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(spacing.listItemGap)) {
@@ -105,20 +140,18 @@ fun MedicinesSection(
 
 @Composable
 fun MedicineItemRow(item: MedicineItem) {
-    val badgeType = resolveMedicineBadgeType(item)
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(Gray50, RoundedCornerShape(16.dp))
-            .padding(16.dp)
+            .padding(14.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            MedicineBadge(type = badgeType)
+            MedicineBadge(iconType = item.iconType)
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -131,9 +164,10 @@ fun MedicineItemRow(item: MedicineItem) {
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = item.schedule,
+                    text = item.dosage,
                     color = Gray500,
-                    fontSize = 14.sp
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -141,7 +175,7 @@ fun MedicineItemRow(item: MedicineItem) {
                 ) {
                     Box(
                         modifier = Modifier
-                            .background(SuccessGreen.copy(alpha = 0.1f), RoundedCornerShape(6.dp))
+                            .background(SuccessGreen.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(
@@ -152,7 +186,7 @@ fun MedicineItemRow(item: MedicineItem) {
                         )
                     }
                     Text(
-                        text = "${item.daysRemaining} zile rămase",
+                        text = "\u00CEnc\u0103 ${item.daysRemaining} zile",
                         color = Gray500,
                         fontSize = 12.sp
                     )
@@ -163,151 +197,20 @@ fun MedicineItemRow(item: MedicineItem) {
 }
 
 @Composable
-fun MedicineBadge(type: MedicineBadgeType) {
+fun MedicineBadge(@Suppress("UNUSED_PARAMETER") iconType: MedicineIconType) {
+    val iconColor = Indigo600
+    val iconBg = iconColor.copy(alpha = 0.1f)
+
     Box(
         modifier = Modifier
-            .size(36.dp)
-            .background(Indigo600.copy(alpha = 0.1f), RoundedCornerShape(10.dp)),
+            .size(38.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(iconBg),
         contentAlignment = Alignment.Center
     ) {
-        Canvas(modifier = Modifier.size(20.dp)) {
-            val strokeWidth = 1.9f
-            val iconColor = Indigo600
-            val w = size.width
-            val h = size.height
-            val cx = w / 2f
-            val cy = h / 2f
-
-            when (type) {
-                MedicineBadgeType.PILL -> {
-                    drawRoundRect(
-                        color = iconColor,
-                        topLeft = Offset(w * 0.3f, h * 0.15f),
-                        size = Size(w * 0.4f, h * 0.7f),
-                        cornerRadius = CornerRadius(w * 0.2f, w * 0.2f),
-                        style = Stroke(strokeWidth)
-                    )
-                    drawLine(
-                        color = iconColor,
-                        start = Offset(w * 0.5f, h * 0.15f),
-                        end = Offset(w * 0.5f, h * 0.85f),
-                        strokeWidth = strokeWidth,
-                        cap = StrokeCap.Round
-                    )
-                }
-
-                MedicineBadgeType.CAPSULE -> {
-                    drawCircle(
-                        color = iconColor,
-                        radius = minOf(w, h) * 0.28f,
-                        center = Offset(cx, cy),
-                        style = Stroke(strokeWidth)
-                    )
-                }
-
-                MedicineBadgeType.SPRAY -> {
-                    drawRoundRect(
-                        color = iconColor,
-                        topLeft = Offset(w * 0.18f, h * 0.34f),
-                        size = Size(w * 0.36f, h * 0.44f),
-                        cornerRadius = CornerRadius(w * 0.08f, w * 0.08f),
-                        style = Stroke(strokeWidth)
-                    )
-                }
-
-                MedicineBadgeType.SYRUP -> {
-                    drawRoundRect(
-                        color = iconColor,
-                        topLeft = Offset(w * 0.28f, h * 0.28f),
-                        size = Size(w * 0.44f, h * 0.5f),
-                        cornerRadius = CornerRadius(w * 0.08f, w * 0.08f),
-                        style = Stroke(strokeWidth)
-                    )
-                }
-
-                MedicineBadgeType.INJECTION -> {
-                    drawLine(
-                        color = iconColor,
-                        start = Offset(w * 0.24f, h * 0.74f),
-                        end = Offset(w * 0.7f, h * 0.28f),
-                        strokeWidth = strokeWidth,
-                        cap = StrokeCap.Round
-                    )
-                }
-
-                MedicineBadgeType.DROPS -> {
-                    val dropPath = Path().apply {
-                        moveTo(cx, h * 0.18f)
-                        cubicTo(w * 0.72f, h * 0.34f, w * 0.74f, h * 0.56f, cx, h * 0.82f)
-                        cubicTo(w * 0.26f, h * 0.56f, w * 0.28f, h * 0.34f, cx, h * 0.18f)
-                        close()
-                    }
-                    drawPath(dropPath, color = iconColor, style = Stroke(strokeWidth))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun PillIcon(isVertical: Boolean = false) {
-    Canvas(modifier = Modifier.size(20.dp)) {
-        val strokeWidth = 1.8f
-        val iconColor = Indigo600
-        val w = size.width
-        val h = size.height
-
-        if (isVertical) {
-            drawRoundRect(
-                color = iconColor,
-                topLeft = Offset(w * 0.3f, h * 0.15f),
-                size = Size(w * 0.4f, h * 0.7f),
-                cornerRadius = CornerRadius(w * 0.2f, w * 0.2f),
-                style = Stroke(strokeWidth)
-            )
-            drawLine(
-                color = iconColor,
-                start = Offset(w * 0.5f, h * 0.15f),
-                end = Offset(w * 0.5f, h * 0.85f),
-                strokeWidth = strokeWidth,
-                cap = StrokeCap.Round
-            )
-        } else {
-            drawRoundRect(
-                color = iconColor,
-                topLeft = Offset(w * 0.12f, h * 0.36f),
-                size = Size(w * 0.76f, h * 0.28f),
-                cornerRadius = CornerRadius(h * 0.16f, h * 0.16f),
-                style = Stroke(strokeWidth)
-            )
-            drawLine(
-                color = iconColor,
-                start = Offset(w * 0.5f, h * 0.36f),
-                end = Offset(w * 0.5f, h * 0.64f),
-                strokeWidth = strokeWidth,
-                cap = StrokeCap.Round
-            )
-        }
-    }
-}
-
-enum class MedicineBadgeType {
-    PILL,
-    CAPSULE,
-    SPRAY,
-    SYRUP,
-    INJECTION,
-    DROPS
-}
-
-fun resolveMedicineBadgeType(item: MedicineItem): MedicineBadgeType {
-    val descriptor = "${item.name} ${item.schedule}".lowercase()
-    return when {
-        descriptor.contains("spray") || descriptor.contains("inhal") -> MedicineBadgeType.SPRAY
-        descriptor.contains("capsul") -> MedicineBadgeType.CAPSULE
-        descriptor.contains("sirop") -> MedicineBadgeType.SYRUP
-        descriptor.contains("inject") -> MedicineBadgeType.INJECTION
-        descriptor.contains("picăt") || descriptor.contains("picat") || descriptor.contains("drops") -> MedicineBadgeType.DROPS
-        else -> MedicineBadgeType.PILL
+        PillIcon(
+            modifier = Modifier.size(20.dp),
+            color = iconColor
+        )
     }
 }
