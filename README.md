@@ -26,7 +26,7 @@ PatientMobile is an Android application for patients to manage their medical doc
 | **UI Framework** | Jetpack Compose (Material 3) |
 | **Architecture** | MVVM + Clean Architecture |
 | **Dependency Injection** | Dagger Hilt |
-| **Networking** | Retrofit 2 + OkHttp + Gson |
+| **Networking** | Retrofit 2 + OkHttp + Kotlinx Serialization |
 | **Local Database** | Room (SQLite) |
 | **Local Storage** | DataStore Preferences + EncryptedSharedPreferences |
 | **Async** | Kotlin Coroutines + Flow |
@@ -40,6 +40,8 @@ PatientMobile is an Android application for patients to manage their medical doc
 - **Room** `2.6.1` — Local persistence
 - **Retrofit** `2.10.0` — REST API client
 - **OkHttp** `4.12.0` — HTTP client with logging
+- **Kotlinx Serialization** `1.6.3` — JSON serialization/deserialization
+- **JakeWharton Retrofit Converter** `1.0.0` — Retrofit + Kotlinx Serialization bridge
 - **Security Crypto** `1.1.0-alpha06` — Encrypted token storage
 - **DataStore** `1.1.1` — Typed preferences
 
@@ -307,18 +309,42 @@ Login ──success──▶ Dashboard (drawer)
 | POST | `/auth/logout` | Yes | Revoke refresh token |
 | GET | `/auth/me` | Yes | Get current user |
 | POST | `/patient/documents` | Yes | Upload document (multipart) |
+| POST | `/patient/documents/duplicate-check` | Yes | Check SHA-256 duplicates |
 | GET | `/patient/documents` | Yes | List documents (paginated) |
 | GET | `/patient/documents/{id}` | Yes | Document metadata |
 | GET | `/patient/documents/{id}/file` | Yes | Download file |
+| PATCH | `/patient/documents/{id}` | Yes | Rename document |
+| DELETE | `/patient/documents/{id}` | Yes | Delete document |
+| POST | `/patient/documents/{id}/share` | Yes | Create share link |
+| POST | `/patient/documents/{id}/ocr` | Yes | Trigger OCR extraction |
+| GET | `/patient/ocr/{id}` | Yes | Get OCR extraction status |
+| GET | `/patient/documents/{id}/ocr` | Yes | List OCR extractions |
 | GET | `/patient/documents/{id}/results` | Yes | Medical results for document |
+| GET | `/patient/results` | Yes | All results (paginated) |
+| GET | `/patient/results/{id}` | Yes | Single result |
+| GET | `/patient/results/{id}/history` | Yes | Result history |
+| GET | `/patient/documents/{id}/reports` | Yes | Reports for document |
+| GET | `/patient/dashboard` | Yes | Dashboard summary |
+| POST | `/patient/dashboard/summary` | Yes | Request AI explanation |
+| POST | `/patient/history/medications` | Yes | Create medication |
+| GET | `/patient/history/medications` | Yes | List medications |
+| PUT | `/patient/history/medications/{id}` | Yes | Update medication |
+| DELETE | `/patient/history/medications/{id}` | Yes | Delete medication |
+| POST | `/patient/history/notes` | Yes | Create personal note |
+| GET | `/patient/history/notes` | Yes | List notes |
+| PUT | `/patient/history/notes/{id}` | Yes | Update note |
+| DELETE | `/patient/history/notes/{id}` | Yes | Delete note |
+| GET | `/shared/{token}` | No | Consume shared link |
 
 ### Network Stack
 
 - **Base URL**: Set per build type in `build.gradle.kts` (see [Build Variants](#build-variants)).
-- **AuthInterceptor**: Automatically attaches `Authorization: Bearer <token>` to requests.
-- **ErrorInterceptor**: Maps HTTP errors to typed exceptions (`InvalidCredentialsException`, `RateLimitException`, `ApiException`, etc.).
+- **AuthInterceptor**: Automatically attaches `Authorization: Bearer <token>` to non-public requests. Skips login/register/refresh endpoints.
+- **TokenRefreshAuthenticator**: OkHttp `Authenticator` that intercepts 401 responses, refreshes the token (using a dedicated `@Named("refresh")` OkHttpClient), and retries the request. Uses `synchronized` + double-check to prevent concurrent refresh races.
+- **ErrorInterceptor**: Passively inspects error responses for logging; does not throw exceptions.
 - **Logging**: OkHttp logging is enabled only in `DEBUG` builds.
-- **Gson**: Custom serializers for `LocalDate` and `Instant`.
+- **Kotlinx Serialization**: JSON via JakeWharton's Retrofit converter (bridged through `KotlinxConverterBridge.java`). Configured with `ignoreUnknownKeys`, `isLenient`, and `coerceInputValues`.
+- **SafeApiCall**: Wraps all API calls in `try-catch`, mapping `HttpException` → `ApiResult.HttpError`, `401` → `ApiResult.AuthError`, and `IOException` → `ApiResult.NetworkError`.
 
 ### Token Security
 
@@ -328,7 +354,7 @@ Login ──success──▶ Dashboard (drawer)
 
 ### Local Database (Room)
 
-`PatientDatabase.kt` contains five entities:
+`PatientDatabase.kt` contains **9 entities** at version 2:
 
 | Entity | DAO | Purpose |
 |--------|-----|---------|
@@ -337,22 +363,43 @@ Login ──success──▶ Dashboard (drawer)
 | `MedicalResultEntity` | `MedicalResultDao` | Cached analysis results |
 | `MedicalReportEntity` | `MedicalReportDao` | Cached reports |
 | `AuditLogEntity` | `AuditLogDao` | Security/audit logs |
+| `OcrExtractionEntity` | `OcrExtractionDao` | Cached OCR extractions |
+| `MedicationEntity` | `MedicationDao` | Cached medications |
+| `PersonalNoteEntity` | `PersonalNoteDao` | Cached personal notes |
+| `SharedLinkEntity` | `SharedLinkDao` | Cached shared links |
 
-- Migrations: Currently uses destructive fallback (`fallbackToDestructiveMigration`) until explicit migrations are added.
+- **Migrations**: `Migration(1, 2)` handles the v1→v2 upgrade (recreates `documents`, `medical_results`, `medical_reports` tables; adds `audit_logs`, `ocr_extractions`, `medications`, `personal_notes`, `shared_links`).
+- **TypeConverters**: `RoomConverters` handles `List<String>`, `SyncStatus`, enums, `LocalDate`/`Instant` via JSON serialization.
+- Development note: If migration fails, reset the database with `adb shell pm clear com.semanticsoft.patientmobile`.
 
 ### Repository Implementations
 
 | Repository | File | Responsibility |
 |------------|------|----------------|
 | `AuthRepository` | `AuthRepositoryImpl.kt` | Login, register, refresh, logout, user profile |
-| `DocumentRepository` | `DocumentRepositoryImpl.kt` | Upload, list, download documents; syncs with Room |
-| `MedicalResultRepository` | `MedicalResultRepositoryImpl.kt` | Fetch results by document; syncs with Room |
+| `DocumentRepository` | `DocumentRepositoryImpl.kt` | Upload, list, download, rename, delete documents; share links; duplicate check |
+| `MedicalResultRepository` | `MedicalResultRepositoryImpl.kt` | Fetch results by document, report, or globally; result history |
 | `AuditRepository` | `AuditRepositoryImpl.kt` | Local audit logging |
+| `OcrRepository` | `OcrRepositoryImpl.kt` | Trigger OCR, poll extraction status, cache results |
+| `DashboardRepository` | `DashboardRepositoryImpl.kt` | Fetch dashboard summary, request AI explanations |
+| `MedicalHistoryRepository` | `MedicalHistoryRepositoryImpl.kt` | CRUD medications and personal notes |
+| `SharedLinkRepository` | `SharedLinkRepositoryImpl.kt` | Consume shared document links |
 
-All repositories emit `Flow<Resource<T>>` for UI consumption:
-- `Resource.Loading` — ongoing operation
-- `Resource.Success(data)` — completed successfully
-- `Resource.Error(message)` — failed with error message
+### Result Type: `ApiResult<T>`
+
+All repository methods return `ApiResult<T>`, a sealed class:
+
+| Variant | Meaning |
+|---------|---------|
+| `Success(data)` | Operation completed successfully |
+| `HttpError(code, message)` | Server returned an error (4xx/5xx) |
+| `NetworkError` | No internet connectivity or DNS failure |
+| `AuthError` | 401 Unauthorized — session expired |
+
+Utilities:
+- `safeApiCall { ... }` — Catches Retrofit/network exceptions and maps to `ApiResult` variants.
+- `ApiResult.map { }` — Transforms `Success` data while preserving error states (exception-safe).
+- `ApiResult.toUserMessage()` — Maps result to a human-readable error string.
 
 ---
 
@@ -440,12 +487,15 @@ com.semanticsoft.patientmobile
 │   │   └── db/           # PatientDatabase, entities, EntityDomainMappers
 │   ├── model/            # Data-layer UI models (DashboardModels)
 │   ├── remote
-│   │   ├── api/          # PatientApiService, ResponseEntity, DTOs
-│   │   └── interceptors/ # AuthInterceptor, ErrorInterceptor
-│   └── repository/       # Repository impls (Auth, Document, MedicalResult, Audit, NetworkState)
+│   │   ├── api/          # PatientApiService, DTOs (Auth, Document, Ocr, Dashboard, etc.)
+│   │   │   └── dto/      # AuthDtos, DocumentDtos, OcrDtos, DashboardDtos, MedicalHistoryDtos, SharedLinkDtos, DtoMappers
+│   │   ├── interceptors/ # AuthInterceptor, ErrorInterceptor, TokenRefreshAuthenticator
+│   │   ├── KotlinxConverterBridge.java  # Java bridge for Retrofit converter
+│   │   └── SafeApiCall.kt  # safeApiCall wrapper
+│   └── repository/       # Repository impls (Auth, Document, MedicalResult, Ocr, Dashboard, MedicalHistory, SharedLink, Audit, NetworkState)
 ├── domain
-│   ├── model/            # Pure domain entities (User, MedicalResult, PatientDocument, etc.)
-│   └── repository/       # Repository contracts (Auth, Document, MedicalResult, Audit)
+│   ├── model/            # Pure domain entities (User, MedicalResult, PatientDocument, OcrExtraction, DashboardSummary, Medication, PersonalNote, SharedLink, etc.)
+│   └── repository/       # Repository contracts (Auth, Document, MedicalResult, Ocr, Dashboard, MedicalHistory, SharedLink, Audit)
 ├── di
 │   ├── DatabaseModule.kt
 │   ├── DataStoreModule.kt
@@ -479,10 +529,10 @@ com.semanticsoft.patientmobile
 │       ├── Type.kt        # Typography (text style tokens)
 │       └── Theme.kt       # PatientMobileTheme
 ├── util
-│   ├── exceptions/       # ApiException, InvalidCredentialsException, etc.
-│   ├── ApiExceptionMessageMapper.kt
+│   ├── ApiResult.kt       # ApiResult<T> sealed class (Success, HttpError, NetworkError, AuthError)
+│   ├── ApiResultExtensions.kt # map, onSuccess, onError, toUserMessage extensions
 │   ├── PasswordValidator.kt
-│   └── Resource.kt       # Resource<T> sealed class (Loading, Success, Error)
+│   └── Resource.kt        # @Deprecated — replaced by ApiResult<T>
 ├── MainActivity.kt
 ├── PatientMobileApp.kt   # Root NavHost with Login, Registration, Dashboard routes
 └── PatientApplication.kt # @HiltAndroidApp

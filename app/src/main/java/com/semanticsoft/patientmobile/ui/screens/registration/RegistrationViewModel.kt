@@ -1,21 +1,20 @@
 package com.semanticsoft.patientmobile.ui.screens.registration
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
+import com.semanticsoft.patientmobile.util.ApiResult
 import com.semanticsoft.patientmobile.util.PasswordValidator
-import com.semanticsoft.patientmobile.util.exceptions.ApiException
-import com.semanticsoft.patientmobile.util.exceptions.ApiValidationException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class RegistrationUiState(
@@ -35,96 +34,84 @@ sealed class RegistrationEvent {
 
 @HiltViewModel
 class RegistrationViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val savedStateHandle: SavedStateHandle
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _events = MutableSharedFlow<RegistrationEvent>()
     val events: SharedFlow<RegistrationEvent> = _events.asSharedFlow()
 
-    var state by mutableStateOf(RegistrationUiState())
-        private set
-
-    init {
-        state = state.copy(
-            name = savedStateHandle[KEY_NAME] ?: "",
-            email = savedStateHandle[KEY_EMAIL] ?: "",
-            password = savedStateHandle[KEY_PASSWORD] ?: "",
-            confirmPassword = savedStateHandle[KEY_CONFIRM_PASSWORD] ?: ""
-        )
-    }
+    private val _state = MutableStateFlow(RegistrationUiState())
+    val state: StateFlow<RegistrationUiState> = _state.asStateFlow()
 
     fun onNameChange(value: String) {
-        state = state.copy(name = value, fieldErrors = state.fieldErrors - "name", errorMessage = null)
-        savedStateHandle[KEY_NAME] = value
+        _state.update { it.copy(name = value, fieldErrors = it.fieldErrors - "name", errorMessage = null) }
     }
 
     fun onEmailChange(value: String) {
-        state = state.copy(email = value, fieldErrors = state.fieldErrors - "email", errorMessage = null)
-        savedStateHandle[KEY_EMAIL] = value
+        _state.update { it.copy(email = value, fieldErrors = it.fieldErrors - "email", errorMessage = null) }
     }
 
     fun onPasswordChange(value: String) {
-        state = state.copy(password = value, fieldErrors = state.fieldErrors - "password", errorMessage = null)
-        savedStateHandle[KEY_PASSWORD] = value
+        _state.update { it.copy(password = value, fieldErrors = it.fieldErrors - "password", errorMessage = null) }
     }
 
     fun onConfirmPasswordChange(value: String) {
-        state = state.copy(confirmPassword = value, fieldErrors = state.fieldErrors - "confirmPassword", errorMessage = null)
-        savedStateHandle[KEY_CONFIRM_PASSWORD] = value
+        _state.update { it.copy(confirmPassword = value, fieldErrors = it.fieldErrors - "confirmPassword", errorMessage = null) }
     }
 
     fun register() {
-        if (state.isLoading) return
+        if (_state.value.isLoading) return
 
-        val localErrors = validateInputs(state)
+        val localErrors = validateInputs(_state.value)
         if (localErrors.isNotEmpty()) {
-            // Validation for incomplete/invalid local fields is handled in UI; do not call API.
-            state = state.copy(fieldErrors = localErrors, errorMessage = null)
+            _state.update { it.copy(fieldErrors = localErrors, errorMessage = null) }
             return
         }
 
-        val nameParts = state.name.trim().split(" ").filter { it.isNotBlank() }
+        val nameParts = _state.value.name.trim().split(" ").filter { it.isNotBlank() }
         val firstName = nameParts.firstOrNull().orEmpty()
         val lastName = if (nameParts.size > 1) nameParts.drop(1).joinToString(" ") else firstName
 
         val request = RegisterRequest(
-            email = state.email.trim(),
-            password = state.password,
-            confirmPassword = state.confirmPassword,
+            email = _state.value.email.trim(),
+            password = _state.value.password,
+            confirmPassword = _state.value.confirmPassword,
             firstName = firstName,
             lastName = lastName,
             dateOfBirth = "1990-01-01"
         )
 
         viewModelScope.launch {
-            state = state.copy(isLoading = true, errorMessage = null, fieldErrors = emptyMap())
+            _state.update { it.copy(isLoading = true, errorMessage = null, fieldErrors = emptyMap()) }
 
-            runCatching {
-                authRepository.register(request)
-            }.onSuccess {
-                state = state.copy(isLoading = false, errorMessage = null)
-                _events.emit(RegistrationEvent.RegistrationSuccess)
-            }.onFailure { throwable ->
-                val apiValidation = throwable as? ApiValidationException
-                val fieldErrors = apiValidation?.fieldErrors?.associate { it.field to it.message }.orEmpty()
-                val message = when {
-                    apiValidation != null -> apiValidation.message ?: "Date invalide."
-                    throwable is ApiException -> throwable.message ?: "Înregistrarea a eșuat."
-                    else -> throwable.message ?: "Înregistrarea a eșuat."
+            when (val result = authRepository.register(request)) {
+                is ApiResult.Success -> {
+                    _state.update { it.copy(isLoading = false, errorMessage = null) }
+                    _events.emit(RegistrationEvent.RegistrationSuccess)
                 }
 
-                // Clear password fields on error
-                state = state.copy(
-                    isLoading = false,
-                    errorMessage = message,
-                    fieldErrors = fieldErrors,
-                    password = "",
-                    confirmPassword = ""
-                )
-                savedStateHandle[KEY_PASSWORD] = ""
-                savedStateHandle[KEY_CONFIRM_PASSWORD] = ""
-                _events.emit(RegistrationEvent.RegistrationFailure(message))
+                is ApiResult.HttpError -> {
+                    val message = when (result.code) {
+                        409 -> "Un cont cu acest email există deja."
+                        422 -> "Date invalide. Verifică câmpurile."
+                        429 -> "Prea multe încercări. Încearcă din nou în câteva minute."
+                        else -> result.message.ifBlank { "Înregistrarea a eșuat (${result.code})." }
+                    }
+                    _state.update { it.copy(isLoading = false, errorMessage = message, password = "", confirmPassword = "") }
+                    _events.emit(RegistrationEvent.RegistrationFailure(message))
+                }
+
+                is ApiResult.NetworkError -> {
+                    val message = "Nu există conexiune la internet."
+                    _state.update { it.copy(isLoading = false, errorMessage = message, password = "", confirmPassword = "") }
+                    _events.emit(RegistrationEvent.RegistrationFailure(message))
+                }
+
+                is ApiResult.AuthError -> {
+                    val message = "Autentificarea a eșuat. Reîncearcă."
+                    _state.update { it.copy(isLoading = false, errorMessage = message, password = "", confirmPassword = "") }
+                    _events.emit(RegistrationEvent.RegistrationFailure(message))
+                }
             }
         }
     }
@@ -158,12 +145,5 @@ class RegistrationViewModel @Inject constructor(
             "Password must not match personal information." -> "Parola nu trebuie să conțină informații personale."
             else -> message
         }
-    }
-
-    companion object {
-        private const val KEY_NAME = "registration_name"
-        private const val KEY_EMAIL = "registration_email"
-        private const val KEY_PASSWORD = "registration_password"
-        private const val KEY_CONFIRM_PASSWORD = "registration_confirm_password"
     }
 }

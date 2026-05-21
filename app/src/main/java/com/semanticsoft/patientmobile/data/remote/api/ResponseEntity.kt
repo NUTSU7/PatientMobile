@@ -1,5 +1,2 @@
+// Deleted — replaced by ApiResult sealed class.
 package com.semanticsoft.patientmobile.data.remote.api
-
-import retrofit2.Response
-
-typealias ResponseEntity<T> = Response<T>

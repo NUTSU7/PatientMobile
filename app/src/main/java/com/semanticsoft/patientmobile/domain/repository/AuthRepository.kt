@@ -3,11 +3,13 @@ package com.semanticsoft.patientmobile.domain.repository
 import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
 import com.semanticsoft.patientmobile.domain.model.AuthResponse
 import com.semanticsoft.patientmobile.domain.model.User
+import com.semanticsoft.patientmobile.util.ApiResult
 
 interface AuthRepository {
-    suspend fun login(email: String, password: String): AuthResponse
-    suspend fun register(request: RegisterRequest): AuthResponse
-    suspend fun refresh(): AuthResponse
+    suspend fun login(email: String, password: String): ApiResult<AuthResponse>
+    suspend fun register(request: RegisterRequest): ApiResult<AuthResponse>
+    suspend fun refresh(): ApiResult<AuthResponse>
     suspend fun logout()
-    suspend fun getCurrentUser(): User
+    suspend fun getCurrentUser(): ApiResult<User>
+    suspend fun isLoggedIn(): Boolean
 }

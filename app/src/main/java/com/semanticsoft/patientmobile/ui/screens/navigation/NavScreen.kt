@@ -60,7 +60,15 @@ import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardUiState
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicalHystoryScreen
 import com.semanticsoft.patientmobile.ui.screens.navigation.components.PostLoginDrawerContent
 import com.semanticsoft.patientmobile.ui.screens.uploadedAnalyses.UploadedAnalysesScreen
+import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileScreen
+import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileViewModel
+import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileEvent
+import com.semanticsoft.patientmobile.ui.shared.upload.rememberUploadFileLaunchers
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlin.math.max
 import kotlin.math.min
 
@@ -72,7 +80,7 @@ internal enum class PostLoginTab {
 
 @Composable
 fun NavScreen(
-    state: DashboardUiState,
+    dashboardState: StateFlow<DashboardUiState>,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -80,10 +88,23 @@ fun NavScreen(
     val scope = rememberCoroutineScope()
     var selectedTab by rememberSaveable { mutableStateOf(PostLoginTab.Dashboard) }
 
-    LaunchedEffect(state.errorMessage) {
-        val message = state.errorMessage?.lowercase().orEmpty()
-        if (message.contains("session expired") || message.contains("unauthorized") || message.contains("401")) {
-            onLogout()
+    var showUploadModal by rememberSaveable { mutableStateOf(false) }
+    val uploadFileViewModel: UploadFileViewModel = hiltViewModel()
+    val uploadFileState by uploadFileViewModel.state.collectAsStateWithLifecycle()
+    val uploadLaunchers = rememberUploadFileLaunchers(uploadFileViewModel)
+    val refreshTrigger = remember { MutableSharedFlow<Unit>() }
+
+    val profileState by dashboardState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(uploadFileViewModel) {
+        uploadFileViewModel.events.collect { event ->
+            when (event) {
+                is UploadFileEvent.AllFilesUploaded -> {
+                    showUploadModal = false
+                    uploadFileViewModel.resetUploadComplete()
+                    refreshTrigger.emit(Unit)
+                }
+            }
         }
     }
 
@@ -111,9 +132,9 @@ fun NavScreen(
                     drawerContentColor = Color.White
                 ) {
                     PostLoginDrawerContent(
-                        fullName = if (state.fullName.isBlank()) state.greetingName else state.fullName,
-                        role = if (state.role.isBlank()) "Pacient" else state.role,
-                        profilePhotoResId = state.profilePhotoResId,
+                        fullName = if (profileState.fullName.isBlank()) profileState.greetingName else profileState.fullName,
+                        role = if (profileState.role.isBlank()) "Pacient" else profileState.role,
+                        profilePhotoResId = profileState.profilePhotoResId,
                         selectedTab = selectedTab,
                         scale = scale,
                         onClose = { scope.launch { drawerState.close() } },
@@ -142,14 +163,20 @@ fun NavScreen(
                     MedicalHystoryScreen(
                         onMenuClick = { scope.launch { drawerState.open() } },
                         onNotificationsClick = { },
-                        onInfoClick = { }
+                        onInfoClick = { },
+                        onUploadClick = {
+                            uploadFileViewModel.reset()
+                            showUploadModal = true
+                        },
+                        refreshTrigger = refreshTrigger
                     )
                 }
 
                 PostLoginTab.Dashboard -> {
                     DashboardScreen(
-                        state = state,
-                        onMenuClick = { scope.launch { drawerState.open() } }
+                        state = profileState,
+                        onMenuClick = { scope.launch { drawerState.open() } },
+                        onUploadClick = {}
                     )
                 }
 
@@ -157,10 +184,29 @@ fun NavScreen(
                     UploadedAnalysesScreen(
                         onMenuClick = { scope.launch { drawerState.open() } },
                         onNotificationsClick = { },
-                        onInfoClick = { }
+                        onInfoClick = { },
+                        onUploadClick = {
+                            uploadFileViewModel.reset()
+                            showUploadModal = true
+                        },
+                        refreshTrigger = refreshTrigger
                     )
                 }
             }
+        }
+
+        if (showUploadModal) {
+            UploadFileScreen(
+                state = uploadFileState,
+                viewModel = uploadFileViewModel,
+                onDismiss = {
+                    uploadFileViewModel.reset()
+                    showUploadModal = false
+                },
+                onCameraClick = uploadLaunchers.onCameraClick,
+                onGalleryClick = uploadLaunchers.onGalleryClick,
+                onFilePickerClick = uploadLaunchers.onFilePickerClick
+            )
         }
     }
 }

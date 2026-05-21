@@ -36,7 +36,8 @@ import java.time.ZoneId
 @Composable
 fun MedicalHistoryAnalysisSection(
     state: MedicalHystoryUiState,
-    spacing: DashboardSpacing
+    spacing: DashboardSpacing,
+    onDocumentClick: (String) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -66,7 +67,7 @@ fun MedicalHistoryAnalysisSection(
         }
 
         when {
-            state.isLoading -> {
+            state.isLoading && state.allDocuments.isEmpty() -> {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -76,6 +77,23 @@ fun MedicalHistoryAnalysisSection(
                     CircularProgressIndicator(
                         color = Indigo600,
                         strokeWidth = 2.dp
+                    )
+                }
+            }
+
+            state.allDocuments.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Gray50, RoundedCornerShape(18.dp))
+                        .padding(spacing.sectionGap),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Nu exist\u0103 analize \u00EEnc\u0103rcate.",
+                        color = TextSecondary,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -98,15 +116,52 @@ fun MedicalHistoryAnalysisSection(
             }
 
             else -> {
-                DocumentList(
-                    items = state.filteredDocuments.map { document ->
-                        DocumentListEntry(
-                            fileName = displayDocumentName(document),
-                            uploadStatus = formatAnalysisDate(document),
-                            resultsCount = 0
-                        )
+                Column(verticalArrangement = Arrangement.spacedBy(spacing.listItemGap)) {
+                    DocumentList(
+                        items = state.filteredDocuments.map { document ->
+                            DocumentListEntry(
+                                documentId = document.id,
+                                fileName = displayDocumentName(document),
+                                uploadStatus = formatAnalysisDate(document),
+                                resultsCount = state.documentResults[document.id]?.size ?: 0
+                            )
+                        },
+                        onDocumentClick = onDocumentClick
+                    )
+
+                    state.selectedDocumentId?.let { docId ->
+                        val results = state.documentResults[docId]
+                        if (!results.isNullOrEmpty()) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Gray50, RoundedCornerShape(16.dp))
+                                    .padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "Rezultate OCR",
+                                    color = Gray900,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                results.forEach { result ->
+                                    Text(
+                                        text = buildString {
+                                            append(result.originalTestName)
+                                            append(": ")
+                                            append(result.valueNumeric ?: result.valueText ?: "-")
+                                            append(" ")
+                                            append(result.unit)
+                                        },
+                                        color = TextSecondary,
+                                        fontSize = 13.sp
+                                    )
+                                }
+                            }
+                        }
                     }
-                )
+                }
             }
         }
     }

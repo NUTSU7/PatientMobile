@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -23,7 +24,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +37,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.common.dashboardSpacing
+import com.semanticsoft.patientmobile.ui.components.ErrorDialog
+import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.screens.uploadedAnalyses.components.UploadedAnalysesTopBar
 import com.semanticsoft.patientmobile.ui.screens.uploadedAnalyses.components.UploadedAnalysisItem
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
@@ -42,6 +47,13 @@ import com.semanticsoft.patientmobile.ui.theme.Gray500
 import com.semanticsoft.patientmobile.ui.theme.Gray900
 import com.semanticsoft.patientmobile.ui.theme.icons.SelectIcon
 import com.semanticsoft.patientmobile.ui.theme.icons.SortIcon
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarData
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 @Composable
 fun UploadedAnalysesScreen(
@@ -51,11 +63,30 @@ fun UploadedAnalysesScreen(
     onSortClick: () -> Unit = { },
     onSelectClick: () -> Unit = { },
     onUploadClick: () -> Unit = { },
+    refreshTrigger: SharedFlow<Unit> = MutableSharedFlow(),
     viewModel: UploadedAnalysesViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
     SetStatusBar(color = Color.White, darkIcons = true)
-    val state by viewModel.stateFlow.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) { viewModel.refreshDocuments() }
+
+    LaunchedEffect(refreshTrigger) {
+        refreshTrigger.collect { viewModel.refreshDocuments() }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.refreshErrors.collect { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
+
+    val showBlockingError = state.errorMessage != null && state.documents.isEmpty()
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val spacing = dashboardSpacing(maxWidth.value)
@@ -65,120 +96,154 @@ fun UploadedAnalysesScreen(
             modifier = Modifier.fillMaxSize(),
             color = AppBackground
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                UploadedAnalysesTopBar(
-                    state = state,
-                    horizontalPadding = horizontalPadding,
-                    onMenuClick = onMenuClick,
-                    onNotificationsClick = onNotificationsClick,
-                    onInfoClick = onInfoClick,
-                    onUploadClick = onUploadClick
-                )
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    UploadedAnalysesTopBar(
+                        state = state,
+                        horizontalPadding = horizontalPadding,
+                        onMenuClick = onMenuClick,
+                        onNotificationsClick = onNotificationsClick,
+                        onInfoClick = onInfoClick,
+                        onUploadClick = onUploadClick
+                    )
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = horizontalPadding,
-                            top = spacing.sectionGap,
-                            end = horizontalPadding,
-                            bottom = spacing.listItemGap
-                        ),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
+                    Row(
                         modifier = Modifier
-                            .background(Color.White, RoundedCornerShape(999.dp))
-                            .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(999.dp))
-                            .clickable { onSortClick() }
-                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                            .fillMaxWidth()
+                            .padding(
+                                start = horizontalPadding,
+                                top = spacing.sectionGap,
+                                end = horizontalPadding,
+                                bottom = spacing.listItemGap
+                            ),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        Box(
+                            modifier = Modifier
+                                .background(Color.White, RoundedCornerShape(999.dp))
+                                .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(999.dp))
+                                .clickable { onSortClick() }
+                                .padding(horizontal = 16.dp, vertical = 10.dp)
                         ) {
-                            Icon(
-                                imageVector = SortIcon,
-                                contentDescription = null,
-                                tint = Gray500,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = "Sortează",
-                                color = Gray900,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    Box(
-                        modifier = Modifier
-                            .background(Gray50, RoundedCornerShape(999.dp))
-                            .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(999.dp))
-                            .clickable { onSelectClick() }
-                            .padding(horizontal = 16.dp, vertical = 10.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(
-                                imageVector = SelectIcon,
-                                contentDescription = null,
-                                tint = Gray500,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = "Selectează",
-                                color = Gray900,
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
-                }
-
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        start = horizontalPadding,
-                        top = 0.dp,
-                        end = horizontalPadding,
-                        bottom = spacing.bottomSpacer
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(spacing.listItemGap),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    items(state.documents) { document ->
-                        UploadedAnalysisItem(
-                            document = document,
-                            onExplainClick = { },
-                            modifier = Modifier.widthIn(max = 1152.dp)
-                        )
-                    }
-
-                    if (!state.isLoading && state.documents.isEmpty()) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .widthIn(max = 1152.dp)
-                                    .height(200.dp),
-                                contentAlignment = Alignment.Center
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
+                                Icon(
+                                    imageVector = SortIcon,
+                                    contentDescription = null,
+                                    tint = Gray500,
+                                    modifier = Modifier.size(20.dp)
+                                )
                                 Text(
-                                    text = "Nu există analize încărcate.",
-                                    color = Gray500,
+                                    text = "Sorteaz\u0103",
+                                    color = Gray900,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        Box(
+                            modifier = Modifier
+                                .background(Gray50, RoundedCornerShape(999.dp))
+                                .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(999.dp))
+                                .clickable { onSelectClick() }
+                                .padding(horizontal = 16.dp, vertical = 10.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = SelectIcon,
+                                    contentDescription = null,
+                                    tint = Gray500,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "Selecteaz\u0103",
+                                    color = Gray900,
+                                    fontWeight = FontWeight.Medium,
                                     fontSize = 14.sp
                                 )
                             }
                         }
                     }
+
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            start = horizontalPadding,
+                            top = 0.dp,
+                            end = horizontalPadding,
+                            bottom = spacing.bottomSpacer
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(spacing.listItemGap),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        items(state.documents) { document ->
+                            UploadedAnalysisItem(
+                                document = document,
+                                onExplainClick = { },
+                                modifier = Modifier.widthIn(max = 1152.dp)
+                            )
+                        }
+
+                        if (!state.isLoading && state.documents.isEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .widthIn(max = 1152.dp)
+                                        .height(200.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Nu exist\u0103 analize \u00EEnc\u0103rcate.",
+                                        color = Gray500,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
+
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .navigationBarsPadding()
+                        .padding(16.dp)
+                ) { data: SnackbarData ->
+                    Snackbar(data)
+                }
+
+                if (state.isLoading && state.documents.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.White.copy(alpha = 0.7f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        LoadingIndicator(message = "Se \u00EEncarc\u0103...")
+                    }
+                }
+            }
+        }
+
+        if (showBlockingError) {
+            state.errorMessage?.let { message ->
+                ErrorDialog(
+                    message = message,
+                    title = "Analize \u00EEnc\u0103rcate",
+                    onDismiss = { },
+                    onRetry = { viewModel.refreshDocuments() }
+                )
             }
         }
     }

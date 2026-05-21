@@ -164,7 +164,7 @@ fun MedicineItemRow(item: MedicineItem) {
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = item.dosage,
+                    text = "${item.doseValue} ${item.doseUnitLabel}",
                     color = Gray500,
                     fontSize = 13.sp,
                     lineHeight = 18.sp

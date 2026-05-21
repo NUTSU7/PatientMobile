@@ -1,6 +1,7 @@
 package com.semanticsoft.patientmobile.data.local.datastore
 
 import android.content.Context
+import com.semanticsoft.patientmobile.domain.model.User
 
 class EncryptedTokenManager(context: Context) : TokenManager {
     private val secureTokenStore = SecureTokenStore(context.applicationContext)
@@ -15,5 +16,15 @@ class EncryptedTokenManager(context: Context) : TokenManager {
 
     override fun clearTokens() {
         secureTokenStore.clearTokens()
+    }
+
+    override fun saveUser(user: User) {
+        secureTokenStore.saveUser(user)
+    }
+
+    override fun getUser(): User? = secureTokenStore.getUser()
+
+    override fun clearUser() {
+        secureTokenStore.clearUser()
     }
 }

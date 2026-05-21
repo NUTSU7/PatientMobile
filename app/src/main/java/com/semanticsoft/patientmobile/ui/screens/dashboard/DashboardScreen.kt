@@ -58,6 +58,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.BasicIndicatorsCard
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.EmptyUploadCard
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.GeneralMarkersCard
@@ -102,6 +103,7 @@ fun DashboardScreen(
     }
 
     val uploadFileViewModel: UploadFileViewModel = hiltViewModel()
+    val uploadFileState by uploadFileViewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var pendingCameraFile by remember { mutableStateOf<File?>(null) }
 
@@ -316,7 +318,9 @@ fun DashboardScreen(
                                     }
                                 }
                             }
+                        }
 
+                        if (state.generalMarkerCards.isNotEmpty()) {
                             item {
                                 Column(
                                     modifier = Modifier
@@ -434,7 +438,7 @@ fun DashboardScreen(
             exit = slideOutVertically { it } + fadeOut()
         ) {
             UploadFileScreen(
-                state = uploadFileViewModel.state,
+                state = uploadFileState,
                 viewModel = uploadFileViewModel,
                 onDismiss = {
                     uploadFileViewModel.reset()

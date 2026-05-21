@@ -1,34 +1,30 @@
 package com.semanticsoft.patientmobile.ui.shared.upload
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
-import com.semanticsoft.patientmobile.util.exceptions.DocumentScanningUnavailableException
-import com.semanticsoft.patientmobile.util.exceptions.DuplicateDocumentException
-import com.semanticsoft.patientmobile.util.exceptions.FileTooLargeException
-import com.semanticsoft.patientmobile.util.exceptions.MalwareDetectedException
-import com.semanticsoft.patientmobile.util.exceptions.NoInternetException
-import com.semanticsoft.patientmobile.util.exceptions.UnsupportedMediaTypeException
+import com.semanticsoft.patientmobile.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
-import java.io.IOException
 import java.security.MessageDigest
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class UploadFileViewModel @Inject constructor(
-    private val documentRepository: DocumentRepository,
-    private val savedStateHandle: SavedStateHandle
+    private val documentRepository: DocumentRepository
 ) : ViewModel() {
-    var state by mutableStateOf(UploadFileUiState())
-        private set
+
+    private val _state = MutableStateFlow(UploadFileUiState())
+    val state: StateFlow<UploadFileUiState> = _state.asStateFlow()
 
     private val _events = MutableSharedFlow<UploadFileEvent>()
     val events = _events.asSharedFlow()
@@ -49,42 +45,44 @@ class UploadFileViewModel @Inject constructor(
         }
 
         if (validFiles.isEmpty()) {
-            val current = state.selectedFiles
+            val current = _state.value.selectedFiles
             if (current.all { it.status != UploadStatus.ERROR }) return
             val updated = current.map { file ->
                 if (file.status == UploadStatus.PENDING || file.status == UploadStatus.UPLOADING) {
                     file.copy(errorMessage = "Niciun fi\u0219ier valid selectat.")
                 } else file
             }
-            state = state.copy(selectedFiles = updated)
+            _state.update { it.copy(selectedFiles = updated) }
             return
         }
 
-        state = state.copy(
-            selectedFiles = state.selectedFiles + validFiles,
-            uploadComplete = false,
-            isSystemicError = false
-        )
+        _state.update {
+            it.copy(
+                selectedFiles = it.selectedFiles + validFiles,
+                uploadComplete = false,
+                isSystemicError = false
+            )
+        }
     }
 
     fun startUpload() {
-        if (state.isUploading) return
-        if (state.selectedFiles.none {
+        if (_state.value.isUploading) return
+        if (_state.value.selectedFiles.none {
                 it.status == UploadStatus.PENDING || it.status == UploadStatus.ERROR
             }) return
 
         viewModelScope.launch {
-            state = state.copy(isUploading = true, isSystemicError = false)
+            _state.update { it.copy(isUploading = true, isSystemicError = false) }
 
-            val pendingIndices = state.selectedFiles.mapIndexedNotNull { idx, f ->
+            val pendingIndices = _state.value.selectedFiles.mapIndexedNotNull { idx, f ->
                 if (f.status == UploadStatus.PENDING) idx else null
             }
 
             val checksumMap = mutableMapOf<Int, String>()
             for (index in pendingIndices) {
-                val f = state.selectedFiles[index]
+                val f = _state.value.selectedFiles[index]
                 val file = resolveFile(f.uri) ?: continue
-                val checksum = computeSha256(file)
+                val checksum = withContext(Dispatchers.IO) { computeSha256(file) }
                 if (checksum != null) {
                     checksumMap[index] = checksum
                 }
@@ -92,92 +90,147 @@ class UploadFileViewModel @Inject constructor(
 
             if (checksumMap.isNotEmpty()) {
                 val uniqueChecksums = checksumMap.values.toList()
-                val matches = documentRepository.checkDuplicates(uniqueChecksums)
-                val matchedChecksums = matches.map { it.checksum }.toSet()
-
-                if (matchedChecksums.isNotEmpty()) {
-                    val files = state.selectedFiles.toMutableList()
-                    for ((index, checksum) in checksumMap) {
-                        if (checksum in matchedChecksums) {
-                            files[index] = files[index].copy(
-                                status = UploadStatus.ERROR,
-                                errorMessage = "Fi\u0219ierul este deja \u00EEnc\u0103rcat.",
-                                errorType = ErrorType.DUPLICATE,
-                                errorIcon = FileErrorIcon.DELETE
-                            )
+                when (val dupResult = documentRepository.checkDuplicates(uniqueChecksums)) {
+                    is ApiResult.Success -> {
+                        val matchedChecksums = dupResult.data.map { it.checksum }.toSet()
+                        if (matchedChecksums.isNotEmpty()) {
+                            _state.update { current ->
+                                val files = current.selectedFiles.toMutableList()
+                                for ((index, checksum) in checksumMap) {
+                                    if (checksum in matchedChecksums) {
+                                        files[index] = files[index].copy(
+                                            status = UploadStatus.ERROR,
+                                            errorMessage = "Fi\u0219ierul este deja \u00EEnc\u0103rcat.",
+                                            errorType = ErrorType.DUPLICATE,
+                                            errorIcon = FileErrorIcon.DELETE
+                                        )
+                                    }
+                                }
+                                current.copy(selectedFiles = files)
+                            }
                         }
                     }
-                    state = state.copy(selectedFiles = files)
+                    else -> {}
                 }
             }
 
             while (true) {
-                val pendingIndex = state.selectedFiles.indexOfFirst {
+                val pendingIndex = _state.value.selectedFiles.indexOfFirst {
                     it.status == UploadStatus.PENDING
                 }
                 if (pendingIndex == -1) break
 
-                val file = state.selectedFiles[pendingIndex]
+                val file = _state.value.selectedFiles[pendingIndex]
 
-                val updated = state.selectedFiles.toMutableList()
-                updated[pendingIndex] = file.copy(status = UploadStatus.UPLOADING, errorMessage = null)
-                state = state.copy(selectedFiles = updated)
+                _state.update { current ->
+                    val updated = current.selectedFiles.toMutableList()
+                    updated[pendingIndex] = file.copy(status = UploadStatus.UPLOADING, errorMessage = null)
+                    current.copy(selectedFiles = updated)
+                }
 
-                try {
-                    val f = resolveFile(file.uri) ?: throw IllegalStateException("Fi\u0219ier neg\u0103sit.")
-                    documentRepository.uploadDocument(f)
+                val f = resolveFile(file.uri)
+                if (f == null) {
+                    _state.update { current ->
+                        val afterError = current.selectedFiles.toMutableList()
+                        afterError[pendingIndex] = file.copy(
+                            status = UploadStatus.ERROR,
+                            errorMessage = "Fi\u0219ier neg\u0103sit.",
+                            errorType = ErrorType.FILE_ERROR,
+                            errorIcon = FileErrorIcon.DELETE
+                        )
+                        current.copy(selectedFiles = afterError)
+                    }
+                    continue
+                }
 
-                    val afterSuccess = state.selectedFiles.toMutableList()
-                    afterSuccess.removeAt(pendingIndex)
-                    state = state.copy(selectedFiles = afterSuccess)
-                } catch (throwable: Throwable) {
-                    if (throwable is DuplicateDocumentException) {
-                        val afterSuccess = state.selectedFiles.toMutableList()
-                        afterSuccess.removeAt(pendingIndex)
-                        state = state.copy(selectedFiles = afterSuccess)
-                        continue
+                when (val uploadResult = documentRepository.uploadDocument(f)) {
+                    is ApiResult.Success -> {
+                        _state.update { current ->
+                            val afterSuccess = current.selectedFiles.toMutableList()
+                            afterSuccess.removeAt(pendingIndex)
+                            current.copy(selectedFiles = afterSuccess)
+                        }
                     }
-                    val message = when (throwable) {
-                        is FileTooLargeException -> "Fi\u0219ier prea mare (max 10 MB)."
-                        is UnsupportedMediaTypeException -> "Format nesuportat (PDF, JPG, JPEG, PNG)."
-                        is MalwareDetectedException -> "Fi\u0219ierul a e\u0219uat scanarea de securitate."
-                        is DocumentScanningUnavailableException -> "Serverul este \u00EEn mentenan\u021B\u0103."
-                        is NoInternetException -> throwable.message ?: "Nu exist\u0103 conexiune la internet."
-                        else -> "Eroare de conexiune. Apas\u0103 pentru a re\u00EEncerca."
+                    is ApiResult.HttpError -> {
+                        if (uploadResult.code == 409) {
+                            _state.update { current ->
+                                val afterSuccess = current.selectedFiles.toMutableList()
+                                afterSuccess.removeAt(pendingIndex)
+                                current.copy(selectedFiles = afterSuccess)
+                            }
+                            continue
+                        }
+                        val message = when (uploadResult.code) {
+                            413 -> "Fi\u0219ier prea mare (max 10 MB)."
+                            415 -> "Format nesuportat (PDF, JPG, JPEG, PNG)."
+                            422 -> "Fi\u0219ierul a e\u0219uat scanarea de securitate."
+                            503 -> "Serverul este \u00EEn mentenan\u021B\u0103."
+                            else -> uploadResult.message.ifBlank { "Eroare de conexiune." }
+                        }
+                        val errorType = when (uploadResult.code) {
+                            413, 415, 422 -> ErrorType.FILE_ERROR
+                            503 -> ErrorType.SYSTEMIC
+                            else -> ErrorType.NETWORK
+                        }
+                        val keepIcon = when (errorType) {
+                            ErrorType.NETWORK -> FileErrorIcon.RETRY
+                            else -> FileErrorIcon.DELETE
+                        }
+                        _state.update { current ->
+                            val afterError = current.selectedFiles.toMutableList()
+                            afterError[pendingIndex] = file.copy(
+                                status = UploadStatus.ERROR,
+                                errorMessage = message,
+                                errorType = errorType,
+                                errorIcon = keepIcon
+                            )
+                            current.copy(
+                                selectedFiles = afterError,
+                                isSystemicError = errorType == ErrorType.SYSTEMIC
+                            )
+                        }
                     }
-                    val errorType = when (throwable) {
-                        is FileTooLargeException, is UnsupportedMediaTypeException,
-                        is MalwareDetectedException -> ErrorType.FILE_ERROR
-                        is DocumentScanningUnavailableException, is NoInternetException -> ErrorType.SYSTEMIC
-                        else -> ErrorType.NETWORK
+                    is ApiResult.NetworkError -> {
+                        _state.update { current ->
+                            val afterError = current.selectedFiles.toMutableList()
+                            afterError[pendingIndex] = file.copy(
+                                status = UploadStatus.ERROR,
+                                errorMessage = "Nu exist\u0103 conexiune la internet.",
+                                errorType = ErrorType.SYSTEMIC,
+                                errorIcon = FileErrorIcon.RETRY
+                            )
+                            current.copy(
+                                selectedFiles = afterError,
+                                isSystemicError = true
+                            )
+                        }
                     }
-                    val keepIcon = when (errorType) {
-                        ErrorType.NETWORK -> FileErrorIcon.RETRY
-                        else -> FileErrorIcon.DELETE
+                    is ApiResult.AuthError -> {
+                        _state.update { current ->
+                            val afterError = current.selectedFiles.toMutableList()
+                            afterError[pendingIndex] = file.copy(
+                                status = UploadStatus.ERROR,
+                                errorMessage = "Session expired.",
+                                errorType = ErrorType.NETWORK,
+                                errorIcon = FileErrorIcon.RETRY
+                            )
+                            current.copy(selectedFiles = afterError)
+                        }
                     }
-                    val afterError = state.selectedFiles.toMutableList()
-                    afterError[pendingIndex] = file.copy(
-                        status = UploadStatus.ERROR,
-                        errorMessage = message,
-                        errorType = errorType,
-                        errorIcon = keepIcon
-                    )
-                    state = state.copy(
-                        selectedFiles = afterError,
-                        isSystemicError = errorType == ErrorType.SYSTEMIC
-                    )
                 }
             }
 
-            val allGone = state.selectedFiles.isEmpty()
-            val hasErrors = state.selectedFiles.any { it.status == UploadStatus.ERROR }
-            val hasNetworkError = state.selectedFiles.any { it.errorType == ErrorType.NETWORK }
+            val allGone = _state.value.selectedFiles.isEmpty()
+            val hasErrors = _state.value.selectedFiles.any { it.status == UploadStatus.ERROR }
+            val hasNetworkError = _state.value.selectedFiles.any { it.errorType == ErrorType.NETWORK }
 
-            state = state.copy(
-                isUploading = false,
-                uploadComplete = allGone && !hasErrors,
-                hasNetworkError = hasNetworkError
-            )
+            _state.update {
+                it.copy(
+                    isUploading = false,
+                    uploadComplete = allGone && !hasErrors,
+                    hasNetworkError = hasNetworkError
+                )
+            }
 
             if (allGone && !hasErrors) {
                 _events.emit(UploadFileEvent.AllFilesUploaded)
@@ -186,32 +239,28 @@ class UploadFileViewModel @Inject constructor(
     }
 
     fun retryFile(index: Int) {
-        if (state.isUploading) return
-        val files = state.selectedFiles.toMutableList()
+        if (_state.value.isUploading) return
+        val files = _state.value.selectedFiles.toMutableList()
         if (index !in files.indices) return
         files[index] = files[index].copy(status = UploadStatus.PENDING, errorMessage = null, errorType = null, errorIcon = null)
-        state = state.copy(selectedFiles = files)
+        _state.update { it.copy(selectedFiles = files) }
         startUpload()
     }
 
     fun removeFile(index: Int) {
-        if (state.isUploading) return
-        val updated = state.selectedFiles.toMutableList().apply { removeAt(index) }
+        if (_state.value.isUploading) return
+        val updated = _state.value.selectedFiles.toMutableList().apply { removeAt(index) }
         val hasSystemic = updated.any { it.errorType == ErrorType.SYSTEMIC }
         val hasNetwork = updated.any { it.errorType == ErrorType.NETWORK }
-        state = state.copy(
-            selectedFiles = updated,
-            isSystemicError = hasSystemic,
-            hasNetworkError = hasNetwork
-        )
+        _state.update { it.copy(selectedFiles = updated, isSystemicError = hasSystemic, hasNetworkError = hasNetwork) }
     }
 
     fun resetUploadComplete() {
-        state = state.copy(uploadComplete = false)
+        _state.update { it.copy(uploadComplete = false) }
     }
 
     fun reset() {
-        state = UploadFileUiState()
+        _state.update { UploadFileUiState() }
     }
 
     private fun resolveFile(uri: String): File? {

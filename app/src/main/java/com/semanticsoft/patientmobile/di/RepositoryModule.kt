@@ -1,22 +1,24 @@
 package com.semanticsoft.patientmobile.di
 
 import android.content.Context
-import com.semanticsoft.patientmobile.data.local.dao.AuditLogDao
-import com.semanticsoft.patientmobile.data.local.dao.DocumentDao
-import com.semanticsoft.patientmobile.data.local.dao.MedicalResultDao
-import com.semanticsoft.patientmobile.data.local.dao.UserDao
 import com.semanticsoft.patientmobile.data.local.datastore.TokenManager
 import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
 import com.semanticsoft.patientmobile.data.repository.AlwaysOnlineStateProvider
-import com.semanticsoft.patientmobile.data.repository.AuditRepositoryImpl
 import com.semanticsoft.patientmobile.data.repository.AuthRepositoryImpl
+import com.semanticsoft.patientmobile.data.repository.DashboardRepositoryImpl
 import com.semanticsoft.patientmobile.data.repository.DocumentRepositoryImpl
+import com.semanticsoft.patientmobile.data.repository.MedicalHistoryRepositoryImpl
 import com.semanticsoft.patientmobile.data.repository.MedicalResultRepositoryImpl
 import com.semanticsoft.patientmobile.data.repository.NetworkStateProvider
-import com.semanticsoft.patientmobile.domain.repository.AuditRepository
+import com.semanticsoft.patientmobile.data.repository.OcrRepositoryImpl
+import com.semanticsoft.patientmobile.data.repository.SharedLinkRepositoryImpl
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
+import com.semanticsoft.patientmobile.domain.repository.DashboardRepository
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
+import com.semanticsoft.patientmobile.domain.repository.MedicalHistoryRepository
 import com.semanticsoft.patientmobile.domain.repository.MedicalResultRepository
+import com.semanticsoft.patientmobile.domain.repository.OcrRepository
+import com.semanticsoft.patientmobile.domain.repository.SharedLinkRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,32 +38,49 @@ object RepositoryModule {
     @Singleton
     fun provideAuthRepository(
         apiService: PatientApiService,
-        userDao: UserDao,
         tokenManager: TokenManager
-    ): AuthRepository = AuthRepositoryImpl(apiService, userDao, tokenManager)
+    ): AuthRepository = AuthRepositoryImpl(apiService, tokenManager)
 
     @Provides
     @Singleton
     fun provideDocumentRepository(
         @ApplicationContext context: Context,
         apiService: PatientApiService,
-        documentDao: DocumentDao,
         networkStateProvider: NetworkStateProvider
-    ): DocumentRepository = DocumentRepositoryImpl(context, apiService, documentDao, networkStateProvider)
+    ): DocumentRepository = DocumentRepositoryImpl(context, apiService, networkStateProvider)
 
     @Provides
     @Singleton
     fun provideMedicalResultRepository(
         apiService: PatientApiService,
-        medicalResultDao: MedicalResultDao,
         networkStateProvider: NetworkStateProvider
-    ): MedicalResultRepository = MedicalResultRepositoryImpl(apiService, medicalResultDao, networkStateProvider)
+    ): MedicalResultRepository = MedicalResultRepositoryImpl(apiService, networkStateProvider)
 
     @Provides
     @Singleton
-    fun provideAuditRepository(
-        auditLogDao: AuditLogDao,
-        userDao: UserDao,
+    fun provideOcrRepository(
+        apiService: PatientApiService,
         networkStateProvider: NetworkStateProvider
-    ): AuditRepository = AuditRepositoryImpl(auditLogDao, userDao, networkStateProvider)
+    ): OcrRepository = OcrRepositoryImpl(apiService, networkStateProvider)
+
+    @Provides
+    @Singleton
+    fun provideDashboardRepository(
+        apiService: PatientApiService,
+        networkStateProvider: NetworkStateProvider
+    ): DashboardRepository = DashboardRepositoryImpl(apiService, networkStateProvider)
+
+    @Provides
+    @Singleton
+    fun provideMedicalHistoryRepository(
+        apiService: PatientApiService,
+        networkStateProvider: NetworkStateProvider
+    ): MedicalHistoryRepository = MedicalHistoryRepositoryImpl(apiService, networkStateProvider)
+
+    @Provides
+    @Singleton
+    fun provideSharedLinkRepository(
+        apiService: PatientApiService,
+        networkStateProvider: NetworkStateProvider
+    ): SharedLinkRepository = SharedLinkRepositoryImpl(apiService, networkStateProvider)
 }

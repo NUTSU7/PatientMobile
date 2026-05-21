@@ -1,11 +1,6 @@
 package com.semanticsoft.patientmobile.data.repository
 
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.semanticsoft.patientmobile.data.local.dao.UserDao
 import com.semanticsoft.patientmobile.data.local.datastore.TokenManager
-import com.semanticsoft.patientmobile.data.local.db.PatientDatabase
 import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
 import com.semanticsoft.patientmobile.data.remote.api.ResponseEntity
 import com.semanticsoft.patientmobile.data.remote.api.dto.AuthResponse
@@ -16,49 +11,25 @@ import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.UserDto
 import com.semanticsoft.patientmobile.domain.model.MedicalResult
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
-import com.semanticsoft.patientmobile.domain.model.SyncStatus
 import com.semanticsoft.patientmobile.domain.model.User
 import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Before
+import org.junit.Assert.assertNull
 import org.junit.Test
-import org.junit.runner.RunWith
-import retrofit2.Response
 
-@RunWith(AndroidJUnit4::class)
 class AuthFlowInstrumentedTest {
 
-    private lateinit var db: PatientDatabase
-    private lateinit var userDao: UserDao
-    private lateinit var tokenManager: InMemoryTokenManager
-    private lateinit var repository: AuthRepositoryImpl
-
-    @Before
-    fun setup() {
-        db = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(),
-            PatientDatabase::class.java
-        ).allowMainThreadQueries().build()
-
-        userDao = db.userDao()
-        tokenManager = InMemoryTokenManager()
-        repository = AuthRepositoryImpl(FakePatientApiService(), userDao, tokenManager)
-    }
-
-    @After
-    fun tearDown() {
-        db.close()
-    }
+    private val tokenManager = InMemoryTokenManager()
+    private val repository = AuthRepositoryImpl(FakePatientApiService(), tokenManager)
 
     @Test
     fun registerLoginRefreshLogout_flow() = runBlocking {
-        val registerResponse = repository.register(
+        val registerResult = repository.register(
             RegisterRequest(
                 email = "john@example.com",
                 password = "Sup3rStrongPassword!",
@@ -68,23 +39,44 @@ class AuthFlowInstrumentedTest {
                 dateOfBirth = "1990-01-01"
             )
         )
-        assertEquals("john@example.com", registerResponse.user.email)
+        assertNotNull(registerResult)
+        assertEquals("john@example.com", (registerResult as? com.semanticsoft.patientmobile.util.ApiResult.Success)?.data?.user?.email)
         assertNotNull(tokenManager.getAccessToken())
 
-        val loginResponse = repository.login("john@example.com", "Sup3rStrongPassword!")
-        assertEquals("john@example.com", loginResponse.user.email)
+        val loginResult = repository.login("john@example.com", "Sup3rStrongPassword!")
+        assertEquals("john@example.com", (loginResult as? com.semanticsoft.patientmobile.util.ApiResult.Success)?.data?.user?.email)
 
-        val refreshResponse = repository.refresh()
-        assertEquals("new_access", refreshResponse.accessToken)
+        val refreshResult = repository.refresh()
+        assertEquals("new_access", (refreshResult as? com.semanticsoft.patientmobile.util.ApiResult.Success)?.data?.accessToken)
+
+        assertTrue(tokenManager.getUser() != null)
 
         repository.logout()
-        assertEquals(null, tokenManager.getAccessToken())
-        assertEquals(null, userDao.getUser())
+        assertNull(tokenManager.getAccessToken())
+        assertNull(tokenManager.getUser())
+    }
+
+    @Test
+    fun isLoggedIn_returnsFalse_afterLogout() = runBlocking {
+        tokenManager.saveTokens("access", "refresh")
+        assertTrue(repository.isLoggedIn())
+
+        tokenManager.clearTokens()
+        assertFalse(repository.isLoggedIn())
+    }
+
+    private fun assertTrue(value: Boolean) {
+        org.junit.Assert.assertTrue(value)
+    }
+
+    private fun assertFalse(value: Boolean) {
+        org.junit.Assert.assertFalse(value)
     }
 
     private class InMemoryTokenManager : TokenManager {
         private var access: String? = null
         private var refresh: String? = null
+        private var user: User? = null
 
         override fun saveTokens(access: String, refresh: String) {
             this.access = access
@@ -98,11 +90,21 @@ class AuthFlowInstrumentedTest {
             access = null
             refresh = null
         }
+
+        override fun saveUser(user: User) {
+            this.user = user
+        }
+
+        override fun getUser(): User? = user
+
+        override fun clearUser() {
+            user = null
+        }
     }
 
     private class FakePatientApiService : PatientApiService {
         override suspend fun register(request: RegisterRequest): ResponseEntity<AuthResponse> {
-            return Response.success(auth("access", "refresh", request.email))
+            return retrofit2.Response.success(auth("access", "refresh", request.email))
         }
 
         override suspend fun login(request: LoginRequest): AuthResponse {
@@ -116,18 +118,16 @@ class AuthFlowInstrumentedTest {
         override suspend fun logout(refreshToken: String) = Unit
 
         override suspend fun getCurrentUser(): User {
-            return User("u1", "john@example.com", "John", "Doe", LocalDate.parse("1990-01-01"))
+            return User("u1", "john@example.com", "John", "Doe", LocalDate.parse("1990-01-01"), "PATIENT", Instant.EPOCH)
         }
 
         override suspend fun uploadDocument(file: MultipartBody.Part): PatientDocument {
             return PatientDocument(
                 id = "d1",
-                ownerUserId = "u1",
                 originalFileName = "doc.pdf",
                 mimeType = "application/pdf",
                 fileSizeBytes = 100,
-                uploadedAt = Instant.now(),
-                syncStatus = SyncStatus.SYNCED
+                uploadedAt = Instant.now()
             )
         }
 
@@ -138,17 +138,19 @@ class AuthFlowInstrumentedTest {
         override suspend fun getDocumentById(id: String): PatientDocument {
             return PatientDocument(
                 id = id,
-                ownerUserId = "u1",
                 originalFileName = "doc.pdf",
                 mimeType = "application/pdf",
                 fileSizeBytes = 100,
-                uploadedAt = Instant.now(),
-                syncStatus = SyncStatus.SYNCED
+                uploadedAt = Instant.now()
             )
         }
 
         override suspend fun downloadDocument(id: String): ResponseBody {
             throw UnsupportedOperationException()
+        }
+
+        override suspend fun getMedicalResultsByDocument(documentId: String): List<MedicalResult> {
+            return emptyList()
         }
 
         override suspend fun getMedicalResults(documentId: String): List<MedicalResult> {
