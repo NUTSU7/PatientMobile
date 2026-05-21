@@ -5,27 +5,20 @@ import com.semanticsoft.patientmobile.BuildConfig
 import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
 import com.semanticsoft.patientmobile.data.remote.interceptors.AuthInterceptor
 import com.semanticsoft.patientmobile.data.remote.interceptors.ErrorInterceptor
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonDeserializationContext
-import com.google.gson.JsonDeserializer
-import com.google.gson.JsonElement
-import com.google.gson.JsonPrimitive
-import com.google.gson.JsonSerializationContext
-import com.google.gson.JsonSerializer
+import com.semanticsoft.patientmobile.data.remote.interceptors.TokenRefreshAuthenticator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import java.lang.reflect.Type
-import java.time.Instant
-import java.time.LocalDate
+import java.util.concurrent.TimeUnit
+import javax.inject.Named
 import javax.inject.Singleton
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import com.semanticsoft.patientmobile.data.remote.KotlinxConverterBridge
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -33,7 +26,16 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthInterceptor(@ApplicationContext context: Context): AuthInterceptor = AuthInterceptor(context)
+    fun provideJson(): Json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        coerceInputValues = true
+    }
+
+    @Provides
+    @Singleton
+    fun provideAuthInterceptor(@ApplicationContext context: Context): AuthInterceptor =
+        AuthInterceptor(context)
 
     @Provides
     @Singleton
@@ -41,34 +43,29 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideGson(): Gson {
-        val localDateSerializer = JsonSerializer<LocalDate> { src: LocalDate?, _: Type?, _: JsonSerializationContext? ->
-            JsonPrimitive(src?.toString())
-        }
-        val localDateDeserializer = JsonDeserializer { json: JsonElement, _: Type, _: JsonDeserializationContext? ->
-            LocalDate.parse(json.asString)
-        }
-
-        val instantSerializer = JsonSerializer<Instant> { src: Instant?, _: Type?, _: JsonSerializationContext? ->
-            JsonPrimitive(src?.toString())
-        }
-        val instantDeserializer = JsonDeserializer { json: JsonElement, _: Type, _: JsonDeserializationContext? ->
-            Instant.parse(json.asString)
-        }
-
-        return GsonBuilder()
-            .registerTypeAdapter(LocalDate::class.java, localDateSerializer)
-            .registerTypeAdapter(LocalDate::class.java, localDateDeserializer)
-            .registerTypeAdapter(Instant::class.java, instantSerializer)
-            .registerTypeAdapter(Instant::class.java, instantDeserializer)
-            .create()
+    @Named("refresh")
+    fun provideRefreshOkHttpClient(): OkHttpClient {
+        return OkHttpClient.Builder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .writeTimeout(15, TimeUnit.SECONDS)
+            .build()
     }
+
+    @Provides
+    @Singleton
+    fun provideTokenRefreshAuthenticator(
+        @ApplicationContext context: Context,
+        @Named("refresh") refreshOkHttpClient: OkHttpClient,
+        json: Json
+    ): TokenRefreshAuthenticator = TokenRefreshAuthenticator(context, refreshOkHttpClient, json)
 
     @Provides
     @Singleton
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
-        errorInterceptor: ErrorInterceptor
+        errorInterceptor: ErrorInterceptor,
+        tokenRefreshAuthenticator: TokenRefreshAuthenticator
     ): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
             level = if (BuildConfig.DEBUG) {
@@ -82,16 +79,20 @@ object NetworkModule {
             .addInterceptor(authInterceptor)
             .addInterceptor(errorInterceptor)
             .addInterceptor(logging)
+            .authenticator(tokenRefreshAuthenticator)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .build()
     }
 
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
+    fun provideRetrofit(okHttpClient: OkHttpClient, json: Json): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create(gson))
+            .addConverterFactory(KotlinxConverterBridge.createFactory(json))
             .build()
     }
 

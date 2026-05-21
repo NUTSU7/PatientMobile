@@ -4,12 +4,18 @@ import java.time.LocalDate
 
 data class MedicalResult(
     val id: String,
+    val testDefinitionId: String? = null,
     val documentId: String,
-    val reportId: String,
-    val analysisType: String,
-    val testName: String,
-    val value: String,
+    val reportId: String? = null,
+    val originalTestName: String,
+    val canonicalName: String,
+    val analysisGroup: String,
+    val valueNumeric: Double? = null,
+    val valueText: String? = null,
     val unit: String,
-    val referenceRange: String,
-    val reportDate: LocalDate
+    val referenceLow: Double? = null,
+    val referenceHigh: Double? = null,
+    val referenceText: String? = null,
+    val abnormalFlag: String? = null,
+    val observedAt: LocalDate? = null
 )

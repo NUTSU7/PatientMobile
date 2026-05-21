@@ -1,16 +1,14 @@
 package com.semanticsoft.patientmobile.data.remote.api.dto
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class PaginatedResponse<T>(
-    @SerializedName(value = "content", alternate = ["items"])
-    val content: List<T> = emptyList(),
-    @SerializedName(value = "pageNumber", alternate = ["page"])
-    val pageNumber: Int = 0,
-    @SerializedName(value = "pageSize", alternate = ["size"])
-    val pageSize: Int = 20,
-    @SerializedName(value = "totalElements", alternate = ["totalItems"])
-    val totalElements: Long = 0,
-    val totalPages: Int = 0,
-    val hasNext: Boolean = false
+    @SerialName("items") val content: List<T> = emptyList(),
+    @SerialName("page") val page: Int = 0,
+    @SerialName("size") val size: Int = 20,
+    @SerialName("totalItems") val totalElements: Long = 0,
+    @SerialName("totalPages") val totalPages: Int = 0,
+    @SerialName("hasNext") val hasNext: Boolean = false
 )

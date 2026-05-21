@@ -1,13 +1,12 @@
 package com.semanticsoft.patientmobile.ui.screens.registration
 
-import androidx.lifecycle.SavedStateHandle
 import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
 import com.semanticsoft.patientmobile.domain.model.AuthResponse
-import com.semanticsoft.patientmobile.domain.model.FieldError
 import com.semanticsoft.patientmobile.domain.model.User
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.testutil.MainDispatcherRule
-import com.semanticsoft.patientmobile.util.exceptions.ApiValidationException
+import com.semanticsoft.patientmobile.util.ApiResult
+import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -26,22 +25,20 @@ class RegistrationViewModelTest {
 
     @Test
     fun register_setsFieldErrors_forInvalidLocalInput() = runTest {
-        val vm = RegistrationViewModel(FakeAuthRepository(), SavedStateHandle())
+        val vm = RegistrationViewModel(FakeAuthRepository())
 
         vm.register()
         advanceUntilIdle()
 
-        assertTrue(vm.state.fieldErrors.isNotEmpty())
-        assertFalse(vm.state.isLoading)
+        assertTrue(vm.state.value.fieldErrors.isNotEmpty())
+        assertFalse(vm.state.value.isLoading)
     }
 
     @Test
-    fun register_surfacesApiFieldErrors() = runTest {
-        val apiEx = ApiValidationException(
-            message = "Validation failed",
-            fieldErrors = listOf(FieldError("email", "Already used", "john@example.com"))
+    fun register_surfacesApiHttpError() = runTest {
+        val vm = RegistrationViewModel(
+            FakeAuthRepository(registerResult = ApiResult.HttpError(422, "Already used"))
         )
-        val vm = RegistrationViewModel(FakeAuthRepository(throwOnRegister = apiEx), SavedStateHandle())
         vm.onNameChange("John Doe")
         vm.onEmailChange("john@example.com")
         vm.onPasswordChange("Sup3rStrongPassword!")
@@ -50,13 +47,29 @@ class RegistrationViewModelTest {
         vm.register()
         advanceUntilIdle()
 
-        assertEquals("Already used", vm.state.fieldErrors["email"])
-        assertEquals("Validation failed", vm.state.errorMessage)
+        assertEquals("Date invalide. Verifică câmpurile.", vm.state.value.errorMessage)
+        assertFalse(vm.state.value.isLoading)
+    }
+
+    @Test
+    fun register_emitsError_forNetworkError() = runTest {
+        val vm = RegistrationViewModel(
+            FakeAuthRepository(registerResult = ApiResult.NetworkError)
+        )
+        vm.onNameChange("John Doe")
+        vm.onEmailChange("john@example.com")
+        vm.onPasswordChange("Sup3rStrongPassword!")
+        vm.onConfirmPasswordChange("Sup3rStrongPassword!")
+
+        vm.register()
+        advanceUntilIdle()
+
+        assertEquals("Nu există conexiune la internet.", vm.state.value.errorMessage)
     }
 
     @Test
     fun register_success_clearsErrors() = runTest {
-        val vm = RegistrationViewModel(FakeAuthRepository(), SavedStateHandle())
+        val vm = RegistrationViewModel(FakeAuthRepository())
         vm.onNameChange("John Doe")
         vm.onEmailChange("john@example.com")
         vm.onPasswordChange("Sup3rStrongPassword!")
@@ -65,33 +78,28 @@ class RegistrationViewModelTest {
         vm.register()
         advanceUntilIdle()
 
-        assertTrue(vm.state.errorMessage == null)
-        assertTrue(vm.state.fieldErrors.isEmpty())
+        assertTrue(vm.state.value.errorMessage == null)
+        assertTrue(vm.state.value.fieldErrors.isEmpty())
     }
 
     private class FakeAuthRepository(
-        private val throwOnRegister: Throwable? = null
-    ) : AuthRepository {
-        override suspend fun login(email: String, password: String): AuthResponse = response(email)
-
-        override suspend fun register(request: RegisterRequest): AuthResponse {
-            throwOnRegister?.let { throw it }
-            return response(request.email)
-        }
-
-        override suspend fun refresh(): AuthResponse = response("john@example.com")
-        override suspend fun logout() = Unit
-        override suspend fun getCurrentUser(): User = User("u1", "john@example.com", "John", "Doe", LocalDate.parse("1990-01-01"))
-
-        private fun response(email: String): AuthResponse {
-            return AuthResponse(
+        private val registerResult: ApiResult<AuthResponse> = ApiResult.Success(
+            AuthResponse(
                 accessToken = "a",
                 refreshToken = "r",
                 tokenType = "BEARER",
                 expiresIn = 1,
                 refreshExpiresIn = 1,
-                user = User("u1", email, "John", "Doe", LocalDate.parse("1990-01-01"))
+                user = User("u1", "john@example.com", "John", "Doe", LocalDate.parse("1990-01-01"), "PATIENT", Instant.EPOCH)
             )
-        }
+        )
+    ) : AuthRepository {
+        override suspend fun login(email: String, password: String): ApiResult<AuthResponse> = registerResult
+        override suspend fun register(request: RegisterRequest): ApiResult<AuthResponse> = registerResult
+        override suspend fun refresh(): ApiResult<AuthResponse> = registerResult
+        override suspend fun logout() = Unit
+        override suspend fun getCurrentUser(): ApiResult<User> =
+            ApiResult.Success(User("u1", "john@example.com", "John", "Doe", LocalDate.parse("1990-01-01"), "PATIENT", Instant.EPOCH))
+        override suspend fun isLoggedIn(): Boolean = true
     }
 }

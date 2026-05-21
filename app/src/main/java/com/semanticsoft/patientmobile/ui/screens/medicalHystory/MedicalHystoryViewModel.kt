@@ -1,23 +1,32 @@
 package com.semanticsoft.patientmobile.ui.screens.medicalHystory
 
-import com.semanticsoft.patientmobile.BuildConfig
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.semanticsoft.patientmobile.domain.repository.AuthRepository
+import com.semanticsoft.patientmobile.domain.model.DoseUnit
+import com.semanticsoft.patientmobile.domain.model.MealRelation
+import com.semanticsoft.patientmobile.domain.model.Medication
+import com.semanticsoft.patientmobile.domain.model.MedicationSchedule
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
+import com.semanticsoft.patientmobile.domain.model.PersonalNote
+import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
-import androidx.compose.ui.graphics.Color
-import com.semanticsoft.patientmobile.util.Resource
+import com.semanticsoft.patientmobile.domain.repository.MedicalHistoryRepository
+import com.semanticsoft.patientmobile.domain.repository.MedicalResultRepository
+import com.semanticsoft.patientmobile.util.ApiResult
+import com.semanticsoft.patientmobile.util.toUserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 enum class MedicalTimelineMode {
@@ -35,12 +44,31 @@ enum class MedicineIconType {
 }
 
 data class MedicineItem(
+    val id: String,
     val name: String,
-    val dosage: String,
-    val schedule: String,
+    val doseValue: Double,
+    val doseUnitLabel: String,
+    val schedules: List<MedicineScheduleUiItem>,
     val daysRemaining: Int,
     val iconType: MedicineIconType = MedicineIconType.PILL
 )
+
+data class MedicineScheduleUiItem(
+    val administrationTime: String,
+    val mealRelationLabel: String?
+)
+
+sealed interface MedicationsState {
+    data object Loading : MedicationsState
+    data class Success(val medications: List<MedicineItem>) : MedicationsState
+    data class Error(val message: String) : MedicationsState
+}
+
+sealed interface PersonalNotesState {
+    data object Loading : PersonalNotesState
+    data class Success(val notes: List<PersonalNoteItem>) : PersonalNotesState
+    data class Error(val message: String) : PersonalNotesState
+}
 
 enum class NoteSeverity {
     GOOD,
@@ -48,59 +76,14 @@ enum class NoteSeverity {
     BAD
 }
 
-private val DEMO_MEDICINES = emptyList<MedicineItem>()
-
-private val DEMO_NOTES = emptyList<PersonalNoteItem>()
-
-private val DEMO_MEDICINES_POPULATED = listOf(
-    MedicineItem(name = "Augmentin 1g", dosage = "1 tablet\u0103 \u2022 De 2 ori pe zi (8:00, 20:00)", schedule = "08:00 \u00B7 20:00", daysRemaining = 7, iconType = MedicineIconType.PILL),
-    MedicineItem(name = "Magnerot 500mg", dosage = "1 tablet\u0103 \u2022 De 3 ori pe zi (8:00, 14:00, 20:00)", schedule = "08:00 \u00B7 14:00 \u00B7 20:00", daysRemaining = 14, iconType = MedicineIconType.PILL),
-    MedicineItem(name = "Vitamina D3 2000 UI", dosage = "1 capsul\u0103 \u2022 O dat\u0103 pe zi (8:00)", schedule = "08:00", daysRemaining = 30, iconType = MedicineIconType.CAPSULE)
-)
-
-private val DEMO_NOTES_POPULATED = listOf(
-    PersonalNoteItem(
-        title = "ALERGIE",
-        content = "Alergie la penicilin\u0103 \u2014 reac\u021Bie sever\u0103 documentat\u0103 \u00EEn 2019.",
-        author = "Dr. Popescu",
-        dateLabel = "15 mar. 2026",
-        severity = NoteSeverity.BAD
-    ),
-    PersonalNoteItem(
-        title = "INTERVEN\u021AIE",
-        content = "Apendicectomie laparoscopic\u0103 efectuat\u0103 \u00EEn 2018. F\u0103r\u0103 complica\u021Bii postoperatorii.",
-        author = "Dr. Ionescu",
-        dateLabel = "03 ian. 2018",
-        severity = NoteSeverity.OK
-    ),
-    PersonalNoteItem(
-        title = "VACCINARE",
-        content = "Vaccinare antigripal\u0103 sezonier\u0103 2025-2026. Reac\u021Bii adverse minore raportate.",
-        author = "Dr. Marinescu",
-        dateLabel = "10 nov. 2025",
-        severity = NoteSeverity.GOOD
-    )
-)
-
-private val DEMO_ANALYSIS_DOCUMENTS = listOf(
-    PatientDocument(
-        id = "demo-doc-1",
-        ownerUserId = "demo-user",
-        originalFileName = "Patient 1-1.pdf",
-        mimeType = "application/pdf",
-        fileSizeBytes = 1_245_338,
-        uploadedAt = Instant.parse("2024-07-11T13:23:00Z"),
-        syncStatus = com.semanticsoft.patientmobile.domain.model.SyncStatus.SYNCED
-    )
-)
-
 data class PersonalNoteItem(
+    val id: String,
     val title: String,
     val content: String,
     val author: String,
     val dateLabel: String,
     val severity: NoteSeverity,
-    val accentColor: Color? = null
+    val accentColor: androidx.compose.ui.graphics.Color? = null
 )
 
 data class MedicalHystoryUiState(
@@ -109,18 +92,16 @@ data class MedicalHystoryUiState(
     val errorMessage: String? = null,
     val allDocuments: List<PatientDocument> = emptyList(),
     val availableYears: List<Int> = emptyList(),
-    val selectedYear: Int = 2024,
+    val selectedYear: Int = LocalDate.now().year,
     val timelineMode: MedicalTimelineMode = MedicalTimelineMode.MONTHS,
     val selectedTimelineValue: Int? = null,
-    val medicines: List<MedicineItem> = DEMO_MEDICINES,
-    val notes: List<PersonalNoteItem> = DEMO_NOTES
+    val medicines: List<MedicineItem> = emptyList(),
+    val notes: List<PersonalNoteItem> = emptyList(),
+    val selectedDocumentId: String? = null,
+    val documentResults: Map<String, List<com.semanticsoft.patientmobile.domain.model.MedicalResult>> = emptyMap()
 ) {
     val analysisDocuments: List<PatientDocument>
-        get() = when {
-            allDocuments.isNotEmpty() -> allDocuments
-            BuildConfig.DEBUG -> DEMO_ANALYSIS_DOCUMENTS
-            else -> emptyList()
-        }
+        get() = allDocuments
 
     val timelineValuesForSelectedYear: List<Int>
         get() = when (timelineMode) {
@@ -146,10 +127,7 @@ data class MedicalHystoryUiState(
         get() {
             return analysisDocuments.filter { document ->
                 val zonedDate = document.uploadedAt.atZone(ZoneId.systemDefault())
-                if (zonedDate.year != selectedYear) {
-                    return@filter false
-                }
-
+                if (zonedDate.year != selectedYear) return@filter false
                 when (timelineMode) {
                     MedicalTimelineMode.MONTHS -> {
                         selectedTimelineValue == null || zonedDate.monthValue == selectedTimelineValue
@@ -165,159 +143,333 @@ data class MedicalHystoryUiState(
 @HiltViewModel
 class MedicalHystoryViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val documentRepository: DocumentRepository
+    private val documentRepository: DocumentRepository,
+    private val medicalResultRepository: MedicalResultRepository,
+    private val medicalHistoryRepository: MedicalHistoryRepository
 ) : ViewModel() {
 
-    private val _stateFlow = MutableStateFlow(MedicalHystoryUiState(isLoading = true))
-    val stateFlow: StateFlow<MedicalHystoryUiState> = _stateFlow.asStateFlow()
+    private val _state = MutableStateFlow(MedicalHystoryUiState(isLoading = true))
+    val state: StateFlow<MedicalHystoryUiState> = _state.asStateFlow()
+
+    private val _refreshErrors = MutableSharedFlow<String>()
+    val refreshErrors: SharedFlow<String> = _refreshErrors.asSharedFlow()
+
+    private val _medicationsState = MutableStateFlow<MedicationsState>(MedicationsState.Loading)
+    val medicationsState: StateFlow<MedicationsState> = _medicationsState.asStateFlow()
+
+    private val _notesState = MutableStateFlow<PersonalNotesState>(PersonalNotesState.Loading)
+    val notesState: StateFlow<PersonalNotesState> = _notesState.asStateFlow()
 
     init {
         refreshUserProfile()
-        refreshDocuments()
+        refresh()
     }
 
-    fun refreshDocuments() {
+    fun refresh() {
         viewModelScope.launch {
-            _stateFlow.value = _stateFlow.value.copy(isLoading = true, errorMessage = null)
-            when (val result = documentRepository.getDocuments().first { it !is Resource.Loading }) {
-                is Resource.Error -> {
-                    _stateFlow.value = _stateFlow.value.copy(
-                        isLoading = false,
-                        errorMessage = result.message
-                    )
+            val hasData = _state.value.allDocuments.isNotEmpty()
+            if (!hasData) {
+                _state.update { it.copy(isLoading = true, errorMessage = null) }
+            }
+
+            var errorMessage: String? = null
+
+            val documents = when (val result = documentRepository.getDocuments(0, 50)) {
+                is ApiResult.Success -> result.data
+                is ApiResult.HttpError -> {
+                    errorMessage = result.toUserMessage()
+                    emptyList()
                 }
-                is Resource.Success -> {
-                    val data = if (result.data.isNotEmpty() || !BuildConfig.DEBUG) {
-                        result.data
-                    } else {
-                        DEMO_ANALYSIS_DOCUMENTS
-                    }
-                    val years = data
-                        .map { it.uploadedAt.atZone(ZoneId.systemDefault()).year }
-                        .distinct()
-                        .sortedDescending()
-                    val currentYear = java.time.LocalDate.now().year
-                    val selectedYear = when {
-                        years.contains(_stateFlow.value.selectedYear) -> _stateFlow.value.selectedYear
-                        years.contains(currentYear) -> currentYear
-                        years.isNotEmpty() -> years.first()
-                        else -> currentYear
-                    }
-
-                    val updatedState = _stateFlow.value.copy(
-                        isLoading = false,
-                        errorMessage = null,
-                        allDocuments = data,
-                        availableYears = years,
-                        selectedYear = selectedYear
-                    )
-
-                    val latestMonthInYear = data
-                        .filter { it.uploadedAt.atZone(ZoneId.systemDefault()).year == selectedYear }
-                        .maxByOrNull { it.uploadedAt }
-                        ?.uploadedAt
-                        ?.atZone(ZoneId.systemDefault())
-                        ?.monthValue
-
-                    _stateFlow.value = updatedState.copy(
-                        selectedTimelineValue = latestMonthInYear
-                            ?: updatedState.timelineValuesForSelectedYear.firstOrNull()
-                    )
+                is ApiResult.NetworkError -> {
+                    errorMessage = result.toUserMessage()
+                    emptyList()
                 }
-                Resource.Loading -> Unit
+                is ApiResult.AuthError -> {
+                    errorMessage = result.toUserMessage()
+                    emptyList()
+                }
+            }
+
+            if (errorMessage != null && hasData) {
+                _refreshErrors.emit(errorMessage)
+                return@launch
+            }
+
+            val years = documents
+                .map { it.uploadedAt.atZone(ZoneId.systemDefault()).year }
+                .distinct()
+                .sortedDescending()
+            val currentYear = LocalDate.now().year
+            val selectedYear = when {
+                years.contains(_state.value.selectedYear) -> _state.value.selectedYear
+                years.contains(currentYear) -> currentYear
+                years.isNotEmpty() -> years.first()
+                else -> currentYear
+            }
+            val latestMonthInYear = documents
+                .filter { it.uploadedAt.atZone(ZoneId.systemDefault()).year == selectedYear }
+                .maxByOrNull { it.uploadedAt }
+                ?.uploadedAt
+                ?.atZone(ZoneId.systemDefault())
+                ?.monthValue
+
+            val medicines = when (val result = medicalHistoryRepository.getMedications()) {
+                is ApiResult.Success -> {
+                    val items = result.data.map { it.toUiItem() }
+                    _medicationsState.update { MedicationsState.Success(items) }
+                    items
+                }
+                else -> {
+                    val msg = result.toUserMessage()
+                    _medicationsState.update { MedicationsState.Error(msg) }
+                    _state.value.medicines
+                }
+            }
+
+            val notes = when (val result = medicalHistoryRepository.getNotes()) {
+                is ApiResult.Success -> {
+                    val items = result.data.map { it.toUiItem() }
+                    _notesState.update { PersonalNotesState.Success(items) }
+                    items
+                }
+                else -> {
+                    val msg = result.toUserMessage()
+                    _notesState.update { PersonalNotesState.Error(msg) }
+                    _state.value.notes
+                }
+            }
+
+            _state.update {
+                it.copy(
+                    isLoading = false,
+                    errorMessage = errorMessage,
+                    allDocuments = documents,
+                    availableYears = years,
+                    selectedYear = selectedYear,
+                    selectedTimelineValue = latestMonthInYear
+                        ?: it.timelineValuesForSelectedYear.firstOrNull(),
+                    medicines = medicines,
+                    notes = notes
+                )
+            }
+        }
+    }
+
+    fun onDocumentSelected(documentId: String) {
+        _state.update { it.copy(selectedDocumentId = documentId) }
+        if (_state.value.documentResults.containsKey(documentId)) return
+
+        viewModelScope.launch {
+            when (val result = medicalResultRepository.getByDocumentId(documentId)) {
+                is ApiResult.Success -> {
+                    _state.update { current ->
+                        current.copy(
+                            documentResults = current.documentResults + (documentId to result.data)
+                        )
+                    }
+                }
+                else -> {}
             }
         }
     }
 
     fun onTimelineModeChange(mode: MedicalTimelineMode) {
-        val updated = _stateFlow.value.copy(timelineMode = mode)
-        _stateFlow.value = updated.copy(
-            selectedTimelineValue = updated.timelineValuesForSelectedYear.firstOrNull()
-        )
+        _state.update { current ->
+            val updated = current.copy(timelineMode = mode)
+            updated.copy(selectedTimelineValue = updated.timelineValuesForSelectedYear.firstOrNull())
+        }
     }
 
     fun onYearSelected(year: Int) {
-        val updated = _stateFlow.value.copy(selectedYear = year)
-        _stateFlow.value = updated.copy(
-            selectedTimelineValue = updated.timelineValuesForSelectedYear.firstOrNull()
-        )
+        _state.update { current ->
+            val updated = current.copy(selectedYear = year)
+            updated.copy(selectedTimelineValue = updated.timelineValuesForSelectedYear.firstOrNull())
+        }
     }
 
     fun selectPreviousYear() {
-        val years = _stateFlow.value.availableYears
+        val years = _state.value.availableYears
         if (years.isEmpty()) return
-
-        val currentIndex = years.indexOf(_stateFlow.value.selectedYear)
+        val currentIndex = years.indexOf(_state.value.selectedYear)
         if (currentIndex >= 0 && currentIndex < years.lastIndex) {
             onYearSelected(years[currentIndex + 1])
         }
     }
 
     fun selectNextYear() {
-        val years = _stateFlow.value.availableYears
+        val years = _state.value.availableYears
         if (years.isEmpty()) return
-
-        val currentIndex = years.indexOf(_stateFlow.value.selectedYear)
+        val currentIndex = years.indexOf(_state.value.selectedYear)
         if (currentIndex > 0) {
             onYearSelected(years[currentIndex - 1])
         }
     }
 
     fun onTimelineValueSelected(value: Int?) {
-        _stateFlow.value = _stateFlow.value.copy(selectedTimelineValue = value)
+        _state.update { it.copy(selectedTimelineValue = value) }
     }
 
-    fun addMedicine(name: String, dosage: String, schedule: String, daysRemaining: Int, iconType: MedicineIconType = MedicineIconType.PILL) {
-        val current = _stateFlow.value.medicines.toMutableList()
-        current.add(0, MedicineItem(name = name, dosage = dosage, schedule = schedule, daysRemaining = daysRemaining, iconType = iconType))
-        _stateFlow.value = _stateFlow.value.copy(medicines = current)
+    fun addMedicine(
+        name: String,
+        dosage: String,
+        schedule: String,
+        daysRemaining: Int,
+        iconType: MedicineIconType = MedicineIconType.PILL
+    ) {
+        viewModelScope.launch {
+            val schedules = schedule.split("·", ",")
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+                .map {
+                    MedicationSchedule(
+                        administrationTime = it,
+                        mealRelation = MealRelation.NO_MEAL_RELATION
+                    )
+                }
+                .ifEmpty {
+                    listOf(
+                        MedicationSchedule(
+                            administrationTime = schedule,
+                            mealRelation = MealRelation.NO_MEAL_RELATION
+                        )
+                    )
+                }
+
+            val medication = Medication(
+                id = "",
+                name = name,
+                doseValue = 1.0,
+                doseUnit = DoseUnit.TABLET,
+                doseUnitLabel = "tablet",
+                schedules = schedules,
+                createdAt = null
+            )
+
+            when (val result = medicalHistoryRepository.createMedication(medication)) {
+                is ApiResult.Success -> {
+                    _state.update { current ->
+                        current.copy(
+                            medicines = listOf(result.data.toUiItem(daysRemaining, iconType))
+                                    + current.medicines
+                        )
+                    }
+                    (medicationsState.value as? MedicationsState.Success)?.let { currentState ->
+                        _medicationsState.update {
+                            MedicationsState.Success(
+                                listOf(result.data.toUiItem(daysRemaining, iconType))
+                                    + currentState.medications
+                            )
+                        }
+                    }
+                }
+                else -> {}
+            }
+        }
     }
 
-    fun addNote(title: String, content: String, author: String = "Me", severity: NoteSeverity = NoteSeverity.OK) {
-        val note = PersonalNoteItem(
-            title = title,
-            content = content,
-            author = author,
-            dateLabel = LocalDate.now().toString(),
-            severity = severity
-        )
-        val current = _stateFlow.value.notes.toMutableList()
-        current.add(0, note)
-        _stateFlow.value = _stateFlow.value.copy(notes = current)
+    fun addNote(
+        title: String,
+        content: String,
+        author: String = "Me",
+        severity: NoteSeverity = NoteSeverity.OK
+    ) {
+        viewModelScope.launch {
+            val note = PersonalNote(
+                id = "",
+                analysisName = title,
+                doctorLocation = author,
+                clinicalObservations = content,
+                noteDate = LocalDate.now()
+            )
+            when (val result = medicalHistoryRepository.createNote(note)) {
+                is ApiResult.Success -> {
+                    _state.update { current ->
+                        current.copy(
+                            notes = listOf(result.data.toUiItem(severity)) + current.notes
+                        )
+                    }
+                    (notesState.value as? PersonalNotesState.Success)?.let { currentState ->
+                        _notesState.update {
+                            PersonalNotesState.Success(
+                                listOf(result.data.toUiItem(severity)) + currentState.notes
+                            )
+                        }
+                    }
+                }
+                else -> {}
+            }
+        }
     }
 
     fun attachFile(document: PatientDocument) {
-        val current = listOf(document) + _stateFlow.value.allDocuments
-        val years = current
-            .map { it.uploadedAt.atZone(ZoneId.systemDefault()).year }
-            .distinct()
-            .sortedDescending()
-        val currentYear = java.time.LocalDate.now().year
-        val selectedYear = when {
-            years.contains(_stateFlow.value.selectedYear) -> _stateFlow.value.selectedYear
-            years.contains(currentYear) -> currentYear
-            years.isNotEmpty() -> years.first()
-            else -> currentYear
+        _state.update { current ->
+            val docs = listOf(document) + current.allDocuments
+            val years = docs
+                .map { it.uploadedAt.atZone(ZoneId.systemDefault()).year }
+                .distinct()
+                .sortedDescending()
+            val currentYear = LocalDate.now().year
+            val selectedYear = when {
+                years.contains(current.selectedYear) -> current.selectedYear
+                years.contains(currentYear) -> currentYear
+                years.isNotEmpty() -> years.first()
+                else -> currentYear
+            }
+            val updatedState = current.copy(
+                allDocuments = docs,
+                availableYears = years,
+                selectedYear = selectedYear
+            )
+            updatedState.copy(
+                selectedTimelineValue = updatedState.timelineValuesForSelectedYear.firstOrNull()
+            )
         }
-
-        val updatedState = _stateFlow.value.copy(
-            allDocuments = current,
-            availableYears = years,
-            selectedYear = selectedYear
-        )
-        _stateFlow.value = updatedState.copy(
-            selectedTimelineValue = updatedState.timelineValuesForSelectedYear.firstOrNull()
-        )
     }
 
     private fun refreshUserProfile() {
         viewModelScope.launch {
-            runCatching { authRepository.getCurrentUser() }
-                .onSuccess { user ->
+            when (val result = authRepository.getCurrentUser()) {
+                is ApiResult.Success -> {
+                    val user = result.data
                     val greetingName = user.firstName.ifBlank { user.email.substringBefore("@") }
-                    _stateFlow.value = _stateFlow.value.copy(greetingName = greetingName)
+                    _state.update { it.copy(greetingName = greetingName) }
                 }
+                else -> {}
+            }
         }
+    }
+
+    private fun Medication.toUiItem(
+        daysRemaining: Int = 0,
+        iconType: MedicineIconType = MedicineIconType.PILL
+    ): MedicineItem {
+        return MedicineItem(
+            id = this.id,
+            name = this.name,
+            doseValue = this.doseValue,
+            doseUnitLabel = this.doseUnitLabel,
+            schedules = this.schedules.map {
+                MedicineScheduleUiItem(
+                    administrationTime = it.administrationTime,
+                    mealRelationLabel = it.mealRelationLabel
+                )
+            },
+            daysRemaining = daysRemaining,
+            iconType = iconType
+        )
+    }
+
+    private fun PersonalNote.toUiItem(
+        severity: NoteSeverity = NoteSeverity.OK
+    ): PersonalNoteItem {
+        return PersonalNoteItem(
+            id = this.id,
+            title = this.analysisName,
+            content = this.clinicalObservations ?: "",
+            author = this.doctorLocation ?: "Me",
+            dateLabel = this.noteDate.toString(),
+            severity = severity
+        )
     }
 }
 

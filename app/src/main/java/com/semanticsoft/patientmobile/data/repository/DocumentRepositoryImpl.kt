@@ -1,195 +1,191 @@
 package com.semanticsoft.patientmobile.data.repository
 
 import android.content.Context
-import com.semanticsoft.patientmobile.data.local.dao.DocumentDao
-import com.semanticsoft.patientmobile.data.local.db.extensions.toDomain
-import com.semanticsoft.patientmobile.data.local.db.extensions.toEntity
+import com.semanticsoft.patientmobile.data.remote.SafeApiCall.safeApiCall
+import com.semanticsoft.patientmobile.data.remote.api.ApiConstants
 import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
+import com.semanticsoft.patientmobile.data.remote.api.dto.BulkDeleteRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.CreateShareLinkRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.DuplicateCheckRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.RenameDocumentRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.toDomain
 import com.semanticsoft.patientmobile.domain.model.DocumentDuplicateInfo
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
-import com.semanticsoft.patientmobile.domain.model.SyncStatus
+import com.semanticsoft.patientmobile.domain.model.SharedLink
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
-import com.semanticsoft.patientmobile.util.Resource
-import com.semanticsoft.patientmobile.util.toUserMessage
-import com.semanticsoft.patientmobile.util.exceptions.DuplicateDocumentException
-import com.semanticsoft.patientmobile.util.exceptions.FileTooLargeException
-import com.semanticsoft.patientmobile.util.exceptions.FileUploadException
-import com.semanticsoft.patientmobile.util.exceptions.MalwareDetectedException
-import com.semanticsoft.patientmobile.util.exceptions.NoInternetException
-import com.semanticsoft.patientmobile.util.exceptions.UnsupportedMediaTypeException
-import com.semanticsoft.patientmobile.util.exceptions.DocumentScanningUnavailableException
+import com.semanticsoft.patientmobile.util.ApiResult
+import com.semanticsoft.patientmobile.util.map
 import java.io.File
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import java.io.FileInputStream
+import java.security.MessageDigest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class DocumentRepositoryImpl(
     private val context: Context,
     private val apiService: PatientApiService,
-    private val documentDao: DocumentDao,
     private val networkStateProvider: NetworkStateProvider = AlwaysOnlineStateProvider
 ) : DocumentRepository {
 
-    override suspend fun checkDuplicates(checksums: List<String>): List<DocumentDuplicateInfo> {
-        if (checksums.isEmpty()) return emptyList()
-        if (!networkStateProvider.isOnline()) return emptyList()
+    override suspend fun checkDuplicates(
+        checksums: List<String>
+    ): ApiResult<List<DocumentDuplicateInfo>> {
+        if (checksums.isEmpty()) return ApiResult.Success(emptyList())
+        if (!networkStateProvider.isOnline()) return ApiResult.Success(emptyList())
 
-        return try {
-            val request = DuplicateCheckRequest(checksums)
-            val response = apiService.checkDuplicates(request)
-            response.matches.map { match ->
-                DocumentDuplicateInfo(
-                    checksum = match.checksum,
-                    existingFileName = match.existingFileName
-                )
-            }
-        } catch (_: Exception) {
-            emptyList()
+        return safeApiCall {
+            apiService.checkDuplicates(DuplicateCheckRequest(checksums))
+        }.map { response -> response.matches.map { it.toDomain() } }
+    }
+
+    override suspend fun uploadDocument(
+        file: File,
+        force: Boolean
+    ): ApiResult<PatientDocument> = withContext(Dispatchers.IO) {
+        if (!networkStateProvider.isOnline()) return@withContext ApiResult.NetworkError
+
+        val validationError = validateFile(file)
+        if (validationError != null) return@withContext validationError
+
+        val mimeType = resolveMimeType(file)
+        val requestBody = file.asRequestBody(mimeType.toMediaType())
+        val part = MultipartBody.Part.createFormData("file", file.name, requestBody)
+        val forceBody = if (force) "true".toRequestBody("text/plain".toMediaType()) else null
+
+        safeApiCall {
+            apiService.uploadDocument(part, forceBody)
+        }.map { it.toDomain() }
+    }
+
+    override suspend fun getDocuments(
+        page: Int,
+        size: Int,
+        search: String?,
+        dateFrom: String?,
+        dateTo: String?
+    ): ApiResult<List<PatientDocument>> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
+
+        return safeApiCall { apiService.getDocuments(page, size, search, dateFrom, dateTo) }.map { response ->
+            response.content.map { it.toDomain() }
         }
     }
 
-    override suspend fun uploadDocument(file: File): PatientDocument {
-        validateFile(file)
+    override suspend fun getDocumentById(id: String): ApiResult<PatientDocument> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
 
-        if (!networkStateProvider.isOnline()) {
-            throw NoInternetException("Nu exist\u0103 conexiune la internet.")
-        }
+        return safeApiCall { apiService.getDocumentById(id) }.map { it.toDomain() }
+    }
 
-        return try {
-            val requestBody = file.asRequestBody(resolveMimeType(file).toMediaType())
-            val part = MultipartBody.Part.createFormData("file", file.name, requestBody)
+    override suspend fun downloadDocument(id: String): ApiResult<File> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
 
-            val uploaded = apiService.uploadDocument(part)
-            val cached = uploaded.copy(
-                localFilePath = uploaded.localFilePath ?: file.absolutePath,
-                syncStatus = SyncStatus.SYNCED
-            )
-            documentDao.insert(cached.toEntity())
-            cached
-        } catch (t: Throwable) {
-            if (!networkStateProvider.isOnline()) {
-                throw NoInternetException("Nu exist\u0103 conexiune la internet.")
-            }
-            if (t is FileTooLargeException || t is UnsupportedMediaTypeException) {
-                throw t
-            }
-            if (t is retrofit2.HttpException) {
-                throw when (t.code()) {
-                    409 -> DuplicateDocumentException(t.message(), t)
-                    413 -> FileTooLargeException("File too large (max 10 MB).")
-                    415 -> UnsupportedMediaTypeException("Unsupported file format.")
-                    422 -> MalwareDetectedException("File failed security scan.")
-                    503 -> DocumentScanningUnavailableException("Scanner unavailable. Please try again later.")
-                    else -> FileUploadException(t.message(), t)
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.downloadDocument(id)
+                if (!response.isSuccessful) {
+                    return@withContext ApiResult.HttpError(
+                        code = response.code(),
+                        message = response.message()
+                    )
                 }
-            }
-            throw FileUploadException(t.toUserMessage(), t)
-        }
-    }
 
-    override fun getDocuments(): Flow<Resource<List<PatientDocument>>> = flow {
-        emit(Resource.Loading)
+                val body = response.body() ?: return@withContext ApiResult.HttpError(
+                    code = -1,
+                    message = "Empty response body"
+                )
 
-        val cached = documentDao.getAllDocuments().map { it.toDomain() }
-        if (!networkStateProvider.isOnline()) {
-            emit(Resource.Success(cached))
-            return@flow
-        }
+                val filename = extractFilename(response, id)
+                val downloadsDir = context.getExternalFilesDir(android.os.Environment.DIRECTORY_DOWNLOADS)
+                    ?: context.cacheDir
+                val outFile = java.io.File(downloadsDir, filename)
 
-        runCatching {
-            val remote = apiService.getDocuments().content
-            documentDao.insertAll(remote.map { it.copy(syncStatus = SyncStatus.SYNCED).toEntity() })
-            remote
-        }.onSuccess {
-            emit(Resource.Success(it))
-        }.onFailure {
-            if (cached.isNotEmpty()) {
-                emit(Resource.Success(cached))
-            } else {
-                emit(Resource.Error(it.toUserMessage()))
+                outFile.outputStream().use { output ->
+                    body.byteStream().use { input -> input.copyTo(output) }
+                }
+
+                body.close()
+                ApiResult.Success(outFile)
+            } catch (e: Exception) {
+                ApiResult.HttpError(code = -1, message = e.message ?: "Download failed")
             }
         }
     }
 
-    override fun getDocumentById(id: String): Flow<Resource<PatientDocument>> = flow {
-        emit(Resource.Loading)
-
-        val local = documentDao.getDocumentById(id)?.toDomain()
-        if (!networkStateProvider.isOnline()) {
-            if (local != null) {
-                emit(Resource.Success(local))
-            } else {
-                emit(Resource.Error("Document not available offline."))
-            }
-            return@flow
-        }
-
-        runCatching {
-            val remote = apiService.getDocumentById(id)
-            documentDao.insert(remote.copy(syncStatus = SyncStatus.SYNCED).toEntity())
-            remote
-        }.onSuccess {
-            emit(Resource.Success(it))
-        }.onFailure {
-            if (local != null) {
-                emit(Resource.Success(local))
-            } else {
-                emit(Resource.Error(it.toUserMessage()))
-            }
-        }
+    override suspend fun renameDocument(id: String, newName: String): ApiResult<PatientDocument> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
+        return safeApiCall {
+            apiService.renameDocument(id, RenameDocumentRequest(newName))
+        }.map { it.toDomain() }
     }
 
-    override suspend fun downloadDocument(id: String): File {
-        val localDocument = documentDao.getDocumentById(id)?.toDomain()
-
-        if (!networkStateProvider.isOnline()) {
-            val localPath = localDocument?.localFilePath
-            if (!localPath.isNullOrBlank()) {
-                val localFile = File(localPath)
-                if (localFile.exists()) return localFile
-            }
-            throw FileUploadException("Document is not available offline.")
-        }
-
-        val body = apiService.downloadDocument(id)
-        val outFile = File(context.cacheDir, "document_$id.bin")
-        outFile.outputStream().use { output ->
-            body.byteStream().use { input -> input.copyTo(output) }
-        }
-
-        localDocument?.let {
-            documentDao.update(it.copy(localFilePath = outFile.absolutePath).toEntity())
-        }
-
-        return outFile
+    override suspend fun deleteDocument(id: String): ApiResult<Unit> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
+        return safeApiCall { apiService.deleteDocument(id) }.map { }
     }
 
-    private fun validateFile(file: File) {
-        val sizeBytes = file.length()
-        if (sizeBytes > MAX_UPLOAD_BYTES) {
-            throw FileTooLargeException("File too large (max 10 MB).")
-        }
+    override suspend fun bulkDelete(documentIds: List<String>): ApiResult<Unit> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
+        if (documentIds.isEmpty()) return ApiResult.Success(Unit)
+        return safeApiCall {
+            apiService.bulkDeleteDocuments(BulkDeleteRequest(documentIds))
+        }.map { }
+    }
 
+    override suspend fun createShareLink(id: String): ApiResult<SharedLink> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
+        return safeApiCall {
+            apiService.shareDocument(id, CreateShareLinkRequest())
+        }.map { it.toDomain() }
+    }
+
+    suspend fun computeSha256(file: File): String = withContext(Dispatchers.IO) {
+        val digest = MessageDigest.getInstance("SHA-256")
+        FileInputStream(file).use { input ->
+            val buffer = ByteArray(8192)
+            var bytesRead: Int
+            while (input.read(buffer).also { bytesRead = it } != -1) {
+                digest.update(buffer, 0, bytesRead)
+            }
+        }
+        digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+    private fun validateFile(file: File): ApiResult<Nothing>? {
+        if (file.length() > ApiConstants.MAX_UPLOAD_BYTES) {
+            return ApiResult.HttpError(413, "File too large (max 10 MB).")
+        }
         val extension = file.extension.lowercase()
-        if (extension !in ALLOWED_EXTENSIONS) {
-            throw UnsupportedMediaTypeException("Unsupported format (pdf, jpg, jpeg, png only).")
+        if (extension !in ApiConstants.ALLOWED_UPLOAD_EXTENSIONS) {
+            return ApiResult.HttpError(415, "Unsupported format (pdf, jpg, jpeg, png only).")
         }
+        return null
     }
 
-    private fun resolveMimeType(file: File): String {
-        return when (file.extension.lowercase()) {
-            "pdf" -> "application/pdf"
-            "jpg", "jpeg" -> "image/jpeg"
-            "png" -> "image/png"
-            else -> "application/octet-stream"
-        }
+    private fun resolveMimeType(file: File): String = when (file.extension.lowercase()) {
+        "pdf" -> "application/pdf"
+        "jpg", "jpeg" -> "image/jpeg"
+        "png" -> "image/png"
+        else -> "application/octet-stream"
     }
 
-    companion object {
-        private val ALLOWED_EXTENSIONS = setOf("pdf", "jpg", "jpeg", "png")
-        private const val MAX_UPLOAD_BYTES = 10L * 1024L * 1024L
+    private fun extractFilename(response: retrofit2.Response<*>, fallbackId: String): String {
+        val contentDisposition = response.headers()["Content-Disposition"]
+            ?: response.headers()["content-disposition"]
+        if (!contentDisposition.isNullOrBlank()) {
+            val match = Regex("""filename\*=UTF-8''(.+?)(?:;|$)""").find(contentDisposition)
+                ?: Regex("""filename="(.+?)"""").find(contentDisposition)
+                ?: Regex("""filename=(.+?)(?:;|$)""").find(contentDisposition)
+            match?.groupValues?.get(1)?.trim()?.let { return it }
+        }
+        val ext = response.headers()["Content-Type"]
+            ?.substringAfter("/")
+            ?.takeIf { it.isNotBlank() }
+            ?: "bin"
+        return "document_$fallbackId.$ext"
     }
 }

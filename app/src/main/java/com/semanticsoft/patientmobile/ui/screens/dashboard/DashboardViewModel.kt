@@ -1,47 +1,55 @@
 package com.semanticsoft.patientmobile.ui.screens.dashboard
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.semanticsoft.patientmobile.data.model.AttentionItem
-import com.semanticsoft.patientmobile.data.model.BasicIndicatorItem
-import com.semanticsoft.patientmobile.data.model.ClinicalPillarCardItem
-import com.semanticsoft.patientmobile.data.model.GeneralMarkerCardItem
-import com.semanticsoft.patientmobile.data.model.MarkerCategoryItem
-import com.semanticsoft.patientmobile.data.model.MarkerSummary
-import com.semanticsoft.patientmobile.data.model.WarningCardItem
+import com.semanticsoft.patientmobile.data.model.ClinicalPillarType
+import com.semanticsoft.patientmobile.data.model.IndicatorSegments
+import com.semanticsoft.patientmobile.data.model.IndicatorStatus
+import com.semanticsoft.patientmobile.data.model.IndicatorTrendDirection
+import com.semanticsoft.patientmobile.data.model.WarningLevel
 import com.semanticsoft.patientmobile.domain.model.MedicalResult
-import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
+import com.semanticsoft.patientmobile.domain.repository.DashboardRepository
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
 import com.semanticsoft.patientmobile.domain.repository.MedicalResultRepository
-import com.semanticsoft.patientmobile.util.Resource
+import com.semanticsoft.patientmobile.util.ApiResult
+import com.semanticsoft.patientmobile.util.toUserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.semanticsoft.patientmobile.data.model.AttentionItem as UiAttentionItem
+import com.semanticsoft.patientmobile.data.model.BasicIndicatorItem as UiBasicIndicatorItem
+import com.semanticsoft.patientmobile.data.model.ClinicalPillarCardItem as UiClinicalPillarCardItem
+import com.semanticsoft.patientmobile.data.model.GeneralMarkerCardItem as UiGeneralMarkerCardItem
+import com.semanticsoft.patientmobile.data.model.MarkerCategoryItem as UiMarkerCategoryItem
+import com.semanticsoft.patientmobile.data.model.MarkerSummary as UiMarkerSummary
+import com.semanticsoft.patientmobile.data.model.WarningCardItem as UiWarningCardItem
+import com.semanticsoft.patientmobile.data.model.WarningIndicatorItem as UiWarningIndicatorItem
 
 data class DashboardUiState(
     val greetingName: String = "",
     val fullName: String = "",
     val role: String = "",
     val profilePhotoResId: Int? = null,
-    val hasUploadedDocuments: Boolean = true,
-    val lastAnalysisDate: String = "15 Mar 2026",
-    val attentionItems: List<AttentionItem> = emptyList(),
-    val basicIndicators: List<BasicIndicatorItem> = emptyList(),
-    val markerCategories: List<MarkerCategoryItem> = emptyList(),
-    val generalMarkerCards: List<GeneralMarkerCardItem> = emptyList(),
-    val markerSummary: MarkerSummary = MarkerSummary(0, 0, 0, 0),
+    val hasUploadedDocuments: Boolean = false,
+    val lastAnalysisDate: String = "",
+    val attentionItems: List<UiAttentionItem> = emptyList(),
+    val basicIndicators: List<UiBasicIndicatorItem> = emptyList(),
+    val markerCategories: List<UiMarkerCategoryItem> = emptyList(),
+    val generalMarkerCards: List<UiGeneralMarkerCardItem> = emptyList(),
+    val markerSummary: UiMarkerSummary = UiMarkerSummary(0, 0, 0, 0),
     val aiSummary: String = "",
-    val warningCards: List<WarningCardItem> = emptyList(),
-    val clinicalPillarCards: List<ClinicalPillarCardItem> = emptyList(),
+    val isAiSummaryLoading: Boolean = false,
+    val warningCards: List<UiWarningCardItem> = emptyList(),
+    val clinicalPillarCards: List<UiClinicalPillarCardItem> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -56,316 +64,405 @@ sealed class DashboardEvent {
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val documentRepository: DocumentRepository,
+    private val dashboardRepository: DashboardRepository,
     private val medicalResultRepository: MedicalResultRepository,
-    private val savedStateHandle: SavedStateHandle
+    private val documentRepository: DocumentRepository
 ) : ViewModel() {
-    private val demoAttentionItems = listOf(
-        AttentionItem("TSH", "0.3", "mIU/L", "Atenție"),
-        AttentionItem("Vitamina D", "18", "ng/mL", "Atenție"),
-        AttentionItem("Colesterol LDL", "4.5", "mmol/L", "Atenție")
-    )
-
-    private val demoBasicIndicators = listOf(
-        BasicIndicatorItem(
-            title = "Hemoglobină",
-            value = "13.4",
-            unit = "g/dL",
-            status = com.semanticsoft.patientmobile.data.model.IndicatorStatus.NORMAL,
-            trendDirection = com.semanticsoft.patientmobile.data.model.IndicatorTrendDirection.STABLE,
-            trendDelta = "0.0",
-            trendDescription = "stabil față de analiza anterioară",
-            markerPosition = 0.55f
-        ),
-        BasicIndicatorItem(
-            title = "Vitamina D",
-            value = "18",
-            unit = "ng/mL",
-            status = com.semanticsoft.patientmobile.data.model.IndicatorStatus.ATTENTION,
-            trendDirection = com.semanticsoft.patientmobile.data.model.IndicatorTrendDirection.DOWN,
-            trendDelta = "-4",
-            trendDescription = "în scădere în ultimele 30 zile",
-            markerPosition = 0.84f
-        )
-    )
-
-    private val demoMarkerCategories = listOf(
-        MarkerCategoryItem(name = "Toate", count = 8),
-        MarkerCategoryItem(name = "Hormonali", count = 2),
-        MarkerCategoryItem(name = "Metabolism", count = 3),
-        MarkerCategoryItem(name = "Hematologie", count = 3)
-    )
-
-    private val demoGeneralMarkerCards = listOf(
-        GeneralMarkerCardItem(
-            title = "TSH",
-            category = "Hormonali",
-            value = "0.3",
-            unit = "mIU/L",
-            status = com.semanticsoft.patientmobile.data.model.IndicatorStatus.BORDERLINE,
-            normalRange = "0.4 - 4.0",
-            borderlineRange = "0.3 - 0.39",
-            attentionRange = "< 0.3"
-        ),
-        GeneralMarkerCardItem(
-            title = "LDL Colesterol",
-            category = "Metabolism",
-            value = "4.5",
-            unit = "mmol/L",
-            status = com.semanticsoft.patientmobile.data.model.IndicatorStatus.ATTENTION,
-            normalRange = "< 3.0",
-            borderlineRange = "3.0 - 3.9",
-            attentionRange = ">= 4.0"
-        ),
-        GeneralMarkerCardItem(
-            title = "Leucocite",
-            category = "Hematologie",
-            value = "6.2",
-            unit = "10^9/L",
-            status = com.semanticsoft.patientmobile.data.model.IndicatorStatus.NORMAL,
-            normalRange = "4.0 - 10.0",
-            borderlineRange = "3.5 - 3.9",
-            attentionRange = "< 3.5"
-        )
-    )
-
-    private val demoWarningCards = listOf(
-        WarningCardItem(
-            level = com.semanticsoft.patientmobile.data.model.WarningLevel.HIGH,
-            indicators = listOf(
-                com.semanticsoft.patientmobile.data.model.WarningIndicatorItem("Vitamina D", "18", "ng/mL"),
-                com.semanticsoft.patientmobile.data.model.WarningIndicatorItem("LDL", "4.5", "mmol/L")
-            )
-        )
-    )
-
-    private val demoClinicalPillarCards = listOf(
-        ClinicalPillarCardItem(
-            type = com.semanticsoft.patientmobile.data.model.ClinicalPillarType.HEART_CV,
-            reportCount = 2
-        ),
-        ClinicalPillarCardItem(
-            type = com.semanticsoft.patientmobile.data.model.ClinicalPillarType.HORMONES,
-            reportCount = 2
-        ),
-        ClinicalPillarCardItem(
-            type = com.semanticsoft.patientmobile.data.model.ClinicalPillarType.NUTRITION_VITAMINS,
-            reportCount = 1
-        )
-    )
-
-    private val demoSummary = MarkerSummary(normal = 4, borderline = 2, attention = 2, score = 72)
-
 
     private val _events = MutableSharedFlow<DashboardEvent>()
     val events: SharedFlow<DashboardEvent> = _events.asSharedFlow()
 
-    var state by mutableStateOf(
-        DashboardUiState(
-            greetingName = savedStateHandle[KEY_GREETING_NAME] ?: "",
-            fullName = savedStateHandle[KEY_FULL_NAME] ?: "",
-            role = savedStateHandle[KEY_ROLE] ?: "",
-            attentionItems = demoAttentionItems,
-            markerSummary = MarkerSummary(
-                normal = savedStateHandle[KEY_SUMMARY_NORMAL] ?: 0,
-                borderline = savedStateHandle[KEY_SUMMARY_BORDERLINE] ?: 0,
-                attention = savedStateHandle[KEY_SUMMARY_ATTENTION] ?: 0,
-                score = savedStateHandle[KEY_SUMMARY_SCORE] ?: 0
-            ),
-            aiSummary = savedStateHandle[KEY_AI_SUMMARY] ?: "",
-            lastAnalysisDate = savedStateHandle[KEY_LAST_ANALYSIS_DATE] ?: "15 Mar 2026",
-            errorMessage = savedStateHandle[KEY_ERROR_MESSAGE]
-        )
-    )
-        private set
+    private val _state = MutableStateFlow(DashboardUiState(isLoading = true))
+    val state: StateFlow<DashboardUiState> = _state.asStateFlow()
+
+    private val _refreshErrors = MutableSharedFlow<String>()
+    val refreshErrors: SharedFlow<String> = _refreshErrors.asSharedFlow()
 
     init {
-        refreshUserProfile()
         refresh()
     }
 
     fun logout() {
         viewModelScope.launch {
-            runCatching { authRepository.logout() }
-                .onSuccess { _events.emit(DashboardEvent.LogoutSuccess) }
-                .onFailure {
-                    val message = it.message ?: "Deconectarea a eșuat."
-                    _events.emit(DashboardEvent.LogoutFailure(message))
-                }
+            try {
+                authRepository.logout()
+                _events.emit(DashboardEvent.LogoutSuccess)
+            } catch (e: Exception) {
+                val message = e.message ?: "Deconectarea a e\u0219uat."
+                _events.emit(DashboardEvent.LogoutFailure(message))
+            }
         }
     }
 
     fun refresh() {
         viewModelScope.launch {
-            state = state.copy(isLoading = true, errorMessage = null)
+            _state.update { it.copy(isLoading = true, errorMessage = null) }
 
-            when (val docsResource = documentRepository.getDocuments().first { it !is Resource.Loading }) {
-                is Resource.Success -> {
-                    val docs = docsResource.data
-                    if (docs.isEmpty()) {
-                        applyDemoDashboardState()
-                        _events.emit(DashboardEvent.RefreshCompleted)
-                        return@launch
-                    }
+            val userDeferred = async { authRepository.getCurrentUser() }
+            val resultsDeferred = async { medicalResultRepository.getLatestResults() }
+            val aiDeferred = async { dashboardRepository.getAiSummary() }
+            val docsDeferred = async { documentRepository.getDocuments(page = 0, size = 1) }
 
-                    val allResults = docs.flatMap { document ->
-                        when (val resultsResource = medicalResultRepository.getByDocumentId(document.id).first { it !is Resource.Loading }) {
-                            is Resource.Success -> resultsResource.data
-                            is Resource.Error -> emptyList()
-                            Resource.Loading -> emptyList()
-                        }
-                    }
+            val userResult = userDeferred.await()
+            val resultsResult = resultsDeferred.await()
+            val aiResult = aiDeferred.await()
+            val docsResult = docsDeferred.await()
 
-                    val summary = buildComputedSummary(allResults)
-                    val lastDate = docs.maxByOrNull { it.uploadedAt }?.uploadedAt?.toString()?.substringBefore("T")
-                        ?: state.lastAnalysisDate
+            val hasDocuments = docsResult is ApiResult.Success && docsResult.data.isNotEmpty()
+            val hasResults = resultsResult is ApiResult.Success && resultsResult.data.isNotEmpty()
 
-                    savedStateHandle[KEY_LAST_ANALYSIS_DATE] = lastDate
-                    savedStateHandle[KEY_SUMMARY_NORMAL] = summary.normal
-                    savedStateHandle[KEY_SUMMARY_BORDERLINE] = summary.borderline
-                    savedStateHandle[KEY_SUMMARY_ATTENTION] = summary.attention
-                    savedStateHandle[KEY_SUMMARY_SCORE] = summary.score
+            var greetingName = ""
+            var fullName = ""
+            var role = "Pacient"
 
-                    val aiSummary = buildAiSummary(docs, summary)
-                    savedStateHandle[KEY_AI_SUMMARY] = aiSummary
-                    savedStateHandle[KEY_ERROR_MESSAGE] = null
-
-                    state = state.copy(
-                        hasUploadedDocuments = docs.isNotEmpty(),
-                        markerSummary = summary,
-                        attentionItems = demoAttentionItems,
-                        basicIndicators = state.basicIndicators.ifEmpty { demoBasicIndicators },
-                        markerCategories = state.markerCategories.ifEmpty { demoMarkerCategories },
-                        generalMarkerCards = state.generalMarkerCards.ifEmpty { demoGeneralMarkerCards },
-                        warningCards = state.warningCards.ifEmpty { demoWarningCards },
-                        clinicalPillarCards = state.clinicalPillarCards.ifEmpty { demoClinicalPillarCards },
-                        aiSummary = aiSummary,
-                        lastAnalysisDate = lastDate,
-                        isLoading = false,
-                        errorMessage = null
-                    )
-                    _events.emit(DashboardEvent.RefreshCompleted)
-                }
-
-                is Resource.Error -> {
-                    applyDemoDashboardState()
-                    _events.emit(DashboardEvent.RefreshFailed(docsResource.message))
-                }
-
-                Resource.Loading -> Unit
+            if (userResult is ApiResult.Success) {
+                val user = userResult.data
+                greetingName = user.firstName.ifBlank { user.email.substringBefore("@") }
+                fullName = listOf(user.firstName, user.lastName)
+                    .filter { it.isNotBlank() }
+                    .joinToString(" ").ifBlank { user.email }
+                role = user.role.ifBlank { "Pacient" }
             }
+
+            if (!hasDocuments && !hasResults) {
+                populateDemoState(greetingName, fullName, role)
+                _events.emit(DashboardEvent.RefreshCompleted)
+                return@launch
+            }
+
+            val results = if (resultsResult is ApiResult.Success) resultsResult.data else emptyList()
+
+            buildCardsFromResults(greetingName, fullName, role, results, aiResult)
+
+            _events.emit(DashboardEvent.RefreshCompleted)
         }
     }
 
-    private fun applyDemoDashboardState() {
-        val demoAiSummary = "Date demonstrative pentru vizualizarea dashboard-ului. Conectează contul la analize reale pentru rezultate exacte."
-        savedStateHandle[KEY_LAST_ANALYSIS_DATE] = "2026-04-12"
-        savedStateHandle[KEY_SUMMARY_NORMAL] = demoSummary.normal
-        savedStateHandle[KEY_SUMMARY_BORDERLINE] = demoSummary.borderline
-        savedStateHandle[KEY_SUMMARY_ATTENTION] = demoSummary.attention
-        savedStateHandle[KEY_SUMMARY_SCORE] = demoSummary.score
-        savedStateHandle[KEY_AI_SUMMARY] = demoAiSummary
-        savedStateHandle[KEY_ERROR_MESSAGE] = null
-
-        state = state.copy(
-            hasUploadedDocuments = true,
-            lastAnalysisDate = "2026-04-12",
-            attentionItems = demoAttentionItems,
-            basicIndicators = demoBasicIndicators,
-            markerCategories = demoMarkerCategories,
-            generalMarkerCards = demoGeneralMarkerCards,
-            markerSummary = demoSummary,
-            aiSummary = demoAiSummary,
-            warningCards = demoWarningCards,
-            clinicalPillarCards = demoClinicalPillarCards,
-            isLoading = false,
-            errorMessage = null
-        )
-    }
-
-    private fun refreshUserProfile() {
+    fun regenerateAiSummary() {
         viewModelScope.launch {
-            runCatching { authRepository.getCurrentUser() }
-                .onSuccess { user ->
-                    val fullName = "${user.firstName} ${user.lastName}".trim()
-                    val greetingName = user.firstName.ifBlank { user.email.substringBefore("@") }
-                    val role = "Pacient"
-
-                    savedStateHandle[KEY_GREETING_NAME] = greetingName
-                    savedStateHandle[KEY_FULL_NAME] = fullName
-                    savedStateHandle[KEY_ROLE] = role
-
-                    state = state.copy(
-                        greetingName = greetingName,
-                        fullName = fullName,
-                        role = role
-                    )
+            _state.update { it.copy(isAiSummaryLoading = true, aiSummary = "") }
+            when (val result = dashboardRepository.regenerateAiSummary()) {
+                is ApiResult.Success -> {
+                    val response = result.data
+                    when (response.status.uppercase()) {
+                        "READY", "COMPLETED" -> _state.update {
+                            it.copy(aiSummary = response.summaryText, isAiSummaryLoading = false)
+                        }
+                        else -> _state.update { it.copy(isAiSummaryLoading = true, aiSummary = "") }
+                    }
                 }
+                else -> _state.update { it.copy(isAiSummaryLoading = false) }
+            }
         }
     }
 
-    private fun buildComputedSummary(results: List<MedicalResult>): MarkerSummary {
-        if (results.isEmpty()) return MarkerSummary(0, 0, 0, 0)
+    private fun buildCardsFromResults(
+        greetingName: String,
+        fullName: String,
+        role: String,
+        results: List<MedicalResult>,
+        aiResult: ApiResult<com.semanticsoft.patientmobile.data.remote.api.dto.AiSummaryResponse>
+    ) {
+        val abnormal = results.filter { !it.abnormalFlag.isNullOrBlank() }
+        val categories = results.groupBy { it.analysisGroup.ifBlank { "Altele" } }
+        val knownCanonicals = setOf(
+            "WBC", "Hemoglobin", "HCT", "PLT", "RBC",
+            "Glucose", "ALT", "AST", "Creatinine", "Urea",
+            "TSH", "Vitamin D", "Iron", "Ferritin", "Cholesterol"
+        )
 
-        var normal = 0
-        var borderline = 0
-        var attention = 0
+        val summary = buildSummary(results)
+        val indicators = buildBasicIndicators(results, knownCanonicals)
+        val markers = buildGeneralMarkers(results)
+        val markersByCategory = buildMarkerCategories(categories)
+        val attention = buildAttentionItems(abnormal)
+        val warnings = buildWarningCards(abnormal)
+        val pillars = buildClinicalPillars(categories)
 
-        results.forEach { result ->
-            val value = result.value.toDoubleOrNull()
-            val range = parseReferenceRange(result.referenceRange)
+        var aiText = ""
+        var aiLoading = false
 
-            if (value == null || range == null) {
-                borderline += 1
-            } else {
-                val (min, max) = range
-                when {
-                    value < min || value > max -> attention += 1
-                    value <= min * 1.05 || value >= max * 0.95 -> borderline += 1
-                    else -> normal += 1
-                }
+        if (aiResult is ApiResult.Success) {
+            val ai = aiResult.data
+            when (ai.status.uppercase()) {
+                "READY", "COMPLETED" -> aiText = ai.summaryText
+                else -> aiLoading = true
             }
         }
 
-        val total = normal + borderline + attention
-        val score = if (total == 0) 0 else ((normal.toFloat() / total.toFloat()) * 100f).toInt()
-        return MarkerSummary(normal = normal, borderline = borderline, attention = attention, score = score)
-    }
-
-    private fun parseReferenceRange(referenceRange: String): Pair<Double, Double>? {
-        val cleaned = referenceRange.replace(" ", "")
-        val separator = when {
-            cleaned.contains("-") -> "-"
-            cleaned.contains("to", ignoreCase = true) -> "to"
-            else -> null
-        } ?: return null
-
-        val parts = cleaned.split(separator)
-        if (parts.size != 2) return null
-
-        val min = parts[0].toDoubleOrNull() ?: return null
-        val max = parts[1].toDoubleOrNull() ?: return null
-        return min to max
-    }
-
-    private fun buildAiSummary(documents: List<PatientDocument>, summary: MarkerSummary): String {
-        return if (documents.isEmpty()) {
-            "Nu există încă documente încărcate."
-        } else {
-            "Ai ${documents.size} documente. ${summary.attention} rezultate necesită atenție, ${summary.normal} sunt în limite normale."
+        _state.update {
+            it.copy(
+                greetingName = greetingName,
+                fullName = fullName,
+                role = role,
+                hasUploadedDocuments = true,
+                attentionItems = attention,
+                basicIndicators = indicators,
+                markerCategories = markersByCategory,
+                generalMarkerCards = markers,
+                markerSummary = summary,
+                aiSummary = aiText,
+                isAiSummaryLoading = aiLoading,
+                warningCards = warnings,
+                clinicalPillarCards = pillars,
+                isLoading = false,
+                errorMessage = null
+            )
         }
     }
 
-    companion object {
-        private const val KEY_LAST_ANALYSIS_DATE = "dashboard_last_analysis_date"
-        private const val KEY_GREETING_NAME = "dashboard_greeting_name"
-        private const val KEY_FULL_NAME = "dashboard_full_name"
-        private const val KEY_ROLE = "dashboard_role"
-        private const val KEY_SUMMARY_NORMAL = "dashboard_summary_normal"
-        private const val KEY_SUMMARY_BORDERLINE = "dashboard_summary_borderline"
-        private const val KEY_SUMMARY_ATTENTION = "dashboard_summary_attention"
-        private const val KEY_SUMMARY_SCORE = "dashboard_summary_score"
-        private const val KEY_AI_SUMMARY = "dashboard_ai_summary"
-        private const val KEY_ERROR_MESSAGE = "dashboard_error_message"
+    private fun populateDemoState(greetingName: String, fullName: String, role: String) {
+        _state.update {
+            it.copy(
+                greetingName = greetingName.ifBlank { "Pacient" },
+                fullName = fullName,
+                role = role,
+                hasUploadedDocuments = false,
+                attentionItems = demoAttentionItems(),
+                basicIndicators = demoIndicators(),
+                markerCategories = demoMarkerCategories(),
+                generalMarkerCards = demoGeneralMarkers(),
+                markerSummary = UiMarkerSummary(normal = 13, borderline = 3, attention = 4, score = 72),
+                aiSummary = "",
+                isAiSummaryLoading = false,
+                warningCards = demoWarningCards(),
+                clinicalPillarCards = demoClinicalPillarCards(),
+                isLoading = false,
+                errorMessage = null
+            )
+        }
     }
+
+    private fun buildSummary(results: List<MedicalResult>): UiMarkerSummary {
+        val normal = results.count { it.abnormalFlag.isNullOrBlank() }
+        val abnormal = results.size - normal
+        val borderline = results.count {
+            it.abnormalFlag?.uppercase()?.let { it == "BORDERLINE" || it == "WARNING" } == true
+        }
+        val attention = abnormal - borderline
+        val score = if (results.isNotEmpty()) (normal * 100 / results.size) else 72
+        return UiMarkerSummary(normal = normal, borderline = borderline, attention = attention, score = score)
+    }
+
+    private fun buildBasicIndicators(
+        results: List<MedicalResult>,
+        knownCanonicals: Set<String>
+    ): List<UiBasicIndicatorItem> {
+        return results
+            .filter { it.canonicalName.ifBlank { it.originalTestName } in knownCanonicals }
+            .take(10)
+            .map { r ->
+                UiBasicIndicatorItem(
+                    title = r.originalTestName.ifBlank { r.canonicalName },
+                    value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
+                    unit = r.unit,
+                    status = parseStatus(r.abnormalFlag),
+                    trendDirection = IndicatorTrendDirection.STABLE,
+                    trendDelta = "",
+                    trendDescription = r.referenceText ?: "",
+                    markerPosition = 0.5f,
+                    segments = IndicatorSegments()
+                )
+            }
+    }
+
+    private fun buildGeneralMarkers(results: List<MedicalResult>): List<UiGeneralMarkerCardItem> {
+        return results.map { r ->
+            UiGeneralMarkerCardItem(
+                title = r.originalTestName.ifBlank { r.canonicalName },
+                category = r.analysisGroup.ifBlank { "Altele" },
+                value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
+                unit = r.unit,
+                status = parseStatus(r.abnormalFlag),
+                normalRange = r.referenceText ?: buildRangeLabel(r.referenceLow, r.referenceHigh),
+                borderlineRange = "-",
+                attentionRange = "-"
+            )
+        }
+    }
+
+    private fun buildMarkerCategories(categories: Map<String, List<MedicalResult>>): List<UiMarkerCategoryItem> {
+        return categories.map { (group, items) ->
+            UiMarkerCategoryItem(name = group, count = items.size)
+        }
+    }
+
+    private fun buildAttentionItems(abnormal: List<MedicalResult>): List<UiAttentionItem> {
+        return abnormal.map { r ->
+            UiAttentionItem(
+                marker = r.originalTestName.ifBlank { r.canonicalName },
+                value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
+                unit = r.unit,
+                severity = r.abnormalFlag ?: "Aten\u021Bie"
+            )
+        }
+    }
+
+    private fun buildWarningCards(abnormal: List<MedicalResult>): List<UiWarningCardItem> {
+        if (abnormal.isEmpty()) return emptyList()
+
+        val highFlags = listOf("HIGH", "ATTENTION", "ABNORMAL", "CRITICAL")
+        val highItems = abnormal.filter {
+            it.abnormalFlag?.uppercase() in highFlags
+        }
+        val moderateItems = abnormal.filter {
+            it.abnormalFlag?.uppercase() !in highFlags
+        }
+
+        val cards = mutableListOf<UiWarningCardItem>()
+        if (highItems.isNotEmpty()) {
+            cards.add(
+                UiWarningCardItem(
+                    level = WarningLevel.HIGH,
+                    indicators = highItems.map { r ->
+                        UiWarningIndicatorItem(
+                            name = r.originalTestName.ifBlank { r.canonicalName },
+                            value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
+                            unit = r.unit
+                        )
+                    }
+                )
+            )
+        }
+        if (moderateItems.isNotEmpty()) {
+            cards.add(
+                UiWarningCardItem(
+                    level = WarningLevel.MODERATE,
+                    indicators = moderateItems.map { r ->
+                        UiWarningIndicatorItem(
+                            name = r.originalTestName.ifBlank { r.canonicalName },
+                            value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
+                            unit = r.unit
+                        )
+                    }
+                )
+            )
+        }
+        return cards
+    }
+
+    private fun buildClinicalPillars(categories: Map<String, List<MedicalResult>>): List<UiClinicalPillarCardItem> {
+        return categories.map { (group, items) ->
+            UiClinicalPillarCardItem(
+                type = parsePillarType(group),
+                reportCount = items.size
+            )
+        }
+    }
+
+    private fun buildRangeLabel(low: Double?, high: Double?): String {
+        if (low == null && high == null) return "-"
+        val lowStr = low?.toString() ?: ""
+        val highStr = high?.toString() ?: ""
+        return "$lowStr - $highStr".trim()
+    }
+
+    private fun parseStatus(abnormalFlag: String?): IndicatorStatus {
+        if (abnormalFlag.isNullOrBlank()) return IndicatorStatus.NORMAL
+        return when (abnormalFlag.uppercase()) {
+            "HIGH", "LOW", "ATTENTION", "ABNORMAL", "CRITICAL" -> IndicatorStatus.ATTENTION
+            "BORDERLINE", "WARNING" -> IndicatorStatus.BORDERLINE
+            else -> IndicatorStatus.NORMAL
+        }
+    }
+
+    private fun parsePillarType(analysisGroup: String): ClinicalPillarType {
+        return when (analysisGroup.uppercase()) {
+            "HEMATOLOGY", "HEMATOLOGIE" -> ClinicalPillarType.BLOOD_CELLS
+            "BIOCHEMISTRY", "BIOCHIMIE" -> ClinicalPillarType.ORGANS_METABOLISM
+            "CARDIOLOGY", "CARDIOLOGIE", "LIPIDS", "LIPIDE" -> ClinicalPillarType.HEART_CV
+            "HORMONES", "HORMONI", "THYROID", "TIROIDA" -> ClinicalPillarType.HORMONES
+            "ONCOLOGY", "ONCOLOGIE", "TUMOR_MARKERS" -> ClinicalPillarType.ONCOLOGY_MARKERS
+            "VITAMINS", "VITAMINE", "NUTRITION", "NUTRITIE" -> ClinicalPillarType.NUTRITION_VITAMINS
+            "COAGULATION", "COAGULARE" -> ClinicalPillarType.COAGULATION
+            "IMMUNOLOGY", "IMUNOLOGIE", "INFECTIONS" -> ClinicalPillarType.INFECTIONS_IMMUNOLOGY
+            else -> ClinicalPillarType.ORGANS_METABOLISM
+        }
+    }
+
+    private fun demoAttentionItems(): List<UiAttentionItem> = listOf(
+        UiAttentionItem("TSH", "0.3", "mIU/L", "Aten\u021Bie"),
+        UiAttentionItem("Vitamina D", "18", "ng/mL", "Aten\u021Bie"),
+        UiAttentionItem("Colesterol LDL", "4.5", "mmol/L", "Aten\u021Bie"),
+        UiAttentionItem("Glucoza a jeun", "6.8", "mmol/L", "Aten\u021Bie moderat\u0103")
+    )
+
+    private fun demoIndicators(): List<UiBasicIndicatorItem> = listOf(
+        UiBasicIndicatorItem(
+            title = "Hemoglobina", value = "14.2", unit = "g/dL",
+            status = IndicatorStatus.NORMAL, trendDirection = IndicatorTrendDirection.STABLE,
+            trendDelta = "", trendDescription = "Stabil fa\u021B\u0103 de ultima analiz\u0103",
+            markerPosition = 0.34f, segments = IndicatorSegments()
+        ),
+        UiBasicIndicatorItem(
+            title = "Glucoza a jeun", value = "6.8", unit = "mmol/L",
+            status = IndicatorStatus.BORDERLINE, trendDirection = IndicatorTrendDirection.UP,
+            trendDelta = "0.6", trendDescription = "fa\u021B\u0103 de ultima analiz\u0103",
+            markerPosition = 0.66f, segments = IndicatorSegments()
+        ),
+        UiBasicIndicatorItem(
+            title = "ALT", value = "55", unit = "U/L",
+            status = IndicatorStatus.ATTENTION, trendDirection = IndicatorTrendDirection.DOWN,
+            trendDelta = "0.9", trendDescription = "fa\u021B\u0103 de ultima analiz\u0103",
+            markerPosition = 0.88f, segments = IndicatorSegments()
+        )
+    )
+
+    private fun demoMarkerCategories(): List<UiMarkerCategoryItem> = listOf(
+        UiMarkerCategoryItem(name = "Toate", count = 20),
+        UiMarkerCategoryItem(name = "Hematologie", count = 6),
+        UiMarkerCategoryItem(name = "Biochimie", count = 9),
+        UiMarkerCategoryItem(name = "Hormoni", count = 1),
+        UiMarkerCategoryItem(name = "Vitamine", count = 3),
+        UiMarkerCategoryItem(name = "Imunologie", count = 1)
+    )
+
+    private fun demoGeneralMarkers(): List<UiGeneralMarkerCardItem> = listOf(
+        UiGeneralMarkerCardItem(
+            title = "Glucoza a jeun", category = "Biochimie",
+            value = "6.8", unit = "mmol/L", status = IndicatorStatus.BORDERLINE,
+            normalRange = "3.9 - 5.5", borderlineRange = "5.6 - 6.9", attentionRange = ">= 7.0"
+        ),
+        UiGeneralMarkerCardItem(
+            title = "ALT", category = "Biochimie",
+            value = "55", unit = "U/L", status = IndicatorStatus.ATTENTION,
+            normalRange = "< 41", borderlineRange = "41 - 50", attentionRange = "> 50"
+        ),
+        UiGeneralMarkerCardItem(
+            title = "Acid folic", category = "Vitamine",
+            value = "12", unit = "nmol/L", status = IndicatorStatus.NORMAL,
+            normalRange = "8.8 - 60.8", borderlineRange = "5.0 - 8.7", attentionRange = "< 5.0"
+        )
+    )
+
+    private fun demoWarningCards(): List<UiWarningCardItem> = listOf(
+        UiWarningCardItem(
+            level = WarningLevel.HIGH,
+            indicators = listOf(
+                UiWarningIndicatorItem("TSH", "0.3", "mIU/L"),
+                UiWarningIndicatorItem("Vitamina D", "18", "ng/mL"),
+                UiWarningIndicatorItem("Colesterol LDL", "4.5", "mmol/L"),
+                UiWarningIndicatorItem("Acid uric", "7.2", "mg/dL")
+            )
+        ),
+        UiWarningCardItem(
+            level = WarningLevel.MODERATE,
+            indicators = listOf(
+                UiWarningIndicatorItem("Glucoza a jeun", "6.8", "mmol/L"),
+                UiWarningIndicatorItem("Trigliceride", "1.8", "mmol/L"),
+                UiWarningIndicatorItem("HbA1c", "5.8", "%")
+            )
+        )
+    )
+
+    private fun demoClinicalPillarCards(): List<UiClinicalPillarCardItem> = listOf(
+        UiClinicalPillarCardItem(type = ClinicalPillarType.BLOOD_CELLS, reportCount = 6),
+        UiClinicalPillarCardItem(type = ClinicalPillarType.ORGANS_METABOLISM, reportCount = 14),
+        UiClinicalPillarCardItem(type = ClinicalPillarType.HEART_CV, reportCount = 5),
+        UiClinicalPillarCardItem(type = ClinicalPillarType.HORMONES, reportCount = 8),
+        UiClinicalPillarCardItem(type = ClinicalPillarType.ONCOLOGY_MARKERS, reportCount = 4),
+        UiClinicalPillarCardItem(type = ClinicalPillarType.NUTRITION_VITAMINS, reportCount = 3),
+        UiClinicalPillarCardItem(type = ClinicalPillarType.COAGULATION, reportCount = 3),
+        UiClinicalPillarCardItem(type = ClinicalPillarType.INFECTIONS_IMMUNOLOGY, reportCount = 5)
+    )
 }

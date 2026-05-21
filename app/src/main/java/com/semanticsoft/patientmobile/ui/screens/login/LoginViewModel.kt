@@ -1,20 +1,18 @@
 package com.semanticsoft.patientmobile.ui.screens.login
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
-import com.semanticsoft.patientmobile.util.exceptions.ApiException
-import com.semanticsoft.patientmobile.util.exceptions.InvalidCredentialsException
-import com.semanticsoft.patientmobile.util.exceptions.RateLimitException
+import com.semanticsoft.patientmobile.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class LoginUiState(
@@ -31,71 +29,63 @@ sealed class LoginEvent {
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val savedStateHandle: SavedStateHandle
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _events = MutableSharedFlow<LoginEvent>()
     val events: SharedFlow<LoginEvent> = _events.asSharedFlow()
 
-    var state by mutableStateOf(LoginUiState())
-        private set
-
-    init {
-        state = state.copy(
-            email = savedStateHandle[KEY_EMAIL] ?: "",
-            password = savedStateHandle[KEY_PASSWORD] ?: ""
-        )
-    }
+    private val _state = MutableStateFlow(LoginUiState())
+    val state: StateFlow<LoginUiState> = _state.asStateFlow()
 
     fun onEmailChange(value: String) {
-        state = state.copy(email = value, errorMessage = null)
-        savedStateHandle[KEY_EMAIL] = value
+        _state.update { it.copy(email = value, errorMessage = null) }
     }
 
     fun onPasswordChange(value: String) {
-        state = state.copy(password = value, errorMessage = null)
-        savedStateHandle[KEY_PASSWORD] = value
+        _state.update { it.copy(password = value, errorMessage = null) }
     }
 
     fun login() {
-        if (state.isLoading) return
+        if (_state.value.isLoading) return
 
-        if (state.email.isBlank() || state.password.isBlank()) {
-            // Validation for empty fields is handled in UI; do not trigger API call.
+        val currentEmail = _state.value.email
+        val currentPassword = _state.value.password
+        if (currentEmail.isBlank() || currentPassword.isBlank()) {
             return
         }
 
         viewModelScope.launch {
-            state = state.copy(isLoading = true, errorMessage = null)
+            _state.update { it.copy(isLoading = true, errorMessage = null) }
 
-            runCatching {
-                authRepository.login(state.email.trim(), state.password)
-            }.onSuccess {
-                state = state.copy(isLoading = false, errorMessage = null)
-                _events.emit(LoginEvent.LoginSuccess)
-            }.onFailure { throwable ->
-                val message = when (throwable) {
-                    is InvalidCredentialsException -> "Email sau parolă incorecte."
-                    is RateLimitException -> "Prea multe încercări. Încearcă din nou în câteva minute."
-                    is ApiException -> throwable.message ?: "Eroare API. Încearcă din nou."
-                    else -> throwable.message ?: "Autentificarea a eșuat."
+            when (val result = authRepository.login(currentEmail.trim(), currentPassword)) {
+                is ApiResult.Success -> {
+                    _state.update { it.copy(isLoading = false, errorMessage = null) }
+                    _events.emit(LoginEvent.LoginSuccess)
                 }
 
-                // Clear password field on error and show error message
-                state = state.copy(
-                    isLoading = false,
-                    errorMessage = message,
-                    password = ""
-                )
-                savedStateHandle[KEY_PASSWORD] = ""
-                _events.emit(LoginEvent.LoginFailure(message))
+                is ApiResult.AuthError -> {
+                    val message = "Email sau parolă incorecte."
+                    _state.update { it.copy(isLoading = false, errorMessage = message, password = "") }
+                    _events.emit(LoginEvent.LoginFailure(message))
+                }
+
+                is ApiResult.HttpError -> {
+                    val message = when (result.code) {
+                        401, 403 -> "Email sau parolă incorecte."
+                        429 -> "Prea multe încercări. Încearcă din nou în câteva minute."
+                        else -> result.message.ifBlank { "Eroare server (${result.code})." }
+                    }
+                    _state.update { it.copy(isLoading = false, errorMessage = message, password = "") }
+                    _events.emit(LoginEvent.LoginFailure(message))
+                }
+
+                is ApiResult.NetworkError -> {
+                    val message = "Nu există conexiune la internet."
+                    _state.update { it.copy(isLoading = false, errorMessage = message, password = "") }
+                    _events.emit(LoginEvent.LoginFailure(message))
+                }
             }
         }
-    }
-
-    companion object {
-        private const val KEY_EMAIL = "login_email"
-        private const val KEY_PASSWORD = "login_password"
     }
 }

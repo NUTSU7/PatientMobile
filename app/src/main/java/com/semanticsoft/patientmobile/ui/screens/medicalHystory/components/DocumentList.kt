@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun DocumentList(
     items: List<DocumentListEntry>,
+    onDocumentClick: (String) -> Unit,
     onRefresh: (() -> Unit)? = null,
     onLoadNextPage: (() -> Unit)? = null,
     modifier: Modifier = Modifier
@@ -26,25 +27,27 @@ fun DocumentList(
             DocumentListItem(
                 fileName = item.fileName,
                 uploadStatus = item.uploadStatus,
-                resultsCount = item.resultsCount
+                resultsCount = item.resultsCount,
+                onClick = { onDocumentClick(item.documentId) }
             )
         }
 
         if (onRefresh != null) {
             TextButton(onClick = onRefresh, modifier = Modifier.padding(top = 4.dp)) {
-                Text(text = "Reîmprospătează", color = Color(0xFF4F46E5))
+                Text(text = "Re\u00EEmprosp\u0103teaz\u0103", color = Color(0xFF4F46E5))
             }
         }
 
         if (onLoadNextPage != null) {
             TextButton(onClick = onLoadNextPage) {
-                Text(text = "Încarcă mai multe", color = Color(0xFF4F46E5))
+                Text(text = "\u00CEncarc\u0103 mai multe", color = Color(0xFF4F46E5))
             }
         }
     }
 }
 
 data class DocumentListEntry(
+    val documentId: String,
     val fileName: String,
     val uploadStatus: String,
     val resultsCount: Int

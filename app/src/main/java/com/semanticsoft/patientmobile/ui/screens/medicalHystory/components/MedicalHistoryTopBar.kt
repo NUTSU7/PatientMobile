@@ -24,13 +24,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.ui.components.ScreenTopBar
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicalHystoryUiState
-import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicalHystoryViewModel
 import com.semanticsoft.patientmobile.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.ui.theme.Purple500
-import java.time.Instant
 
 @Composable
 fun MedicalHistoryTopBar(
@@ -39,7 +36,7 @@ fun MedicalHistoryTopBar(
     onMenuClick: () -> Unit,
     onNotificationsClick: () -> Unit,
     onInfoClick: () -> Unit,
-    viewModel: MedicalHystoryViewModel
+    onUploadClick: () -> Unit
 ) {
     val lastAnalysisDate = state.analysisDocuments
         .maxByOrNull { it.uploadedAt }
@@ -116,19 +113,7 @@ fun MedicalHistoryTopBar(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(999.dp))
                     .background(Brush.horizontalGradient(listOf(Indigo600, Purple500)))
-                    .clickable {
-                        viewModel.attachFile(
-                            PatientDocument(
-                                id = "demo-new-${System.currentTimeMillis()}",
-                                ownerUserId = "demo-user",
-                                originalFileName = "Analiz\u0103 noua.pdf",
-                                mimeType = "application/pdf",
-                                fileSizeBytes = 500_000,
-                                uploadedAt = Instant.now(),
-                                syncStatus = com.semanticsoft.patientmobile.domain.model.SyncStatus.SYNCED
-                            )
-                        )
-                    }
+                    .clickable(onClick = onUploadClick)
                     .padding(vertical = 12.dp)
             )
         }

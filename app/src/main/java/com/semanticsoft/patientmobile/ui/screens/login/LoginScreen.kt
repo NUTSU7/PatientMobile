@@ -62,7 +62,7 @@ fun LoginScreen(
     }
 
     val loginWarningMessage = when {
-        state.errorMessage != null -> "Email sau parola invalida"
+        state.errorMessage != null -> state.errorMessage
         hasAttemptedLogin -> missingCredentialsMessage
         else -> null
     }

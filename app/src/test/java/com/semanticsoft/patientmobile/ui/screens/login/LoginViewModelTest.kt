@@ -1,19 +1,19 @@
 package com.semanticsoft.patientmobile.ui.screens.login
 
-import androidx.lifecycle.SavedStateHandle
 import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
 import com.semanticsoft.patientmobile.domain.model.AuthResponse
 import com.semanticsoft.patientmobile.domain.model.User
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.testutil.MainDispatcherRule
-import com.semanticsoft.patientmobile.util.exceptions.InvalidCredentialsException
+import com.semanticsoft.patientmobile.util.ApiResult
+import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 
@@ -25,59 +25,92 @@ class LoginViewModelTest {
 
     @Test
     fun login_setsError_forEmptyCredentials() = runTest {
-        val vm = LoginViewModel(FakeAuthRepository(), SavedStateHandle())
+        val vm = LoginViewModel(FakeAuthRepository())
 
         vm.login()
         advanceUntilIdle()
 
-        assertEquals("Completează emailul și parola.", vm.state.errorMessage)
-        assertFalse(vm.state.isLoading)
+        assertNull(vm.state.value.errorMessage)
+        assertFalse(vm.state.value.isLoading)
     }
 
     @Test
     fun login_emitsError_forInvalidCredentials() = runTest {
-        val vm = LoginViewModel(FakeAuthRepository(throwOnLogin = InvalidCredentialsException("bad")), SavedStateHandle())
+        val vm = LoginViewModel(FakeAuthRepository(loginResult = ApiResult.AuthError))
         vm.onEmailChange("john@example.com")
         vm.onPasswordChange("wrong")
 
         vm.login()
         advanceUntilIdle()
 
-        assertEquals("Email sau parolă incorecte.", vm.state.errorMessage)
-        assertFalse(vm.state.isLoading)
+        assertEquals("Email sau parolă incorecte.", vm.state.value.errorMessage)
+        assertFalse(vm.state.value.isLoading)
+    }
+
+    @Test
+    fun login_emitsError_forHttp401() = runTest {
+        val vm = LoginViewModel(
+            FakeAuthRepository(loginResult = ApiResult.HttpError(401, "Unauthorized"))
+        )
+        vm.onEmailChange("john@example.com")
+        vm.onPasswordChange("pass")
+
+        vm.login()
+        advanceUntilIdle()
+
+        assertEquals("Email sau parolă incorecte.", vm.state.value.errorMessage)
+        assertFalse(vm.state.value.isLoading)
+    }
+
+    @Test
+    fun login_emitsError_forNetworkError() = runTest {
+        val vm = LoginViewModel(
+            FakeAuthRepository(loginResult = ApiResult.NetworkError)
+        )
+        vm.onEmailChange("john@example.com")
+        vm.onPasswordChange("pass")
+
+        vm.login()
+        advanceUntilIdle()
+
+        assertEquals("Nu există conexiune la internet.", vm.state.value.errorMessage)
+        assertFalse(vm.state.value.isLoading)
     }
 
     @Test
     fun login_success_clearsError() = runTest {
-        val vm = LoginViewModel(FakeAuthRepository(), SavedStateHandle())
+        val vm = LoginViewModel(FakeAuthRepository())
         vm.onEmailChange("john@example.com")
         vm.onPasswordChange("Sup3rStrongPassword!")
 
         vm.login()
         advanceUntilIdle()
 
-        assertTrue(vm.state.errorMessage == null)
-        assertFalse(vm.state.isLoading)
+        assertNull(vm.state.value.errorMessage)
+        assertFalse(vm.state.value.isLoading)
     }
 
     private class FakeAuthRepository(
-        private val throwOnLogin: Throwable? = null
-    ) : AuthRepository {
-        override suspend fun login(email: String, password: String): AuthResponse {
-            throwOnLogin?.let { throw it }
-            return AuthResponse(
+        private val loginResult: ApiResult<AuthResponse> = ApiResult.Success(
+            AuthResponse(
                 accessToken = "a",
                 refreshToken = "r",
                 tokenType = "BEARER",
                 expiresIn = 1,
                 refreshExpiresIn = 1,
-                user = User("u1", email, "John", "Doe", LocalDate.parse("1990-01-01"))
+                user = User("u1", "john@example.com", "John", "Doe", LocalDate.parse("1990-01-01"), "PATIENT", Instant.EPOCH)
             )
-        }
+        )
+    ) : AuthRepository {
+        override suspend fun login(email: String, password: String): ApiResult<AuthResponse> = loginResult
 
-        override suspend fun register(request: RegisterRequest): AuthResponse = login(request.email, request.password)
-        override suspend fun refresh(): AuthResponse = login("john@example.com", "x")
+        override suspend fun register(request: RegisterRequest): ApiResult<AuthResponse> =
+            login(request.email, request.password)
+
+        override suspend fun refresh(): ApiResult<AuthResponse> = loginResult
         override suspend fun logout() = Unit
-        override suspend fun getCurrentUser(): User = User("u1", "john@example.com", "John", "Doe", LocalDate.parse("1990-01-01"))
+        override suspend fun getCurrentUser(): ApiResult<User> =
+            ApiResult.Success(User("u1", "john@example.com", "John", "Doe", LocalDate.parse("1990-01-01"), "PATIENT", Instant.EPOCH))
+        override suspend fun isLoggedIn(): Boolean = true
     }
 }

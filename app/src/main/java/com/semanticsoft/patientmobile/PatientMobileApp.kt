@@ -2,12 +2,17 @@ package com.semanticsoft.patientmobile
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.semanticsoft.patientmobile.ui.navigation.AppDestination
+import com.semanticsoft.patientmobile.ui.screens.auth.AuthEvent
+import com.semanticsoft.patientmobile.ui.screens.auth.AuthState
+import com.semanticsoft.patientmobile.ui.screens.auth.AuthViewModel
 import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardEvent
 import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardViewModel
 import com.semanticsoft.patientmobile.ui.screens.login.LoginEvent
@@ -21,12 +26,36 @@ import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun PatientMobileApp(navController: NavHostController = rememberNavController()) {
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val authState by authViewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(authViewModel) {
+        authViewModel.events.collectLatest { event ->
+            when (event) {
+                AuthEvent.NavigateToLogin -> {
+                    navController.navigate(AppDestination.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.SessionExpired) {
+            navController.navigate(AppDestination.Login.route) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = AppDestination.Login.route
     ) {
         composable(AppDestination.Login.route) {
             val vm: LoginViewModel = hiltViewModel()
+            val state by vm.state.collectAsStateWithLifecycle()
 
             LaunchedEffect(vm) {
                 vm.events.collectLatest { event ->
@@ -36,14 +65,13 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
                                 popUpTo(AppDestination.Login.route) { inclusive = true }
                             }
                         }
-
                         is LoginEvent.LoginFailure -> Unit
                     }
                 }
             }
 
             LoginScreen(
-                state = vm.state,
+                state = state,
                 onEmailChange = vm::onEmailChange,
                 onPasswordChange = vm::onPasswordChange,
                 onLoginClick = vm::login,
@@ -53,6 +81,7 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
 
         composable(AppDestination.Registration.route) {
             val vm: RegistrationViewModel = hiltViewModel()
+            val state by vm.state.collectAsStateWithLifecycle()
 
             LaunchedEffect(vm) {
                 vm.events.collectLatest { event ->
@@ -62,14 +91,13 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
                                 popUpTo(AppDestination.Login.route)
                             }
                         }
-
                         is RegistrationEvent.RegistrationFailure -> Unit
                     }
                 }
             }
 
             RegistrationScreen(
-                state = vm.state,
+                state = state,
                 onNameChange = vm::onNameChange,
                 onEmailChange = vm::onEmailChange,
                 onPasswordChange = vm::onPasswordChange,
@@ -90,7 +118,6 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
                                 popUpTo(AppDestination.Dashboard.route) { inclusive = true }
                             }
                         }
-
                         is DashboardEvent.LogoutFailure -> Unit
                         DashboardEvent.RefreshCompleted -> Unit
                         is DashboardEvent.RefreshFailed -> Unit
@@ -99,8 +126,8 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
             }
 
             NavScreen(
-                state = vm.state,
-                onLogout = vm::logout
+                dashboardState = vm.state,
+                onLogout = authViewModel::logout
             )
         }
     }
