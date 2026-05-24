@@ -39,7 +39,6 @@ import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.common.dashboardSpacing
 import com.semanticsoft.patientmobile.ui.components.ErrorDialog
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
-import com.semanticsoft.patientmobile.ui.screens.uploadedAnalyses.components.UploadedAnalysesTopBar
 import com.semanticsoft.patientmobile.ui.screens.uploadedAnalyses.components.UploadedAnalysisItem
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
 import com.semanticsoft.patientmobile.ui.theme.Gray50
@@ -57,12 +56,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 
 @Composable
 fun UploadedAnalysesScreen(
-    onMenuClick: () -> Unit,
-    onNotificationsClick: () -> Unit,
-    onInfoClick: () -> Unit,
     onSortClick: () -> Unit = { },
     onSelectClick: () -> Unit = { },
-    onUploadClick: () -> Unit = { },
     refreshTrigger: SharedFlow<Unit> = MutableSharedFlow(),
     viewModel: UploadedAnalysesViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
@@ -98,15 +93,6 @@ fun UploadedAnalysesScreen(
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    UploadedAnalysesTopBar(
-                        state = state,
-                        horizontalPadding = horizontalPadding,
-                        onMenuClick = onMenuClick,
-                        onNotificationsClick = onNotificationsClick,
-                        onInfoClick = onInfoClick,
-                        onUploadClick = onUploadClick
-                    )
-
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

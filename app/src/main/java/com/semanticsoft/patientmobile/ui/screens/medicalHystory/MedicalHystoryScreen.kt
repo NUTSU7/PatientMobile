@@ -34,7 +34,6 @@ import com.semanticsoft.patientmobile.ui.components.ErrorDialog
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.MedicalHistoryAnalysisSection
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.MedicalHistoryFiltersCard
-import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.MedicalHistoryTopBar
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.MedicinesSection
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.PersonalNotesSection
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
@@ -44,10 +43,6 @@ import kotlinx.coroutines.flow.SharedFlow
 
 @Composable
 fun MedicalHystoryScreen(
-    onMenuClick: () -> Unit,
-    onNotificationsClick: () -> Unit,
-    onInfoClick: () -> Unit,
-    onUploadClick: () -> Unit,
     viewModel: MedicalHystoryViewModel = hiltViewModel(),
     refreshTrigger: SharedFlow<Unit> = kotlinx.coroutines.flow.MutableSharedFlow(),
     modifier: Modifier = Modifier
@@ -85,15 +80,6 @@ fun MedicalHystoryScreen(
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    MedicalHistoryTopBar(
-                        state = state,
-                        horizontalPadding = horizontalPadding,
-                        onMenuClick = onMenuClick,
-                        onNotificationsClick = onNotificationsClick,
-                        onInfoClick = onInfoClick,
-                        onUploadClick = onUploadClick
-                    )
-
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
