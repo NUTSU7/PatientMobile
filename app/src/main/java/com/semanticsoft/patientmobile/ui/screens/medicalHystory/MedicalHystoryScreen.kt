@@ -1,5 +1,7 @@
 package com.semanticsoft.patientmobile.ui.screens.medicalHystory
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.semanticsoft.patientmobile.ui.components.ErrorDialog
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
@@ -39,22 +42,19 @@ import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.Perso
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.common.dashboardSpacing
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
-import kotlinx.coroutines.flow.SharedFlow
 
 @Composable
 fun MedicalHystoryScreen(
     viewModel: MedicalHystoryViewModel = hiltViewModel(),
-    refreshTrigger: SharedFlow<Unit> = kotlinx.coroutines.flow.MutableSharedFlow(),
     modifier: Modifier = Modifier
 ) {
     SetStatusBar(color = Color.White, darkIcons = true)
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(Unit) { viewModel.refresh() }
-
-    LaunchedEffect(refreshTrigger) {
-        refreshTrigger.collect { viewModel.refresh() }
+    LifecycleResumeEffect(Unit) {
+        viewModel.refresh()
+        onPauseOrDispose { }
     }
 
     LaunchedEffect(viewModel) {
@@ -74,7 +74,20 @@ fun MedicalHystoryScreen(
         val horizontalPadding = spacing.horizontalPadding
         val isWideLayout = maxWidth >= 840.dp
 
-        Surface(
+        Crossfade(
+            targetState = state.isLoading && state.allDocuments.isEmpty() && state.medicines.isEmpty(),
+            animationSpec = tween(300),
+            label = "HistoryTransition"
+        ) { loading ->
+            if (loading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    LoadingIndicator(message = "Se \u00EEncarc\u0103 istoricul medical...")
+                }
+            } else {
+                Surface(
             modifier = Modifier.fillMaxSize(),
             color = AppBackground
         ) {
@@ -193,17 +206,6 @@ fun MedicalHystoryScreen(
                 ) { data: SnackbarData ->
                     Snackbar(data)
                 }
-
-                if (state.isLoading) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.White.copy(alpha = 0.7f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        LoadingIndicator(message = "Se \u00EEncarc\u0103 istoricul medical...")
-                    }
-                }
             }
         }
 
@@ -215,6 +217,8 @@ fun MedicalHystoryScreen(
                     onDismiss = { },
                     onRetry = { viewModel.refresh() }
                 )
+            }
+        }
             }
         }
     }

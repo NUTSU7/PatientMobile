@@ -11,6 +11,7 @@ import com.semanticsoft.patientmobile.domain.model.MedicalResult
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.domain.repository.DashboardRepository
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
+import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.MedicalResultRepository
 import com.semanticsoft.patientmobile.util.ApiResult
 import com.semanticsoft.patientmobile.util.toUserMessage
@@ -66,7 +67,8 @@ class DashboardViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val dashboardRepository: DashboardRepository,
     private val medicalResultRepository: MedicalResultRepository,
-    private val documentRepository: DocumentRepository
+    private val documentRepository: DocumentRepository,
+    private val globalSyncManager: GlobalSyncManager
 ) : ViewModel() {
 
     private val _events = MutableSharedFlow<DashboardEvent>()
@@ -79,7 +81,9 @@ class DashboardViewModel @Inject constructor(
     val refreshErrors: SharedFlow<String> = _refreshErrors.asSharedFlow()
 
     init {
-        refresh()
+        viewModelScope.launch {
+            globalSyncManager.syncEvents.collect { refresh() }
+        }
     }
 
     fun logout() {
@@ -125,7 +129,16 @@ class DashboardViewModel @Inject constructor(
             }
 
             if (!hasDocuments && !hasResults) {
-                populateDemoState(greetingName, fullName, role)
+                _state.update {
+                    it.copy(
+                        greetingName = greetingName.ifBlank { "Pacient" },
+                        fullName = fullName,
+                        role = role,
+                        hasUploadedDocuments = false,
+                        isLoading = false,
+                        errorMessage = null
+                    )
+                }
                 _events.emit(DashboardEvent.RefreshCompleted)
                 return@launch
             }
@@ -205,28 +218,6 @@ class DashboardViewModel @Inject constructor(
                 isAiSummaryLoading = aiLoading,
                 warningCards = warnings,
                 clinicalPillarCards = pillars,
-                isLoading = false,
-                errorMessage = null
-            )
-        }
-    }
-
-    private fun populateDemoState(greetingName: String, fullName: String, role: String) {
-        _state.update {
-            it.copy(
-                greetingName = greetingName.ifBlank { "Pacient" },
-                fullName = fullName,
-                role = role,
-                hasUploadedDocuments = false,
-                attentionItems = demoAttentionItems(),
-                basicIndicators = demoIndicators(),
-                markerCategories = demoMarkerCategories(),
-                generalMarkerCards = demoGeneralMarkers(),
-                markerSummary = UiMarkerSummary(normal = 13, borderline = 3, attention = 4, score = 72),
-                aiSummary = "",
-                isAiSummaryLoading = false,
-                warningCards = demoWarningCards(),
-                clinicalPillarCards = demoClinicalPillarCards(),
                 isLoading = false,
                 errorMessage = null
             )
@@ -379,90 +370,4 @@ class DashboardViewModel @Inject constructor(
             else -> ClinicalPillarType.ORGANS_METABOLISM
         }
     }
-
-    private fun demoAttentionItems(): List<UiAttentionItem> = listOf(
-        UiAttentionItem("TSH", "0.3", "mIU/L", "Aten\u021Bie"),
-        UiAttentionItem("Vitamina D", "18", "ng/mL", "Aten\u021Bie"),
-        UiAttentionItem("Colesterol LDL", "4.5", "mmol/L", "Aten\u021Bie"),
-        UiAttentionItem("Glucoza a jeun", "6.8", "mmol/L", "Aten\u021Bie moderat\u0103")
-    )
-
-    private fun demoIndicators(): List<UiBasicIndicatorItem> = listOf(
-        UiBasicIndicatorItem(
-            title = "Hemoglobina", value = "14.2", unit = "g/dL",
-            status = IndicatorStatus.NORMAL, trendDirection = IndicatorTrendDirection.STABLE,
-            trendDelta = "", trendDescription = "Stabil fa\u021B\u0103 de ultima analiz\u0103",
-            markerPosition = 0.34f, segments = IndicatorSegments()
-        ),
-        UiBasicIndicatorItem(
-            title = "Glucoza a jeun", value = "6.8", unit = "mmol/L",
-            status = IndicatorStatus.BORDERLINE, trendDirection = IndicatorTrendDirection.UP,
-            trendDelta = "0.6", trendDescription = "fa\u021B\u0103 de ultima analiz\u0103",
-            markerPosition = 0.66f, segments = IndicatorSegments()
-        ),
-        UiBasicIndicatorItem(
-            title = "ALT", value = "55", unit = "U/L",
-            status = IndicatorStatus.ATTENTION, trendDirection = IndicatorTrendDirection.DOWN,
-            trendDelta = "0.9", trendDescription = "fa\u021B\u0103 de ultima analiz\u0103",
-            markerPosition = 0.88f, segments = IndicatorSegments()
-        )
-    )
-
-    private fun demoMarkerCategories(): List<UiMarkerCategoryItem> = listOf(
-        UiMarkerCategoryItem(name = "Toate", count = 20),
-        UiMarkerCategoryItem(name = "Hematologie", count = 6),
-        UiMarkerCategoryItem(name = "Biochimie", count = 9),
-        UiMarkerCategoryItem(name = "Hormoni", count = 1),
-        UiMarkerCategoryItem(name = "Vitamine", count = 3),
-        UiMarkerCategoryItem(name = "Imunologie", count = 1)
-    )
-
-    private fun demoGeneralMarkers(): List<UiGeneralMarkerCardItem> = listOf(
-        UiGeneralMarkerCardItem(
-            title = "Glucoza a jeun", category = "Biochimie",
-            value = "6.8", unit = "mmol/L", status = IndicatorStatus.BORDERLINE,
-            normalRange = "3.9 - 5.5", borderlineRange = "5.6 - 6.9", attentionRange = ">= 7.0"
-        ),
-        UiGeneralMarkerCardItem(
-            title = "ALT", category = "Biochimie",
-            value = "55", unit = "U/L", status = IndicatorStatus.ATTENTION,
-            normalRange = "< 41", borderlineRange = "41 - 50", attentionRange = "> 50"
-        ),
-        UiGeneralMarkerCardItem(
-            title = "Acid folic", category = "Vitamine",
-            value = "12", unit = "nmol/L", status = IndicatorStatus.NORMAL,
-            normalRange = "8.8 - 60.8", borderlineRange = "5.0 - 8.7", attentionRange = "< 5.0"
-        )
-    )
-
-    private fun demoWarningCards(): List<UiWarningCardItem> = listOf(
-        UiWarningCardItem(
-            level = WarningLevel.HIGH,
-            indicators = listOf(
-                UiWarningIndicatorItem("TSH", "0.3", "mIU/L"),
-                UiWarningIndicatorItem("Vitamina D", "18", "ng/mL"),
-                UiWarningIndicatorItem("Colesterol LDL", "4.5", "mmol/L"),
-                UiWarningIndicatorItem("Acid uric", "7.2", "mg/dL")
-            )
-        ),
-        UiWarningCardItem(
-            level = WarningLevel.MODERATE,
-            indicators = listOf(
-                UiWarningIndicatorItem("Glucoza a jeun", "6.8", "mmol/L"),
-                UiWarningIndicatorItem("Trigliceride", "1.8", "mmol/L"),
-                UiWarningIndicatorItem("HbA1c", "5.8", "%")
-            )
-        )
-    )
-
-    private fun demoClinicalPillarCards(): List<UiClinicalPillarCardItem> = listOf(
-        UiClinicalPillarCardItem(type = ClinicalPillarType.BLOOD_CELLS, reportCount = 6),
-        UiClinicalPillarCardItem(type = ClinicalPillarType.ORGANS_METABOLISM, reportCount = 14),
-        UiClinicalPillarCardItem(type = ClinicalPillarType.HEART_CV, reportCount = 5),
-        UiClinicalPillarCardItem(type = ClinicalPillarType.HORMONES, reportCount = 8),
-        UiClinicalPillarCardItem(type = ClinicalPillarType.ONCOLOGY_MARKERS, reportCount = 4),
-        UiClinicalPillarCardItem(type = ClinicalPillarType.NUTRITION_VITAMINS, reportCount = 3),
-        UiClinicalPillarCardItem(type = ClinicalPillarType.COAGULATION, reportCount = 3),
-        UiClinicalPillarCardItem(type = ClinicalPillarType.INFECTIONS_IMMUNOLOGY, reportCount = 5)
-    )
 }

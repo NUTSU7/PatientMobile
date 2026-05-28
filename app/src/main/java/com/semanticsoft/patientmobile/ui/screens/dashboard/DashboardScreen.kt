@@ -1,5 +1,7 @@
 package com.semanticsoft.patientmobile.ui.screens.dashboard
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -115,7 +117,20 @@ fun DashboardScreen(
             else -> 252.dp
         }
 
-        Surface(
+        Crossfade(
+            targetState = state.isLoading && state.greetingName.isEmpty(),
+            animationSpec = tween(300),
+            label = "DashboardTransition"
+        ) { loading ->
+            if (loading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    LoadingIndicator(message = "Se \u00EEncarc\u0103...")
+                }
+            } else {
+                Surface(
             modifier = Modifier.fillMaxSize(),
             color = AppBackground
         ) {
@@ -350,6 +365,8 @@ fun DashboardScreen(
             modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
         ) { data: SnackbarData ->
             Snackbar(data)
+        }
+            }
         }
     }
 }

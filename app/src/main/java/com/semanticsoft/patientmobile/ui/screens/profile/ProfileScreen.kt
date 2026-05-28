@@ -1,6 +1,7 @@
 package com.semanticsoft.patientmobile.ui.screens.profile
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -34,18 +35,15 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
@@ -66,18 +64,21 @@ fun ProfileScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    if (state.isLoading && !state.showChangePasswordDialog) {
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .background(AppBackground),
-            contentAlignment = Alignment.Center
-        ) {
-            LoadingIndicator(message = "Se \u00EEncarc\u0103...")
-        }
-        return
-    }
-
+    Crossfade(
+        targetState = state.isLoading && state.email.isEmpty(),
+        animationSpec = tween(300),
+        label = "ProfileTransition"
+    ) { loading ->
+        if (loading) {
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .background(AppBackground),
+                contentAlignment = Alignment.Center
+            ) {
+                LoadingIndicator(message = "Se \u00EEncarc\u0103...")
+            }
+        } else {
     Box(modifier = modifier.fillMaxSize()) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
@@ -192,6 +193,8 @@ fun ProfileScreen(
                 }
             }
         }
+            }
+        }
     }
 }
 
@@ -203,18 +206,10 @@ fun ProfileScreen(
 ) {
     val vm: ProfileViewModel = hiltViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
-    val lifecycleOwner = LocalLifecycleOwner.current
 
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                vm.onResume()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
+    LifecycleResumeEffect(Unit) {
+        vm.refresh()
+        onPauseOrDispose { }
     }
 
     LaunchedEffect(vm) {

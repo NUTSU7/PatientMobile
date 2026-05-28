@@ -1,5 +1,7 @@
 package com.semanticsoft.patientmobile.ui.screens.uploadedAnalyses
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.common.dashboardSpacing
@@ -51,14 +54,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarData
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.MutableSharedFlow
 
 @Composable
 fun UploadedAnalysesScreen(
     onSortClick: () -> Unit = { },
     onSelectClick: () -> Unit = { },
-    refreshTrigger: SharedFlow<Unit> = MutableSharedFlow(),
     viewModel: UploadedAnalysesViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
@@ -66,10 +66,9 @@ fun UploadedAnalysesScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(Unit) { viewModel.refreshDocuments() }
-
-    LaunchedEffect(refreshTrigger) {
-        refreshTrigger.collect { viewModel.refreshDocuments() }
+    LifecycleResumeEffect(Unit) {
+        viewModel.refreshDocuments()
+        onPauseOrDispose { }
     }
 
     LaunchedEffect(viewModel) {
@@ -87,7 +86,20 @@ fun UploadedAnalysesScreen(
         val spacing = dashboardSpacing(maxWidth.value)
         val horizontalPadding = spacing.horizontalPadding
 
-        Surface(
+        Crossfade(
+            targetState = state.isLoading && state.allDocuments.isEmpty(),
+            animationSpec = tween(300),
+            label = "AnalysesTransition"
+        ) { loading ->
+            if (loading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    LoadingIndicator(message = "Se \u00EEncarc\u0103...")
+                }
+            } else {
+                Surface(
             modifier = Modifier.fillMaxSize(),
             color = AppBackground
         ) {
@@ -208,17 +220,6 @@ fun UploadedAnalysesScreen(
                 ) { data: SnackbarData ->
                     Snackbar(data)
                 }
-
-                if (state.isLoading && state.documents.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.White.copy(alpha = 0.7f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        LoadingIndicator(message = "Se \u00EEncarc\u0103...")
-                    }
-                }
             }
         }
 
@@ -226,10 +227,12 @@ fun UploadedAnalysesScreen(
             state.errorMessage?.let { message ->
                 ErrorDialog(
                     message = message,
-                    title = "Analize \u00EEnc\u0103rcate",
+                    title = "Analize \u00EEncarc\u0103te",
                     onDismiss = { },
                     onRetry = { viewModel.refreshDocuments() }
                 )
+            }
+        }
             }
         }
     }

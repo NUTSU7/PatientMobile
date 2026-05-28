@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
+import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
 import com.semanticsoft.patientmobile.util.ApiResult
 import com.semanticsoft.patientmobile.util.PasswordValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -52,7 +53,8 @@ sealed class ProfileEffect {
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val documentRepository: DocumentRepository
+    private val documentRepository: DocumentRepository,
+    private val globalSyncManager: GlobalSyncManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileUiState(isLoading = true))
@@ -61,17 +63,9 @@ class ProfileViewModel @Inject constructor(
     private val _effects = MutableSharedFlow<ProfileEffect>()
     val effects: SharedFlow<ProfileEffect> = _effects.asSharedFlow()
 
-    private var hasResumed = false
-
     init {
-        refresh()
-    }
-
-    fun onResume() {
-        if (hasResumed) {
-            refresh()
-        } else {
-            hasResumed = true
+        viewModelScope.launch {
+            globalSyncManager.syncEvents.collect { refresh() }
         }
     }
 

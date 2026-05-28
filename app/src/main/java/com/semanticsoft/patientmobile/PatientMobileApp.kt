@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -109,6 +110,11 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
 
         composable(AppDestination.Dashboard.route) {
             val vm: DashboardViewModel = hiltViewModel()
+
+            LifecycleResumeEffect(Unit) {
+                vm.refresh()
+                onPauseOrDispose { }
+            }
 
             LaunchedEffect(vm) {
                 vm.events.collectLatest { event ->

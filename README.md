@@ -251,7 +251,7 @@ The drawer shows the user's profile, role, and a logout button. Drawer content i
   - AI summary
   - Warning cards
   - Clinical pillar cards
-- **Demo Mode**: If no documents are uploaded or the API fails, the dashboard falls back to **demo data** so the UI is always usable.
+- **Data Freshness**: The dashboard always fetches fresh data from the backend. On first load or when no documents exist yet, an `EmptyUploadCard` is shown prompting the user to upload their first document. No demo/fake data fallbacks are used.
 - `DashboardViewModel.kt` fetches documents and medical results, computes summaries, and builds an AI summary string.
 - Dashboard-specific widgets live in `ui/screens/dashboard/components/`.
 
@@ -384,6 +384,15 @@ Login ──success──▶ Dashboard (drawer)
 | `DashboardRepository` | `DashboardRepositoryImpl.kt` | Fetch dashboard summary, request AI explanations |
 | `MedicalHistoryRepository` | `MedicalHistoryRepositoryImpl.kt` | CRUD medications and personal notes |
 | `SharedLinkRepository` | `SharedLinkRepositoryImpl.kt` | Consume shared document links |
+
+### Global Sync Engine
+
+`GlobalSyncManager` is a singleton `SharedFlow`-based broadcast mechanism that keeps all data-fetching screens in sync. When any ViewModel mutates backend data (upload, medication add, note add), it calls `globalSyncManager.triggerSync()`. All consumer ViewModels (`DashboardViewModel`, `MedicalHystoryViewModel`, `ProfileViewModel`, `UploadedAnalysesViewModel`) collect `globalSyncManager.syncEvents` in their `init` block and re-fetch fresh data from the API. Screens also use `LifecycleResumeEffect` to refresh when the user navigates back to a tab, ensuring data is never stale.
+
+| Component | File | Responsibility |
+|-----------|------|----------------|
+| `GlobalSyncManager` (interface) | `domain/repository/GlobalSyncManager.kt` | Contract for sync event broadcasting |
+| `GlobalSyncManagerImpl` | `data/repository/GlobalSyncManagerImpl.kt` | Singleton `MutableSharedFlow<Unit>` implementation |
 
 ### Result Type: `ApiResult<T>`
 

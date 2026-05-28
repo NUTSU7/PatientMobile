@@ -7,11 +7,13 @@ import com.semanticsoft.patientmobile.data.repository.AlwaysOnlineStateProvider
 import com.semanticsoft.patientmobile.data.repository.AuthRepositoryImpl
 import com.semanticsoft.patientmobile.data.repository.DashboardRepositoryImpl
 import com.semanticsoft.patientmobile.data.repository.DocumentRepositoryImpl
+import com.semanticsoft.patientmobile.data.repository.GlobalSyncManagerImpl
 import com.semanticsoft.patientmobile.data.repository.MedicalHistoryRepositoryImpl
 import com.semanticsoft.patientmobile.data.repository.MedicalResultRepositoryImpl
 import com.semanticsoft.patientmobile.data.repository.NetworkStateProvider
 import com.semanticsoft.patientmobile.data.repository.OcrRepositoryImpl
 import com.semanticsoft.patientmobile.data.repository.SharedLinkRepositoryImpl
+import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.domain.repository.DashboardRepository
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
@@ -83,4 +85,10 @@ object RepositoryModule {
         apiService: PatientApiService,
         networkStateProvider: NetworkStateProvider
     ): SharedLinkRepository = SharedLinkRepositoryImpl(apiService, networkStateProvider)
+
+    @Provides
+    @Singleton
+    fun provideGlobalSyncManager(
+        impl: GlobalSyncManagerImpl
+    ): GlobalSyncManager = impl
 }
