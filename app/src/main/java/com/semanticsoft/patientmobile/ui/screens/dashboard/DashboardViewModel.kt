@@ -118,7 +118,7 @@ class DashboardViewModel @Inject constructor(
             if (userResult is ApiResult.Success) {
                 val user = userResult.data
                 greetingName = user.firstName.ifBlank { user.email.substringBefore("@") }
-                fullName = listOf(user.firstName, user.lastName)
+                fullName = listOfNotNull(user.firstName, user.lastName)
                     .filter { it.isNotBlank() }
                     .joinToString(" ").ifBlank { user.email }
                 role = user.role.ifBlank { "Pacient" }

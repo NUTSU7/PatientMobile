@@ -1,10 +1,11 @@
 package com.semanticsoft.patientmobile.ui.screens.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,125 +13,177 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
+import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
+import com.semanticsoft.patientmobile.ui.screens.profile.components.AccountManagementCard
+import com.semanticsoft.patientmobile.ui.screens.profile.components.ChangePasswordDialog
+import com.semanticsoft.patientmobile.ui.screens.profile.components.ProfileDetailsCard
+import com.semanticsoft.patientmobile.ui.screens.profile.components.ProfileStatsSection
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
-import com.semanticsoft.patientmobile.ui.theme.Indigo600
-import com.semanticsoft.patientmobile.ui.theme.Purple500
+import com.semanticsoft.patientmobile.ui.theme.AppDimens
 
 @Composable
 fun ProfileScreen(
-    fullName: String,
-    role: String,
-    onLogout: () -> Unit,
+    state: ProfileUiState,
+    onEvent: (ProfileEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     SetStatusBar(color = Color.White, darkIcons = true)
 
-    val initials = fullName
-        .split(" ")
-        .filter { it.isNotBlank() }
-        .take(2)
-        .joinToString("") { it.first().uppercase() }
-        .ifBlank { "AP" }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(AppBackground)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
+    LaunchedEffect(state.successMessage) {
+        state.successMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            onEvent(ProfileEvent.OnChangePasswordDismiss)
+        }
+    }
+
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+        }
+    }
+
+    if (state.showChangePasswordDialog) {
+        ChangePasswordDialog(
+            onDismiss = { onEvent(ProfileEvent.OnChangePasswordDismiss) },
+            onSubmit = { old, new ->
+                onEvent(ProfileEvent.OnChangePasswordSubmit(old, new))
+            }
+        )
+    }
+
+    if (state.isLoading) {
         Box(
-            modifier = Modifier
-                .size(96.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.horizontalGradient(listOf(Indigo600, Purple500))
-                ),
+            modifier = modifier
+                .fillMaxSize()
+                .background(AppBackground),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = initials,
-                color = Color.White,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold
-            )
+            LoadingIndicator(message = "Se \u00EEncarc\u0103...")
         }
+        return
+    }
 
-        Spacer(modifier = Modifier.height(20.dp))
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = AppBackground,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { innerPadding ->
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val horizontalPadding = when {
+                maxWidth >= 430.dp -> AppDimens.paddingLarge
+                else -> AppDimens.paddingDefault
+            }
+            val sectionGap = when {
+                maxWidth >= 360.dp -> AppDimens.gapDefault
+                else -> AppDimens.gapMedium
+            }
 
-        Text(
-            text = fullName.ifBlank { "Pacient" },
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF111827)
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = role.ifBlank { "Pacient" },
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF6B7280)
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = Color.White,
-            shape = RoundedCornerShape(12.dp),
-            shadowElevation = 2.dp
-        ) {
-            Row(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(innerPadding)
+                    .padding(
+                        start = horizontalPadding,
+                        end = horizontalPadding,
+                        top = AppDimens.paddingDefault,
+                        bottom = AppDimens.paddingDefault
+                    ),
+                verticalArrangement = Arrangement.spacedBy(sectionGap)
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.Logout,
-                    contentDescription = null,
-                    tint = Color(0xFFDC2626),
-                    modifier = Modifier.size(24.dp)
+                ProfileStatsSection(
+                    totalAnalyses = state.totalAnalyses,
+                    daysSinceLastAnalysis = state.daysSinceLastAnalysis
                 )
 
-                Button(
-                    onClick = onLogout,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFDC2626)
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = "Deconectare",
-                        color = Color.White,
-                        fontWeight = FontWeight.Medium
+                ProfileDetailsCard(
+                    email = state.email,
+                    onChangePasswordClick = { onEvent(ProfileEvent.OnChangePasswordClicked) }
+                )
+
+                AccountManagementCard(
+                    onExportDataClick = { onEvent(ProfileEvent.OnExportDataClicked) },
+                    onDeleteAccountClick = { onEvent(ProfileEvent.OnDeleteAccountClicked) }
+                )
+
+                OutlinedButton(
+                    onClick = { onEvent(ProfileEvent.OnLogoutClicked) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(AppDimens.buttonHeightDefault),
+                    shape = MaterialTheme.shapes.small,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
                     )
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.Logout,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(AppDimens.gapSmall))
+                    Text(text = "Deconectare")
                 }
+
+                Spacer(modifier = Modifier.height(AppDimens.paddingSmall))
             }
         }
     }
+}
+
+@Composable
+fun ProfileScreen(
+    onLogout: () -> Unit,
+    onUploadClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val vm: ProfileViewModel = hiltViewModel()
+    val state by vm.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(vm) {
+        vm.effects.collect { effect ->
+            when (effect) {
+                ProfileEffect.NavigateToLogin -> onLogout()
+                is ProfileEffect.ShowSnackbar -> Unit
+            }
+        }
+    }
+
+    ProfileScreen(
+        state = state,
+        onEvent = { event ->
+            when (event) {
+                ProfileEvent.OnUploadClicked -> onUploadClick()
+                else -> vm.onEvent(event)
+            }
+        },
+        modifier = modifier
+    )
 }

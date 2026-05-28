@@ -79,7 +79,7 @@ fun NavScreen(
                     titleHighlight = "încărcate"
                 )
                 BottomNavDestination.Profile.route -> ScreenTopBar(
-                    titlePrefix = "Profil",
+                    titlePrefix = "Profilul meu",
                     titleHighlight = ""
                 )
             }

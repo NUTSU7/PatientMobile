@@ -8,8 +8,10 @@ import com.semanticsoft.patientmobile.data.remote.api.dto.BulkDeleteRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.CreateShareLinkRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.DuplicateCheckRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.RenameDocumentRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.parseInstantSafe
 import com.semanticsoft.patientmobile.data.remote.api.dto.toDomain
 import com.semanticsoft.patientmobile.domain.model.DocumentDuplicateInfo
+import com.semanticsoft.patientmobile.domain.model.DocumentStats
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.domain.model.SharedLink
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
@@ -141,6 +143,23 @@ class DocumentRepositoryImpl(
         return safeApiCall {
             apiService.shareDocument(id, CreateShareLinkRequest())
         }.map { it.toDomain() }
+    }
+
+    override suspend fun getDocumentStats(): ApiResult<DocumentStats> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
+        return safeApiCall {
+            apiService.getDocuments(
+                page = 0,
+                size = 1,
+                sortBy = "uploadedAt",
+                sortDir = "desc"
+            )
+        }.map { response ->
+            DocumentStats(
+                totalCount = response.totalElements.toInt(),
+                lastUploadedAt = response.content.firstOrNull()?.uploadedAt?.let(::parseInstantSafe)
+            )
+        }
     }
 
     suspend fun computeSha256(file: File): String = withContext(Dispatchers.IO) {
