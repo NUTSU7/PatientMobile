@@ -1,7 +1,15 @@
 package com.semanticsoft.patientmobile.ui.screens.profile
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -26,14 +34,18 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
@@ -54,29 +66,7 @@ fun ProfileScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(state.successMessage) {
-        state.successMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            onEvent(ProfileEvent.OnChangePasswordDismiss)
-        }
-    }
-
-    LaunchedEffect(state.errorMessage) {
-        state.errorMessage?.let {
-            snackbarHostState.showSnackbar(it)
-        }
-    }
-
-    if (state.showChangePasswordDialog) {
-        ChangePasswordDialog(
-            onDismiss = { onEvent(ProfileEvent.OnChangePasswordDismiss) },
-            onSubmit = { old, new ->
-                onEvent(ProfileEvent.OnChangePasswordSubmit(old, new))
-            }
-        )
-    }
-
-    if (state.isLoading) {
+    if (state.isLoading && !state.showChangePasswordDialog) {
         Box(
             modifier = modifier
                 .fillMaxSize()
@@ -88,11 +78,12 @@ fun ProfileScreen(
         return
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = AppBackground,
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { innerPadding ->
+    Box(modifier = modifier.fillMaxSize()) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = AppBackground,
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        ) { innerPadding ->
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             val horizontalPadding = when {
                 maxWidth >= 430.dp -> AppDimens.paddingLarge
@@ -156,6 +147,52 @@ fun ProfileScreen(
             }
         }
     }
+
+        AnimatedVisibility(
+            visible = state.showChangePasswordDialog,
+            enter = fadeIn(animationSpec = tween(200)),
+            exit = fadeOut(animationSpec = tween(200))
+        ) {
+            val interactionSource = remember { MutableInteractionSource() }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0x80000000))
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = { onEvent(ProfileEvent.OnChangePasswordDismiss) }
+                    )
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                AnimatedVisibility(
+                    visible = state.showChangePasswordDialog,
+                    enter = scaleIn(initialScale = 0.85f, animationSpec = tween(250)) +
+                        fadeIn(animationSpec = tween(250)),
+                    exit = scaleOut(targetScale = 0.85f, animationSpec = tween(200)) +
+                        fadeOut(animationSpec = tween(200))
+                ) {
+                    Box(
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {}
+                        )
+                    ) {
+                        ChangePasswordDialog(
+                            onDismiss = { onEvent(ProfileEvent.OnChangePasswordDismiss) },
+                            onSubmit = { old, new, confirm ->
+                                onEvent(ProfileEvent.OnChangePasswordSubmit(old, new, confirm))
+                            },
+                            errorMessage = state.changePasswordError,
+                            isLoading = state.isLoading
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -166,6 +203,19 @@ fun ProfileScreen(
 ) {
     val vm: ProfileViewModel = hiltViewModel()
     val state by vm.state.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                vm.onResume()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     LaunchedEffect(vm) {
         vm.effects.collect { effect ->

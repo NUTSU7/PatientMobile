@@ -27,15 +27,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.semanticsoft.patientmobile.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.ui.theme.AppShapes
-
-private val AccentPurple = Color(0xFF6366F1)
-private val LightPurpleBg = Color(0xFFF5F3FF)
-private val FieldBg = Color(0xFFEFF4FA)
-private val FieldIconTint = Color(0xFF9CA3AF)
+import com.semanticsoft.patientmobile.ui.theme.AccentPurple
+import com.semanticsoft.patientmobile.ui.theme.Gray400
+import com.semanticsoft.patientmobile.ui.theme.Gray500
+import com.semanticsoft.patientmobile.ui.theme.InputBackground
+import com.semanticsoft.patientmobile.ui.theme.LightPurpleBg
 
 @Composable
 internal fun ProfileDetailsCard(
@@ -107,21 +106,21 @@ internal fun ProfileDetailsCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(AppDimens.inputHeightDefault)
-                        .background(FieldBg, RoundedCornerShape(AppDimens.cornerRadiusSmall))
+                        .background(InputBackground, RoundedCornerShape(AppDimens.cornerRadiusSmall))
                         .padding(horizontal = AppDimens.paddingMedium),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Email,
                         contentDescription = null,
-                        tint = FieldIconTint,
+                        tint = Gray400,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(AppDimens.gapSmall))
                     Text(
                         text = email,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF6B7280)
+                        color = Gray500
                     )
                 }
 
@@ -137,21 +136,21 @@ internal fun ProfileDetailsCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(AppDimens.inputHeightDefault)
-                        .background(FieldBg, RoundedCornerShape(AppDimens.cornerRadiusSmall))
+                        .background(InputBackground, RoundedCornerShape(AppDimens.cornerRadiusSmall))
                         .padding(horizontal = AppDimens.paddingMedium),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Lock,
                         contentDescription = null,
-                        tint = FieldIconTint,
+                        tint = Gray400,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(AppDimens.gapSmall))
                     Text(
                         text = "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF6B7280)
+                        color = Gray500
                     )
                 }
             }
