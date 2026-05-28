@@ -49,7 +49,7 @@ fun UserDto.toDomain(): User = User(
     email = email,
     firstName = firstName,
     lastName = lastName,
-    dateOfBirth = parseDateSafe(dateOfBirth),
+    dateOfBirth = dateOfBirth?.let(::parseDateSafe),
     role = role,
     createdAt = parseInstantSafe(createdAt)
 )
@@ -231,8 +231,8 @@ fun CreateSharedLinkDto.toDomain(): SharedLink = SharedLink(
 // ── Defensive date parsers ──────────────────────────────────────────────────
 
 @JvmSynthetic
-fun parseDateSafe(raw: String): LocalDate {
-    if (raw.isBlank()) return LocalDate.EPOCH
+fun parseDateSafe(raw: String?): LocalDate {
+    if (raw.isNullOrBlank()) return LocalDate.EPOCH
     return runCatching {
         LocalDate.parse(raw.substringBefore('T'))
     }.getOrElse {

@@ -52,9 +52,8 @@ fun PostLoginNavHost(
 
         composable(BottomNavDestination.Profile.route) {
             ProfileScreen(
-                fullName = if (state.fullName.isBlank()) state.greetingName else state.fullName,
-                role = if (state.role.isBlank()) "Pacient" else state.role,
-                onLogout = onLogout
+                onLogout = onLogout,
+                onUploadClick = onUploadClick
             )
         }
     }

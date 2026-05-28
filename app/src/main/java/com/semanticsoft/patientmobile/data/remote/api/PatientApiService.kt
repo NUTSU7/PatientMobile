@@ -4,6 +4,7 @@ import com.semanticsoft.patientmobile.data.remote.api.dto.AiExplainRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.AiExplainResponse
 import com.semanticsoft.patientmobile.data.remote.api.dto.AiSummaryResponse
 import com.semanticsoft.patientmobile.data.remote.api.dto.AuthResponse
+import com.semanticsoft.patientmobile.data.remote.api.dto.ChangePasswordRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.BulkDeleteRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.CreateMedicationRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.CreateNoteRequest
@@ -65,6 +66,12 @@ interface PatientApiService {
     @GET("auth/me")
     suspend fun getCurrentUser(): UserDto
 
+    @POST("auth/change-password")
+    suspend fun changePassword(@Body request: ChangePasswordRequest)
+
+    @DELETE("auth/account")
+    suspend fun deleteAccount()
+
     // ── Documents ──────────────────────────────────────────────────────────
 
     @Multipart
@@ -86,7 +93,9 @@ interface PatientApiService {
         @Query("size") size: Int = 20,
         @Query("search") search: String? = null,
         @Query("dateFrom") dateFrom: String? = null,
-        @Query("dateTo") dateTo: String? = null
+        @Query("dateTo") dateTo: String? = null,
+        @Query("sortBy") sortBy: String? = null,
+        @Query("sortDir") sortDir: String? = null
     ): PaginatedResponse<DocumentDto>
 
     @GET("patient/documents/{documentId}")

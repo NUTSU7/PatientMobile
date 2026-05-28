@@ -50,12 +50,18 @@ data class LogoutRequest(
 )
 
 @Serializable
+data class ChangePasswordRequest(
+    val oldPassword: String,
+    val newPassword: String
+)
+
+@Serializable
 data class UserDto(
     val id: String,
     val email: String,
     val firstName: String,
-    val lastName: String,
-    val dateOfBirth: String,
+    val lastName: String? = null,
+    val dateOfBirth: String? = null,
     val role: String = "PATIENT",
     val createdAt: String? = null
 )

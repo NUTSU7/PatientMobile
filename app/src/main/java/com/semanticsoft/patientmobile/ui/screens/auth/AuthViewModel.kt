@@ -74,7 +74,7 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun User.toDisplayName(): String {
-        val name = listOf(firstName, lastName)
+        val name = listOfNotNull(firstName, lastName)
             .filter { it.isNotBlank() }
             .joinToString(" ")
         return name.ifBlank { email }

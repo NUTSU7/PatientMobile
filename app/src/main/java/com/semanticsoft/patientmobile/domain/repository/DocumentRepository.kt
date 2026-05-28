@@ -1,6 +1,7 @@
 package com.semanticsoft.patientmobile.domain.repository
 
 import com.semanticsoft.patientmobile.domain.model.DocumentDuplicateInfo
+import com.semanticsoft.patientmobile.domain.model.DocumentStats
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.domain.model.SharedLink
 import com.semanticsoft.patientmobile.util.ApiResult
@@ -22,4 +23,5 @@ interface DocumentRepository {
     suspend fun deleteDocument(id: String): ApiResult<Unit>
     suspend fun bulkDelete(documentIds: List<String>): ApiResult<Unit>
     suspend fun createShareLink(id: String): ApiResult<SharedLink>
+    suspend fun getDocumentStats(): ApiResult<DocumentStats>
 }

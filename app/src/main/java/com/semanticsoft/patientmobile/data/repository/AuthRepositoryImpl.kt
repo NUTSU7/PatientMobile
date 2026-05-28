@@ -3,6 +3,7 @@ package com.semanticsoft.patientmobile.data.repository
 import com.semanticsoft.patientmobile.data.local.datastore.TokenManager
 import com.semanticsoft.patientmobile.data.remote.SafeApiCall.safeApiCall
 import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
+import com.semanticsoft.patientmobile.data.remote.api.dto.ChangePasswordRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.LoginRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.LogoutRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.RefreshRequest
@@ -103,5 +104,25 @@ class AuthRepositoryImpl(
 
     override suspend fun isLoggedIn(): Boolean {
         return tokenManager.getAccessToken() != null
+    }
+
+    override suspend fun changePassword(
+        oldPassword: String,
+        newPassword: String
+    ): ApiResult<Unit> {
+        return safeApiCall {
+            apiService.changePassword(
+                ChangePasswordRequest(oldPassword = oldPassword, newPassword = newPassword)
+            )
+        }.map { }
+    }
+
+    override suspend fun deleteAccount(): ApiResult<Unit> {
+        return safeApiCall { apiService.deleteAccount() }.also { result ->
+            if (result is ApiResult.Success) {
+                tokenManager.clearTokens()
+                tokenManager.clearUser()
+            }
+        }.map { }
     }
 }
