@@ -12,7 +12,6 @@ import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardUiState
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicalHystoryScreen
 import com.semanticsoft.patientmobile.ui.screens.profile.ProfileScreen
 import com.semanticsoft.patientmobile.ui.screens.uploadedAnalyses.UploadedAnalysesScreen
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
@@ -21,7 +20,6 @@ fun PostLoginNavHost(
     dashboardState: StateFlow<DashboardUiState>,
     onUploadClick: () -> Unit,
     onLogout: () -> Unit,
-    refreshTrigger: SharedFlow<Unit>,
     modifier: Modifier = Modifier
 ) {
     val state by dashboardState.collectAsStateWithLifecycle()
@@ -39,15 +37,11 @@ fun PostLoginNavHost(
         }
 
         composable(BottomNavDestination.History.route) {
-            MedicalHystoryScreen(
-                refreshTrigger = refreshTrigger
-            )
+            MedicalHystoryScreen()
         }
 
         composable(BottomNavDestination.Analyses.route) {
-            UploadedAnalysesScreen(
-                refreshTrigger = refreshTrigger
-            )
+            UploadedAnalysesScreen()
         }
 
         composable(BottomNavDestination.Profile.route) {

@@ -3,6 +3,7 @@ package com.semanticsoft.patientmobile.ui.shared.upload
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
+import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
 import com.semanticsoft.patientmobile.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
@@ -20,7 +21,8 @@ import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class UploadFileViewModel @Inject constructor(
-    private val documentRepository: DocumentRepository
+    private val documentRepository: DocumentRepository,
+    private val globalSyncManager: GlobalSyncManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(UploadFileUiState())
@@ -150,6 +152,7 @@ class UploadFileViewModel @Inject constructor(
                             afterSuccess.removeAt(pendingIndex)
                             current.copy(selectedFiles = afterSuccess)
                         }
+                        globalSyncManager.triggerSync()
                     }
                     is ApiResult.HttpError -> {
                         if (uploadResult.code == 409) {

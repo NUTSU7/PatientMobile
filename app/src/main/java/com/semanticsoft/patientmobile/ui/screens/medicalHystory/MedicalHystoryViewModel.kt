@@ -10,6 +10,7 @@ import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.domain.model.PersonalNote
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
+import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.MedicalHistoryRepository
 import com.semanticsoft.patientmobile.domain.repository.MedicalResultRepository
 import com.semanticsoft.patientmobile.util.ApiResult
@@ -20,6 +21,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -145,7 +147,8 @@ class MedicalHystoryViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val documentRepository: DocumentRepository,
     private val medicalResultRepository: MedicalResultRepository,
-    private val medicalHistoryRepository: MedicalHistoryRepository
+    private val medicalHistoryRepository: MedicalHistoryRepository,
+    private val globalSyncManager: GlobalSyncManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MedicalHystoryUiState(isLoading = true))
@@ -161,8 +164,9 @@ class MedicalHystoryViewModel @Inject constructor(
     val notesState: StateFlow<PersonalNotesState> = _notesState.asStateFlow()
 
     init {
-        refreshUserProfile()
-        refresh()
+        viewModelScope.launch {
+            globalSyncManager.syncEvents.collect { refresh() }
+        }
     }
 
     fun refresh() {
@@ -173,6 +177,8 @@ class MedicalHystoryViewModel @Inject constructor(
             }
 
             var errorMessage: String? = null
+
+            val userDeferred = async { authRepository.getCurrentUser() }
 
             val documents = when (val result = documentRepository.getDocuments(0, 50)) {
                 is ApiResult.Success -> result.data
@@ -237,6 +243,13 @@ class MedicalHystoryViewModel @Inject constructor(
                     _notesState.update { PersonalNotesState.Error(msg) }
                     _state.value.notes
                 }
+            }
+
+            val userResult = userDeferred.await()
+            if (userResult is ApiResult.Success) {
+                val user = userResult.data
+                val greetingName = user.firstName.ifBlank { user.email.substringBefore("@") }
+                _state.update { it.copy(greetingName = greetingName) }
             }
 
             _state.update {
@@ -347,6 +360,7 @@ class MedicalHystoryViewModel @Inject constructor(
 
             when (val result = medicalHistoryRepository.createMedication(medication)) {
                 is ApiResult.Success -> {
+                    globalSyncManager.triggerSync()
                     _state.update { current ->
                         current.copy(
                             medicines = listOf(result.data.toUiItem(daysRemaining, iconType))
@@ -383,6 +397,7 @@ class MedicalHystoryViewModel @Inject constructor(
             )
             when (val result = medicalHistoryRepository.createNote(note)) {
                 is ApiResult.Success -> {
+                    globalSyncManager.triggerSync()
                     _state.update { current ->
                         current.copy(
                             notes = listOf(result.data.toUiItem(severity)) + current.notes
@@ -423,19 +438,6 @@ class MedicalHystoryViewModel @Inject constructor(
             updatedState.copy(
                 selectedTimelineValue = updatedState.timelineValuesForSelectedYear.firstOrNull()
             )
-        }
-    }
-
-    private fun refreshUserProfile() {
-        viewModelScope.launch {
-            when (val result = authRepository.getCurrentUser()) {
-                is ApiResult.Success -> {
-                    val user = result.data
-                    val greetingName = user.firstName.ifBlank { user.email.substringBefore("@") }
-                    _state.update { it.copy(greetingName = greetingName) }
-                }
-                else -> {}
-            }
         }
     }
 

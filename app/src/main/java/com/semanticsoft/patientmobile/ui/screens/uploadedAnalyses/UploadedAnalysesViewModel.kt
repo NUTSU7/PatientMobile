@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
+import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
 import com.semanticsoft.patientmobile.util.ApiResult
 import com.semanticsoft.patientmobile.util.toUserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,7 +36,8 @@ data class UploadedAnalysesUiState(
 
 @HiltViewModel
 class UploadedAnalysesViewModel @Inject constructor(
-    private val documentRepository: DocumentRepository
+    private val documentRepository: DocumentRepository,
+    private val globalSyncManager: GlobalSyncManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(UploadedAnalysesUiState(isLoading = true))
@@ -45,7 +47,9 @@ class UploadedAnalysesViewModel @Inject constructor(
     val refreshErrors: SharedFlow<String> = _refreshErrors.asSharedFlow()
 
     init {
-        refreshDocuments()
+        viewModelScope.launch {
+            globalSyncManager.syncEvents.collect { refreshDocuments() }
+        }
     }
 
     fun refreshDocuments() {

@@ -26,7 +26,6 @@ import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileEvent
 import com.semanticsoft.patientmobile.ui.shared.upload.rememberUploadFileLaunchers
 import com.semanticsoft.patientmobile.ui.screens.navigation.components.BottomNavBar
 import com.semanticsoft.patientmobile.ui.components.ScreenTopBar
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardUiState
 import kotlinx.coroutines.flow.collect
@@ -42,7 +41,6 @@ fun NavScreen(
     val uploadFileViewModel: UploadFileViewModel = hiltViewModel()
     val uploadFileState by uploadFileViewModel.state.collectAsStateWithLifecycle()
     val uploadLaunchers = rememberUploadFileLaunchers(uploadFileViewModel)
-    val refreshTrigger = remember { MutableSharedFlow<Unit>() }
     val profileState by dashboardState.collectAsStateWithLifecycle()
 
     LaunchedEffect(uploadFileViewModel) {
@@ -51,7 +49,6 @@ fun NavScreen(
                 is UploadFileEvent.AllFilesUploaded -> {
                     showUploadModal = false
                     uploadFileViewModel.resetUploadComplete()
-                    refreshTrigger.emit(Unit)
                 }
             }
         }
@@ -115,8 +112,7 @@ fun NavScreen(
                     if (!showUploadModal) uploadFileViewModel.reset()
                     showUploadModal = !showUploadModal
                 },
-                onLogout = onLogout,
-                refreshTrigger = refreshTrigger
+                onLogout = onLogout
             )
 
             AnimatedVisibility(
