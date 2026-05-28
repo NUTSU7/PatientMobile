@@ -12,13 +12,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.semanticsoft.patientmobile.ui.theme.ErrorLightBg
+import com.semanticsoft.patientmobile.ui.theme.ErrorText
+import com.semanticsoft.patientmobile.ui.theme.Gray400
+import com.semanticsoft.patientmobile.ui.theme.Gray900
+import com.semanticsoft.patientmobile.ui.theme.InputBackground
 
 @Composable
 fun AuthInput(
@@ -36,7 +40,7 @@ fun AuthInput(
         modifier = Modifier
             .fillMaxWidth()
             .height(inputHeight)
-            .background(if (isError) Color(0xFFFEE2E2) else Color(0xFFEFF4FA), RoundedCornerShape(8.dp))
+            .background(if (isError) ErrorLightBg else InputBackground, RoundedCornerShape(8.dp))
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -44,14 +48,14 @@ fun AuthInput(
             if (value.isEmpty()) {
                 Text(
                     text = if (isError && !errorMessage.isNullOrBlank()) errorMessage else placeholder,
-                    color = if (isError) Color(0xFFB91C1C) else Color(0xFF9CA3AF),
+                    color = if (isError) ErrorText else Gray400,
                     fontSize = 14.sp
                 )
             }
             BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
-                textStyle = TextStyle(color = if (isError) Color(0xFFB91C1C) else Color(0xFF111827), fontSize = 14.sp),
+                textStyle = TextStyle(color = if (isError) ErrorText else Gray900, fontSize = 14.sp),
                 singleLine = true,
                 visualTransformation = if (isPassword && !passwordVisible) {
                     PasswordVisualTransformation()

@@ -24,8 +24,15 @@ val Purple600 = Color(0xFF7C3AED)
 val Gray50 = Color(0xFFFAFAFA)
 val Gray100 = Color(0xFFF3F4F6)
 val Gray200 = Color(0xFFE5E7EB)
+val Gray400 = Color(0xFF9CA3AF)
 val Gray500 = Color(0xFF6B7280)
 val Gray900 = Color(0xFF111827)
+
+val InputBackground = Color(0xFFEFF4FA)
+val ErrorLightBg = Color(0xFFFEE2E2)
+val ErrorText = Color(0xFFB91C1C)
+val LightPurpleBg = Color(0xFFF5F3FF)
+val AccentPurple = Color(0xFF6366F1)
 
 // Light gray colors for UI cards and backgrounds
 val GrayLightBg = Color(0xFFF3F4F6)
