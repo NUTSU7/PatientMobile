@@ -20,6 +20,8 @@ fun PostLoginNavHost(
     dashboardState: StateFlow<DashboardUiState>,
     onUploadClick: () -> Unit,
     onLogout: () -> Unit,
+    navigateToExplanation: (String) -> Unit = { },
+    navigateToReportResults: (String) -> Unit = { },
     modifier: Modifier = Modifier
 ) {
     val state by dashboardState.collectAsStateWithLifecycle()
@@ -37,11 +39,11 @@ fun PostLoginNavHost(
         }
 
         composable(BottomNavDestination.History.route) {
-            MedicalHystoryScreen()
+            MedicalHystoryScreen(navigateToReportResults = navigateToReportResults)
         }
 
         composable(BottomNavDestination.Analyses.route) {
-            UploadedAnalysesScreen()
+            UploadedAnalysesScreen(navigateToExplanation = navigateToExplanation)
         }
 
         composable(BottomNavDestination.Profile.route) {

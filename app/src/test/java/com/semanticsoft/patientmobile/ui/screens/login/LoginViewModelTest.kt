@@ -112,5 +112,9 @@ class LoginViewModelTest {
         override suspend fun getCurrentUser(): ApiResult<User> =
             ApiResult.Success(User("u1", "john@example.com", "John", "Doe", LocalDate.parse("1990-01-01"), "PATIENT", Instant.EPOCH))
         override suspend fun isLoggedIn(): Boolean = true
+        override suspend fun changePassword(oldPassword: String, newPassword: String): ApiResult<Unit> =
+            throw UnsupportedOperationException()
+        override suspend fun deleteAccount(): ApiResult<Unit> =
+            throw UnsupportedOperationException()
     }
 }

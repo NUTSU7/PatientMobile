@@ -13,6 +13,7 @@ object ApiConstants {
     const val DEFAULT_PAGE_SIZE = 20
     const val DEFAULT_RESULTS_PAGE_SIZE = 20
 
-    const val OCR_POLL_DELAY_MS = 3_000L
-    const val OCR_POLL_MAX_RETRIES = 40
+    const val OCR_POLL_DELAY_MS = 5_000L
+    const val OCR_POLL_MAX_RETRIES = 144            // 12 min total (5s × 144 = 720s)
+    const val OCR_POLL_SLOW_WARNING_MS = 180_000L   // 3 min — match web
 }

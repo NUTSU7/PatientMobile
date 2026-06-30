@@ -6,11 +6,15 @@ import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.semanticsoft.patientmobile.ui.navigation.AppDestination
+import com.semanticsoft.patientmobile.ui.screens.analysisExplanation.AnalysisExplanationScreen
+import com.semanticsoft.patientmobile.ui.screens.analysisExplanation.AnalysisExplanationViewModel
 import com.semanticsoft.patientmobile.ui.screens.auth.AuthEvent
 import com.semanticsoft.patientmobile.ui.screens.auth.AuthState
 import com.semanticsoft.patientmobile.ui.screens.auth.AuthViewModel
@@ -23,6 +27,8 @@ import com.semanticsoft.patientmobile.ui.screens.navigation.NavScreen
 import com.semanticsoft.patientmobile.ui.screens.registration.RegistrationEvent
 import com.semanticsoft.patientmobile.ui.screens.registration.RegistrationScreen
 import com.semanticsoft.patientmobile.ui.screens.registration.RegistrationViewModel
+import com.semanticsoft.patientmobile.ui.screens.reportResults.ReportResultsScreen
+import com.semanticsoft.patientmobile.ui.screens.reportResults.ReportResultsViewModel
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -133,7 +139,49 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
 
             NavScreen(
                 dashboardState = vm.state,
-                onLogout = authViewModel::logout
+                onLogout = authViewModel::logout,
+                navigateToExplanation = { documentId ->
+                    navController.navigate("analysis_explanation/$documentId")
+                },
+                navigateToReportResults = { reportId ->
+                    navController.navigate("report_results/$reportId")
+                }
+            )
+        }
+
+        composable(
+            route = AppDestination.AnalysisExplanation.ROUTE_PATTERN,
+            arguments = listOf(navArgument(AppDestination.AnalysisExplanation.ARG_DOCUMENT_ID) { type = NavType.StringType })
+        ) {
+            val vm: AnalysisExplanationViewModel = hiltViewModel()
+
+            LifecycleResumeEffect(Unit) {
+                vm.refresh()
+                onPauseOrDispose { }
+            }
+
+            val state by vm.state.collectAsStateWithLifecycle()
+
+            AnalysisExplanationScreen(state = state, onClose = { navController.popBackStack() })
+        }
+
+        composable(
+            route = AppDestination.ReportResults.ROUTE_PATTERN,
+            arguments = listOf(navArgument(AppDestination.ReportResults.ARG_REPORT_ID) { type = NavType.StringType })
+        ) {
+            val vm: ReportResultsViewModel = hiltViewModel()
+
+            LifecycleResumeEffect(Unit) {
+                vm.loadResults()
+                onPauseOrDispose { }
+            }
+
+            val state by vm.state.collectAsStateWithLifecycle()
+
+            ReportResultsScreen(
+                state = state,
+                onClose = { navController.popBackStack() },
+                onRetry = { vm.loadResults() }
             )
         }
     }

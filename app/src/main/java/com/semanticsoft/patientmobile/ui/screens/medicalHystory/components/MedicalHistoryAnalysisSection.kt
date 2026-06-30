@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -55,13 +57,13 @@ fun MedicalHistoryAnalysisSection(
             Icon(
                 imageVector = CalendarIcon,
                 contentDescription = "Analize",
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(22.dp),
                 tint = Indigo600
             )
             Text(
                 text = "Analize",
                 color = Gray900,
-                fontSize = 18.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -116,52 +118,18 @@ fun MedicalHistoryAnalysisSection(
             }
 
             else -> {
-                Column(verticalArrangement = Arrangement.spacedBy(spacing.listItemGap)) {
-                    DocumentList(
-                        items = state.filteredDocuments.map { document ->
-                            DocumentListEntry(
-                                documentId = document.id,
-                                fileName = displayDocumentName(document),
-                                uploadStatus = formatAnalysisDate(document),
-                                resultsCount = state.documentResults[document.id]?.size ?: 0
-                            )
-                        },
-                        onDocumentClick = onDocumentClick
-                    )
-
-                    state.selectedDocumentId?.let { docId ->
-                        val results = state.documentResults[docId]
-                        if (!results.isNullOrEmpty()) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Gray50, RoundedCornerShape(16.dp))
-                                    .padding(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "Rezultate OCR",
-                                    color = Gray900,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                results.forEach { result ->
-                                    Text(
-                                        text = buildString {
-                                            append(result.originalTestName)
-                                            append(": ")
-                                            append(result.valueNumeric ?: result.valueText ?: "-")
-                                            append(" ")
-                                            append(result.unit)
-                                        },
-                                        color = TextSecondary,
-                                        fontSize = 13.sp
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                DocumentList(
+                    items = state.filteredDocuments.map { document ->
+                        DocumentListEntry(
+                            documentId = document.id,
+                            fileName = displayDocumentName(document),
+                            uploadStatus = formatAnalysisDate(document),
+                            resultsCount = 0,
+                            readiness = state.documentReadiness[document.id]
+                        )
+                    },
+                    onDocumentClick = onDocumentClick
+                )
             }
         }
     }
@@ -174,7 +142,8 @@ private fun displayDocumentName(document: PatientDocument): String {
 }
 
 private fun formatAnalysisDate(document: PatientDocument): String {
-    val localDate = document.uploadedAt.atZone(ZoneId.systemDefault()).toLocalDate()
+    val obsInstant = document.observedAt ?: document.uploadedAt
+    val localDate = obsInstant.atZone(ZoneId.systemDefault()).toLocalDate()
     val day = localDate.dayOfMonth
     val monthName = when (localDate.monthValue) {
         1 -> "ianuarie"

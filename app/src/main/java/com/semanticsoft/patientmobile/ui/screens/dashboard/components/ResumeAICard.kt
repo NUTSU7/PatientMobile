@@ -1,8 +1,6 @@
 package com.semanticsoft.patientmobile.ui.screens.dashboard.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -23,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -89,20 +86,6 @@ fun ResumeAICard(
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height((10f * scale).dp))
-
-                Text(
-                    text = "Vezi raport detaliat AI →",
-                    color = Color(0xFF4F46E5),
-                    fontSize = 13.sp * scale,
-                    lineHeight = 18.sp * scale,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .border(1.dp, Color(0xFFC7D2FE), RoundedCornerShape(999.dp))
-                        .clip(RoundedCornerShape(999.dp))
-                        .clickable { }
-                        .padding(horizontal = (18f * scale).dp, vertical = (9f * scale).dp)
-                )
             }
         }
     }

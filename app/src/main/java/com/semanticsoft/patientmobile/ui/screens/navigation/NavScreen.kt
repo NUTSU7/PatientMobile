@@ -7,6 +7,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,6 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.semanticsoft.patientmobile.ui.shared.upload.components.ProcessingBanner
 import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileScreen
 import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileViewModel
 import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileEvent
@@ -35,11 +37,14 @@ import androidx.compose.material3.Scaffold
 fun NavScreen(
     dashboardState: StateFlow<DashboardUiState>,
     onLogout: () -> Unit,
+    navigateToExplanation: (String) -> Unit = { },
+    navigateToReportResults: (String) -> Unit = { },
     modifier: Modifier = Modifier
 ) {
     var showUploadModal by rememberSaveable { mutableStateOf(false) }
     val uploadFileViewModel: UploadFileViewModel = hiltViewModel()
     val uploadFileState by uploadFileViewModel.state.collectAsStateWithLifecycle()
+    val processingPollState by uploadFileViewModel.processingPollState.collectAsStateWithLifecycle()
     val uploadLaunchers = rememberUploadFileLaunchers(uploadFileViewModel)
     val profileState by dashboardState.collectAsStateWithLifecycle()
 
@@ -50,6 +55,11 @@ fun NavScreen(
                     showUploadModal = false
                     uploadFileViewModel.resetUploadComplete()
                 }
+                is UploadFileEvent.ProcessingComplete -> {
+                    showUploadModal = false
+                    uploadFileViewModel.resetUploadComplete()
+                }
+                is UploadFileEvent.ExtractionStarted -> { /* extraction handled via polling in ViewModel */ }
             }
         }
     }
@@ -112,7 +122,14 @@ fun NavScreen(
                     if (!showUploadModal) uploadFileViewModel.reset()
                     showUploadModal = !showUploadModal
                 },
-                onLogout = onLogout
+                onLogout = onLogout,
+                navigateToExplanation = navigateToExplanation,
+                navigateToReportResults = navigateToReportResults
+            )
+
+            ProcessingBanner(
+                state = processingPollState,
+                modifier = Modifier.fillMaxWidth()
             )
 
             AnimatedVisibility(

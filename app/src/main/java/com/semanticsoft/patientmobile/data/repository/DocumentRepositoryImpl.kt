@@ -68,11 +68,13 @@ class DocumentRepositoryImpl(
         size: Int,
         search: String?,
         dateFrom: String?,
-        dateTo: String?
+        dateTo: String?,
+        sortBy: String?,
+        sortDir: String?
     ): ApiResult<List<PatientDocument>> {
         if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
 
-        return safeApiCall { apiService.getDocuments(page, size, search, dateFrom, dateTo) }.map { response ->
+        return safeApiCall { apiService.getDocuments(page, size, search, dateFrom, dateTo, sortBy, sortDir) }.map { response ->
             response.content.map { it.toDomain() }
         }
     }
@@ -116,6 +118,61 @@ class DocumentRepositoryImpl(
                 ApiResult.HttpError(code = -1, message = e.message ?: "Download failed")
             }
         }
+    }
+
+    override suspend fun downloadDocumentFile(documentId: String): ApiResult<File> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.downloadDocument(documentId)
+                if (!response.isSuccessful) {
+                    return@withContext ApiResult.HttpError(
+                        code = response.code(),
+                        message = response.message()
+                    )
+                }
+
+                val body = response.body() ?: return@withContext ApiResult.HttpError(
+                    code = -1,
+                    message = "Empty response body"
+                )
+
+                val filename = extractFilename(response, documentId)
+                val outFile = java.io.File(context.cacheDir, filename)
+
+                outFile.outputStream().use { output ->
+                    body.byteStream().use { input -> input.copyTo(output) }
+                }
+
+                body.close()
+                ApiResult.Success(outFile)
+            } catch (e: Exception) {
+                ApiResult.HttpError(code = -1, message = e.message ?: "Download failed")
+            }
+        }
+    }
+
+    override suspend fun getDocumentExplanation(documentId: String): ApiResult<String> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
+
+        val extractionsResult = safeApiCall { apiService.listExtractions(documentId) }
+        if (extractionsResult !is ApiResult.Success) return ApiResult.Success("")
+
+        val successExtraction = extractionsResult.data
+            .firstOrNull { it.status.equals("SUCCESS", ignoreCase = true) }
+            ?: return ApiResult.Success("")
+
+        val detailResult = safeApiCall {
+            apiService.getExtractionStatus(documentId, successExtraction.id)
+        }
+        if (detailResult !is ApiResult.Success) return ApiResult.Success("")
+
+        val reportId = detailResult.data.reports.firstOrNull()?.id
+            ?: return ApiResult.Success("")
+
+        return safeApiCall { apiService.getAiExplanation(reportId) }
+            .map { it.explanation }
     }
 
     override suspend fun renameDocument(id: String, newName: String): ApiResult<PatientDocument> {

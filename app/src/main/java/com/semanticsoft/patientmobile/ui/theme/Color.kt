@@ -37,3 +37,13 @@ val AccentPurple = Color(0xFF6366F1)
 // Light gray colors for UI cards and backgrounds
 val GrayLightBg = Color(0xFFF3F4F6)
 val GrayLightBorder = Color(0xFFE5E7EB)
+
+// Medical result color-coded values
+val ResultHigh = Color(0xFFDC2626)
+val ResultLow = Color(0xFFEA580C)
+val ResultNormal = Color(0xFF16A34A)
+
+// Result badge backgrounds
+val PastelGreenBg = Color(0xFFD1FAE5)
+val PastelOrangeBg = Color(0xFFFFEDD5)
+val SoftIndigoGrey = Color(0xFF374151)

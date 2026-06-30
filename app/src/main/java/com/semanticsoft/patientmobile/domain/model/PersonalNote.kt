@@ -9,5 +9,7 @@ data class PersonalNote(
     val doctorLocation: String? = null,
     val clinicalObservations: String? = null,
     val noteDate: LocalDate,
+    val analysisDocumentId: String? = null,
+    val attachmentIds: List<String> = emptyList(),
     val createdAt: Instant? = null
 )

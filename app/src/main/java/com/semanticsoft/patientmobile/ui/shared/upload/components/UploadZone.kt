@@ -144,6 +144,30 @@ fun UploadZone(
                             onRetry = { onRetryFile(index) }
                         )
                     }
+                    if (state.errorFiles.isNotEmpty()) {
+                        item {
+                            Spacer(modifier = Modifier.height((4f * scale).dp))
+                            Text(
+                                text = "Fi\u0219iere respinse:",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = (10.2f * scale).sp,
+                                    lineHeight = (16f * scale).sp
+                                ),
+                                color = Color(0xFF6B7280),
+                                modifier = Modifier.padding(vertical = (2f * scale).dp)
+                            )
+                            state.errorFiles.forEach { err ->
+                                Text(
+                                    text = "${err.name}: ${err.message}",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontSize = (10.2f * scale).sp,
+                                        lineHeight = (16f * scale).sp
+                                    ),
+                                    color = Color(0xFFDC2626)
+                                )
+                            }
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height((4f * scale).dp))
@@ -174,13 +198,16 @@ private fun FileRow(
     onRemove: () -> Unit,
     onRetry: () -> Unit
 ) {
+    val isDuplicateWarning = file.status == UploadStatus.PENDING_FORCE
     val isError = file.status == UploadStatus.ERROR
     val showRetry = isError && file.errorIcon == FileErrorIcon.RETRY
     val bgColor = when {
+        isDuplicateWarning -> Color(0xFFFFF7ED)
         isError -> Color(0xFFFEF2F2)
         else -> Color.White
     }
     val accentColor = when {
+        isDuplicateWarning -> Color(0xFFEA580C)
         isError -> Color(0xFFDC2626)
         else -> Color(0xFF9CA3AF)
     }
@@ -227,16 +254,24 @@ private fun FileRow(
                         fontSize = (11.9f * scale).sp,
                         lineHeight = (20f * scale).sp
                     ),
-                    color = if (isError) Color(0xFFDC2626) else Color(0xFF374151),
+                    color = when {
+                        isDuplicateWarning -> Color(0xFFEA580C)
+                        isError -> Color(0xFFDC2626)
+                        else -> Color(0xFF374151)
+                    },
                     maxLines = 1
                 )
                 Text(
-                    text = if (isError) (file.errorMessage ?: "Eroare") else formatFileSize(file.sizeBytes),
+                    text = if (isDuplicateWarning || isError) (file.errorMessage ?: "Eroare") else formatFileSize(file.sizeBytes),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontSize = (11f * scale).sp,
                         lineHeight = (18f * scale).sp
                     ),
-                    color = if (isError) Color(0xFFDC2626) else Color(0xFF9CA3AF),
+                    color = when {
+                        isDuplicateWarning -> Color(0xFFEA580C)
+                        isError -> Color(0xFFDC2626)
+                        else -> Color(0xFF9CA3AF)
+                    },
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -244,7 +279,7 @@ private fun FileRow(
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (showRetry) {
+            if (showRetry || isDuplicateWarning) {
                 Icon(
                     imageVector = RefreshIcon,
                     contentDescription = "Re\u00EEncarc\u0103",

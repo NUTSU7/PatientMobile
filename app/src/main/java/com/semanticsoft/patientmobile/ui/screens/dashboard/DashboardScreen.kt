@@ -56,6 +56,7 @@ import androidx.compose.material3.SnackbarData
 import androidx.compose.ui.unit.dp
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.BasicIndicatorsCard
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.EmptyUploadCard
+import com.semanticsoft.patientmobile.ui.screens.dashboard.components.ProcessingEmptyCard
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.GeneralMarkersCard
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.HealthScoreCard
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.ResumeAICard
@@ -134,7 +135,35 @@ fun DashboardScreen(
             modifier = Modifier.fillMaxSize(),
             color = AppBackground
         ) {
-            if (!state.hasUploadedDocuments) {
+            if (state.emptyReason != null) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(
+                                start = horizontalPadding,
+                                end = horizontalPadding,
+                                bottom = spacing.sectionGap + bottomInset
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val reason = state.emptyReason
+                        if (reason == DashboardEmptyReason.NO_DOCUMENTS || reason == null) {
+                            EmptyUploadCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                onUploadClick = onUploadClick
+                            )
+                        } else {
+                            ProcessingEmptyCard(
+                                reason = reason,
+                                modifier = Modifier.fillMaxWidth(),
+                                onUploadClick = onUploadClick
+                            )
+                        }
+                    }
+                }
+            } else if (!state.hasUploadedDocuments) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     Box(
                         modifier = Modifier

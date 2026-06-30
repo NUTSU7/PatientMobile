@@ -104,7 +104,7 @@ fun OcrExtractionDto.toDomain(): OcrExtraction = OcrExtraction(
     id = id,
     documentId = documentId,
     engineName = engineName,
-    status = try { OcrStatus.valueOf(status) } catch (_: Exception) { OcrStatus.PENDING },
+    status = mapOcrStatus(status),
     rawText = rawText,
     reports = reports.map { it.toDomain() },
     createdAt = parseInstantSafe(createdAt)
@@ -193,6 +193,12 @@ fun MedicationDto.toDomain(): Medication = Medication(
     doseUnit = try { DoseUnit.valueOf(doseUnit) } catch (_: Exception) { DoseUnit.TABLET },
     doseUnitLabel = doseUnitLabel,
     schedules = schedules.map { it.toDomain() },
+    active = active,
+    effectiveDate = effectiveDate?.let(::parseDateSafe),
+    endDate = endDate?.let(::parseDateSafe),
+    analysisDocumentId = analysisDocumentId,
+    attachmentIds = attachments.map { it.id },
+    ocrReviewConfirmed = ocrReviewConfirmed,
     createdAt = parseInstantSafe(createdAt)
 )
 fun MedicationScheduleDto.toDomain(): MedicationSchedule =
@@ -208,6 +214,8 @@ fun PersonalNoteDto.toDomain(): PersonalNote = PersonalNote(
     doctorLocation = doctorLocation,
     clinicalObservations = clinicalObservations,
     noteDate = parseDateSafe(noteDate),
+    analysisDocumentId = analysisDocumentId,
+    attachmentIds = attachments.map { it.id },
     createdAt = parseInstantSafe(createdAt)
 )
 
@@ -265,4 +273,11 @@ fun parseInstantSafe(raw: String?): Instant {
             }
         }
     }
+}
+
+@JvmSynthetic
+fun mapOcrStatus(raw: String): OcrStatus = when (raw.uppercase()) {
+    "SUCCESS" -> OcrStatus.COMPLETED
+    "PARTIAL" -> OcrStatus.PARTIAL
+    else -> try { OcrStatus.valueOf(raw.uppercase()) } catch (_: Exception) { OcrStatus.PENDING }
 }
