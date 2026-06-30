@@ -9,6 +9,7 @@ import com.semanticsoft.patientmobile.domain.model.OcrStatus
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
 import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.OcrRepository
+import com.semanticsoft.patientmobile.domain.repository.UploadStateManager
 import com.semanticsoft.patientmobile.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
@@ -35,6 +36,7 @@ class UploadFileViewModel @Inject constructor(
     private val globalSyncManager: GlobalSyncManager,
     private val ocrRepository: OcrRepository,
     private val dashboardRepository: com.semanticsoft.patientmobile.domain.repository.DashboardRepository,
+    private val uploadStateManager: UploadStateManager,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
@@ -348,55 +350,60 @@ class UploadFileViewModel @Inject constructor(
         )
         _processingPollState.update { pollState }
         viewModelScope.launch {
-            globalSyncManager.triggerSync()
-            val startTime = System.currentTimeMillis()
-            val results = mutableMapOf<String, ExtractionJobResult>()
-            coroutineScope {
-                jobs.map { job ->
-                    async {
-                        val extracted = pollExtractionJob(job)
-                        synchronized(results) { results[job.documentId] = extracted }
-                        val completed = results.values.count { it.status == "SUCCESS" }
-                        val failed = results.values.count { it.status == "FAILED" }
-                        val elapsed = System.currentTimeMillis() - startTime
-                        val message = when {
-                            elapsed >= ApiConstants.OCR_POLL_MAX_RETRIES * ApiConstants.OCR_POLL_DELAY_MS -> {
-                                _processingPollState.update { it.copy(isTimedOut = true) }
-                                "Procesarea a durat prea mult. Po\u021Bi reveni mai t\u00E2rziu."
+            uploadStateManager.setProcessing(true)
+            try {
+                globalSyncManager.triggerSync()
+                val startTime = System.currentTimeMillis()
+                val results = mutableMapOf<String, ExtractionJobResult>()
+                coroutineScope {
+                    jobs.map { job ->
+                        async {
+                            val extracted = pollExtractionJob(job)
+                            synchronized(results) { results[job.documentId] = extracted }
+                            val completed = results.values.count { it.status == "SUCCESS" }
+                            val failed = results.values.count { it.status == "FAILED" }
+                            val elapsed = System.currentTimeMillis() - startTime
+                            val message = when {
+                                elapsed >= ApiConstants.OCR_POLL_MAX_RETRIES * ApiConstants.OCR_POLL_DELAY_MS -> {
+                                    _processingPollState.update { it.copy(isTimedOut = true) }
+                                    "Procesarea a durat prea mult. Po\u021Bi reveni mai t\u00E2rziu."
+                                }
+                                elapsed >= ApiConstants.OCR_POLL_SLOW_WARNING_MS -> {
+                                    _processingPollState.update { it.copy(isSlowWarning = true) }
+                                    "Procesarea dureaz\u0103 mai mult dec\u00E2t de obicei..."
+                                }
+                                else -> pollState.message
                             }
-                            elapsed >= ApiConstants.OCR_POLL_SLOW_WARNING_MS -> {
-                                _processingPollState.update { it.copy(isSlowWarning = true) }
-                                "Procesarea dureaz\u0103 mai mult dec\u00E2t de obicei..."
+                            _processingPollState.update {
+                                it.copy(
+                                    completedJobs = completed,
+                                    failedJobs = failed,
+                                    message = "$message (${completed + failed} din ${pollState.totalJobs})"
+                                )
                             }
-                            else -> pollState.message
+                            globalSyncManager.triggerSync()
                         }
-                        _processingPollState.update {
-                            it.copy(
-                                completedJobs = completed,
-                                failedJobs = failed,
-                                message = "$message (${completed + failed} din ${pollState.totalJobs})"
-                            )
-                        }
-                        globalSyncManager.triggerSync()
-                    }
-                }.awaitAll()
+                    }.awaitAll()
+                }
+                val successCount = results.values.count { it.status == "SUCCESS" }
+                val failedCount = results.values.count { it.status == "FAILED" }
+                val timedOut = _processingPollState.value.isTimedOut
+                _processingPollState.update { ProcessingPollState() }
+                globalSyncManager.triggerSync()
+                launch {
+                    try { dashboardRepository.regenerateAiSummary() } catch (_: Exception) {}
+                }
+                delay(2_500L)
+                globalSyncManager.triggerSync()
+                _events.emit(UploadFileEvent.ProcessingComplete(
+                    totalJobs = pollState.totalJobs,
+                    successCount = successCount,
+                    failedCount = failedCount,
+                    timedOut = timedOut
+                ))
+            } finally {
+                uploadStateManager.setProcessing(false)
             }
-            val successCount = results.values.count { it.status == "SUCCESS" }
-            val failedCount = results.values.count { it.status == "FAILED" }
-            val timedOut = _processingPollState.value.isTimedOut
-            _processingPollState.update { ProcessingPollState() }
-            globalSyncManager.triggerSync()
-            launch {
-                try { dashboardRepository.regenerateAiSummary() } catch (_: Exception) {}
-            }
-            delay(2_500L)
-            globalSyncManager.triggerSync()
-            _events.emit(UploadFileEvent.ProcessingComplete(
-                totalJobs = pollState.totalJobs,
-                successCount = successCount,
-                failedCount = failedCount,
-                timedOut = timedOut
-            ))
         }
     }
 

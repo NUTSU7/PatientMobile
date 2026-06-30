@@ -13,6 +13,7 @@ import com.semanticsoft.patientmobile.domain.repository.DashboardRepository
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
 import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.MedicalResultRepository
+import com.semanticsoft.patientmobile.domain.repository.UploadStateManager
 import com.semanticsoft.patientmobile.util.ApiResult
 import com.semanticsoft.patientmobile.util.toUserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,9 +24,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.semanticsoft.patientmobile.data.model.AttentionItem as UiAttentionItem
@@ -78,14 +81,28 @@ class DashboardViewModel @Inject constructor(
     private val dashboardRepository: DashboardRepository,
     private val medicalResultRepository: MedicalResultRepository,
     private val documentRepository: DocumentRepository,
-    private val globalSyncManager: GlobalSyncManager
+    private val globalSyncManager: GlobalSyncManager,
+    private val uploadStateManager: UploadStateManager
 ) : ViewModel() {
 
     private val _events = MutableSharedFlow<DashboardEvent>()
     val events: SharedFlow<DashboardEvent> = _events.asSharedFlow()
 
     private val _state = MutableStateFlow(DashboardUiState(isLoading = true))
-    val state: StateFlow<DashboardUiState> = _state.asStateFlow()
+    val state: StateFlow<DashboardUiState> = combine(
+        _state,
+        uploadStateManager.isBatchProcessing
+    ) { internalState, isProcessing ->
+        if (isProcessing) {
+            internalState.copy(
+                isLoading = false,
+                emptyReason = DashboardEmptyReason.PROCESSING,
+                hasUploadedDocuments = true
+            )
+        } else {
+            internalState
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState(isLoading = true))
 
     private val _refreshErrors = MutableSharedFlow<String>()
     val refreshErrors: SharedFlow<String> = _refreshErrors.asSharedFlow()
