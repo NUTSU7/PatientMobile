@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +32,8 @@ import kotlin.math.min
 @Composable
 fun ResumeAICard(
     summaryText: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false
 ) {
     BoxWithConstraints(modifier = modifier) {
         val scale = max(0.86f, min(maxWidth.value / 343.2f, 1.06f))
@@ -69,17 +71,32 @@ fun ResumeAICard(
 
                 Spacer(modifier = Modifier.height((14f * scale).dp))
 
-                Text(
-                    text = summaryText,
-                    color = Color(0xFF312E81),
-                    fontSize = 15.3.sp * scale,
-                    lineHeight = 26.sp * scale
-                )
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height((52f * scale).dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size((28f * scale).dp),
+                            strokeWidth = 2.5.dp,
+                            color = Color(0xFF4F46E5)
+                        )
+                    }
+                } else {
+                    Text(
+                        text = summaryText,
+                        color = Color(0xFF312E81),
+                        fontSize = 15.3.sp * scale,
+                        lineHeight = 26.sp * scale
+                    )
+                }
 
                 Spacer(modifier = Modifier.height((16f * scale).dp))
 
                 Text(
-                    text = "Consultă doctorul pentru mai multe detalii.",
+                    text = "Consult\u0103 doctorul pentru mai multe detalii.",
                     color = Color(0xFF4F46E5),
                     fontSize = 13.sp * scale,
                     lineHeight = 16.sp * scale,

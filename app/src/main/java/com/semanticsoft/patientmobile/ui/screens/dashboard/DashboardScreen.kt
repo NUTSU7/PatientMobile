@@ -211,7 +211,8 @@ fun DashboardScreen(
                                         )
                                         ResumeAICard(
                                             summaryText = state.aiSummary,
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier.fillMaxWidth(),
+                                            isLoading = state.isAiSummaryLoading
                                         )
                                     }
                                 } else {
@@ -226,7 +227,8 @@ fun DashboardScreen(
                                         )
                                         ResumeAICard(
                                             summaryText = state.aiSummary,
-                                            modifier = Modifier.weight(1f)
+                                            modifier = Modifier.weight(1f),
+                                            isLoading = state.isAiSummaryLoading
                                         )
                                     }
                                 }
