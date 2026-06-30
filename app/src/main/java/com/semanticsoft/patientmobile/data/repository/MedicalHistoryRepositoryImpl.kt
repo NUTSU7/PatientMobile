@@ -28,7 +28,13 @@ class MedicalHistoryRepositoryImpl(
             doseUnit = medication.doseUnit.name,
             schedules = medication.schedules.map {
                 CreateMedicationScheduleRequest(it.administrationTime, it.mealRelation.name)
-            }
+            },
+            active = medication.active,
+            effectiveDate = medication.effectiveDate?.toString(),
+            endDate = medication.endDate?.toString(),
+            analysisDocumentId = medication.analysisDocumentId,
+            attachmentIds = medication.attachmentIds.ifEmpty { null },
+            ocrReviewConfirmed = medication.ocrReviewConfirmed.takeIf { medication.analysisDocumentId != null }
         )
 
         return safeApiCall { apiService.createMedication(request) }.map { it.toDomain() }
@@ -49,7 +55,13 @@ class MedicalHistoryRepositoryImpl(
             doseUnit = medication.doseUnit.name,
             schedules = medication.schedules.map {
                 CreateMedicationScheduleRequest(it.administrationTime, it.mealRelation.name)
-            }
+            },
+            active = medication.active,
+            effectiveDate = medication.effectiveDate?.toString(),
+            endDate = medication.endDate?.toString(),
+            analysisDocumentId = medication.analysisDocumentId,
+            attachmentIds = medication.attachmentIds.ifEmpty { null },
+            ocrReviewConfirmed = medication.ocrReviewConfirmed.takeIf { medication.analysisDocumentId != null }
         )
 
         return safeApiCall { apiService.updateMedication(id, request) }.map { it.toDomain() }
@@ -67,7 +79,9 @@ class MedicalHistoryRepositoryImpl(
             analysisName = note.analysisName,
             doctorLocation = note.doctorLocation,
             clinicalObservations = note.clinicalObservations,
-            noteDate = note.noteDate.toString()
+            noteDate = note.noteDate.toString(),
+            analysisDocumentId = note.analysisDocumentId,
+            attachmentIds = note.attachmentIds.ifEmpty { null }
         )
 
         return safeApiCall { apiService.createNote(request) }.map { it.toDomain() }
@@ -86,7 +100,9 @@ class MedicalHistoryRepositoryImpl(
             analysisName = note.analysisName,
             doctorLocation = note.doctorLocation,
             clinicalObservations = note.clinicalObservations,
-            noteDate = note.noteDate.toString()
+            noteDate = note.noteDate.toString(),
+            analysisDocumentId = note.analysisDocumentId,
+            attachmentIds = note.attachmentIds.ifEmpty { null }
         )
 
         return safeApiCall { apiService.updateNote(id, request) }.map { it.toDomain() }

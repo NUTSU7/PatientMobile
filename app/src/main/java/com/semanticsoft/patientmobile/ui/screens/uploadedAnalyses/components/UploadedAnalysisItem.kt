@@ -1,33 +1,27 @@
 package com.semanticsoft.patientmobile.ui.screens.uploadedAnalyses.components
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,20 +29,34 @@ import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.ui.theme.Gray100
 import com.semanticsoft.patientmobile.ui.theme.Gray500
 import com.semanticsoft.patientmobile.ui.theme.Gray900
-import com.semanticsoft.patientmobile.ui.theme.Indigo500
-import com.semanticsoft.patientmobile.ui.theme.Purple500
-import com.semanticsoft.patientmobile.ui.theme.icons.SparkleIcon
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun UploadedAnalysisItem(
     document: PatientDocument,
-    onExplainClick: () -> Unit,
+    onExplainClick: (String) -> Unit,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onLongPress: (String) -> Unit = {},
+    onToggleSelection: (String) -> Unit = {},
+    onRenameClick: (String) -> Unit = {},
+    onDeleteClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = {
+                    if (isSelectionMode) onToggleSelection(document.id)
+                    else onExplainClick(document.id)
+                },
+                onLongClick = {
+                    if (!isSelectionMode) onLongPress(document.id)
+                }
+            ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
@@ -80,52 +88,27 @@ fun UploadedAnalysisItem(
                     )
                 }
 
-                Card(
-                    modifier = Modifier.size(36.dp),
-                    shape = RoundedCornerShape(999.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                ) {
-                    IconButton(onClick = { }, modifier = Modifier.size(36.dp)) {
-                        Icon(
-                            imageVector = Icons.Outlined.MoreVert,
-                            contentDescription = null,
-                            tint = Gray500
+                Crossfade(
+                    targetState = isSelectionMode,
+                    animationSpec = tween(200)
+                ) { inSelection ->
+                    if (inSelection) {
+                        Checkbox(
+                            checked = isSelected,
+                            onCheckedChange = { onToggleSelection(document.id) },
+                            colors = CheckboxDefaults.colors(
+                                checkedColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
+                    } else {
+                        DocumentItemMenu(
+                            onRenameClick = { onRenameClick(document.id) },
+                            onDeleteClick = { onDeleteClick(document.id) }
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(Brush.horizontalGradient(listOf(Indigo500, Purple500)))
-                    .clickable { onExplainClick() }
-                    .padding(vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = "Explică-mi",
-                        color = Color.White,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp,
-                        textAlign = TextAlign.Center
-                    )
-                    Icon(
-                        imageVector = SparkleIcon,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
         }
     }
 }

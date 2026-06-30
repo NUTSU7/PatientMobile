@@ -1,15 +1,25 @@
 package com.semanticsoft.patientmobile.ui.shared.upload
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.semanticsoft.patientmobile.di.IoDispatcher
+import com.semanticsoft.patientmobile.data.remote.api.ApiConstants
+import com.semanticsoft.patientmobile.domain.model.OcrStatus
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
 import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
+import com.semanticsoft.patientmobile.domain.repository.OcrRepository
 import com.semanticsoft.patientmobile.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
 import java.security.MessageDigest
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,27 +32,48 @@ import kotlinx.coroutines.withContext
 @HiltViewModel
 class UploadFileViewModel @Inject constructor(
     private val documentRepository: DocumentRepository,
-    private val globalSyncManager: GlobalSyncManager
+    private val globalSyncManager: GlobalSyncManager,
+    private val ocrRepository: OcrRepository,
+    private val dashboardRepository: com.semanticsoft.patientmobile.domain.repository.DashboardRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(UploadFileUiState())
     val state: StateFlow<UploadFileUiState> = _state.asStateFlow()
 
+    val processingPollState: StateFlow<ProcessingPollState>
+        get() = _processingPollState
+    private val _processingPollState = MutableStateFlow(ProcessingPollState())
+
     private val _events = MutableSharedFlow<UploadFileEvent>()
     val events = _events.asSharedFlow()
 
     fun onFilesSelected(uris: List<String>) {
+        val oversizeErrors = mutableListOf<ErrorFileEntry>()
         val validFiles = uris.mapNotNull { uri ->
             val file = resolveFile(uri) ?: return@mapNotNull null
             if (!file.exists()) return@mapNotNull null
             val extension = file.extension.lowercase()
             if (extension !in ALLOWED_EXTENSIONS) return@mapNotNull null
-            if (file.length() > MAX_UPLOAD_BYTES) return@mapNotNull null
+            if (file.length() > MAX_UPLOAD_BYTES) {
+                oversizeErrors.add(ErrorFileEntry(file.name, "Fi\u0219ier prea mare (max 10 MB)."))
+                return@mapNotNull null
+            }
+            val normalized = if (ImageNormalizer.shouldNormalize(file)) {
+                ImageNormalizer.normalize(file)
+            } else null
+            val uploadFile = normalized ?: file
+            val displayName = if (normalized != null) {
+                val dot = file.name.lastIndexOf('.')
+                val base = if (dot > 0) file.name.substring(0, dot) else file.name
+                "${base}-normalizata.jpg"
+            } else file.name
+            val displaySize = uploadFile.length()
             SelectedFile(
-                name = file.name,
-                uri = uri,
-                sizeBytes = file.length(),
-                mimeType = resolveMimeType(file)
+                name = displayName,
+                uri = uploadFile.absolutePath.let { "file://$it" },
+                sizeBytes = displaySize,
+                mimeType = if (normalized != null) "image/jpeg" else resolveMimeType(file)
             )
         }
 
@@ -62,7 +93,8 @@ class UploadFileViewModel @Inject constructor(
             it.copy(
                 selectedFiles = it.selectedFiles + validFiles,
                 uploadComplete = false,
-                isSystemicError = false
+                isSystemicError = false,
+                errorFiles = oversizeErrors
             )
         }
     }
@@ -77,14 +109,14 @@ class UploadFileViewModel @Inject constructor(
             _state.update { it.copy(isUploading = true, isSystemicError = false) }
 
             val pendingIndices = _state.value.selectedFiles.mapIndexedNotNull { idx, f ->
-                if (f.status == UploadStatus.PENDING) idx else null
+                if (f.status == UploadStatus.PENDING || f.status == UploadStatus.PENDING_FORCE) idx else null
             }
 
             val checksumMap = mutableMapOf<Int, String>()
             for (index in pendingIndices) {
                 val f = _state.value.selectedFiles[index]
                 val file = resolveFile(f.uri) ?: continue
-                val checksum = withContext(Dispatchers.IO) { computeSha256(file) }
+                val checksum = withContext(ioDispatcher) { computeSha256(file) }
                 if (checksum != null) {
                     checksumMap[index] = checksum
                 }
@@ -99,13 +131,14 @@ class UploadFileViewModel @Inject constructor(
                             _state.update { current ->
                                 val files = current.selectedFiles.toMutableList()
                                 for ((index, checksum) in checksumMap) {
-                                    if (checksum in matchedChecksums) {
-                                        files[index] = files[index].copy(
-                                            status = UploadStatus.ERROR,
-                                            errorMessage = "Fi\u0219ierul este deja \u00EEnc\u0103rcat.",
-                                            errorType = ErrorType.DUPLICATE,
-                                            errorIcon = FileErrorIcon.DELETE
-                                        )
+                                    if (checksum in matchedChecksums && index in files.indices) {
+                                        val f = files[index]
+                                        if (f.status == UploadStatus.PENDING) {
+                                            files[index] = f.copy(
+                                                status = UploadStatus.PENDING_FORCE,
+                                                errorMessage = "Fi\u0219ier deja \u00EEnc\u0103rcat."
+                                            )
+                                        }
                                     }
                                 }
                                 current.copy(selectedFiles = files)
@@ -118,7 +151,7 @@ class UploadFileViewModel @Inject constructor(
 
             while (true) {
                 val pendingIndex = _state.value.selectedFiles.indexOfFirst {
-                    it.status == UploadStatus.PENDING
+                    it.status == UploadStatus.PENDING || it.status == UploadStatus.PENDING_FORCE
                 }
                 if (pendingIndex == -1) break
 
@@ -145,14 +178,39 @@ class UploadFileViewModel @Inject constructor(
                     continue
                 }
 
-                when (val uploadResult = documentRepository.uploadDocument(f)) {
+                val forceUpload = _state.value.selectedFiles[pendingIndex].status == UploadStatus.PENDING_FORCE
+                when (val uploadResult = documentRepository.uploadDocument(f, force = forceUpload)) {
                     is ApiResult.Success -> {
+                        val documentId = uploadResult.data.id
                         _state.update { current ->
                             val afterSuccess = current.selectedFiles.toMutableList()
                             afterSuccess.removeAt(pendingIndex)
                             current.copy(selectedFiles = afterSuccess)
                         }
-                        globalSyncManager.triggerSync()
+                        withContext(ioDispatcher) {
+                            Log.d(TAG, "Triggering startExtraction for documentId=$documentId")
+                            when (val extractionResult = ocrRepository.startExtraction(documentId)) {
+                                is ApiResult.Success -> {
+                                    val runId = extractionResult.data
+                                    Log.d(TAG, "startExtraction success: runId=$runId documentId=$documentId")
+                                    _state.update { current ->
+                                        current.copy(
+                                            extractionJobs = current.extractionJobs + ExtractionJob(documentId, runId)
+                                        )
+                                    }
+                                    _events.emit(UploadFileEvent.ExtractionStarted(documentId, runId))
+                                }
+                                is ApiResult.HttpError -> {
+                                    Log.e(TAG, "startExtraction HTTP ${extractionResult.code}: ${extractionResult.message} for documentId=$documentId")
+                                }
+                                is ApiResult.NetworkError -> {
+                                    Log.e(TAG, "startExtraction NetworkError for documentId=$documentId")
+                                }
+                                is ApiResult.AuthError -> {
+                                    Log.e(TAG, "startExtraction AuthError for documentId=$documentId")
+                                }
+                            }
+                        }
                     }
                     is ApiResult.HttpError -> {
                         if (uploadResult.code == 409) {
@@ -236,7 +294,13 @@ class UploadFileViewModel @Inject constructor(
             }
 
             if (allGone && !hasErrors) {
-                _events.emit(UploadFileEvent.AllFilesUploaded)
+                val extractionJobs = _state.value.extractionJobs
+                if (extractionJobs.isNotEmpty()) {
+                    startPollingExtractions()
+                } else {
+                    globalSyncManager.triggerSync()
+                    _events.emit(UploadFileEvent.AllFilesUploaded)
+                }
             }
         }
     }
@@ -245,7 +309,11 @@ class UploadFileViewModel @Inject constructor(
         if (_state.value.isUploading) return
         val files = _state.value.selectedFiles.toMutableList()
         if (index !in files.indices) return
-        files[index] = files[index].copy(status = UploadStatus.PENDING, errorMessage = null, errorType = null, errorIcon = null)
+        val current = files[index]
+        files[index] = current.copy(
+            status = if (current.errorMessage?.contains("deja") == true) UploadStatus.PENDING_FORCE else UploadStatus.PENDING,
+            errorMessage = null, errorType = null, errorIcon = null
+        )
         _state.update { it.copy(selectedFiles = files) }
         startUpload()
     }
@@ -264,6 +332,93 @@ class UploadFileViewModel @Inject constructor(
 
     fun reset() {
         _state.update { UploadFileUiState() }
+        _processingPollState.update { ProcessingPollState() }
+    }
+
+    private fun startPollingExtractions() {
+        val jobs = _state.value.extractionJobs
+        if (jobs.isEmpty()) {
+            _processingPollState.update { ProcessingPollState() }
+            return
+        }
+        val pollState = ProcessingPollState(
+            isPolling = true,
+            totalJobs = jobs.size,
+            message = "Fi\u0219ierele s-au \u00EEnc\u0103rcat, iar acum se proceseaz\u0103..."
+        )
+        _processingPollState.update { pollState }
+        viewModelScope.launch {
+            globalSyncManager.triggerSync()
+            val startTime = System.currentTimeMillis()
+            val results = mutableMapOf<String, ExtractionJobResult>()
+            coroutineScope {
+                jobs.map { job ->
+                    async {
+                        val extracted = pollExtractionJob(job)
+                        synchronized(results) { results[job.documentId] = extracted }
+                        val completed = results.values.count { it.status == "SUCCESS" }
+                        val failed = results.values.count { it.status == "FAILED" }
+                        val elapsed = System.currentTimeMillis() - startTime
+                        val message = when {
+                            elapsed >= ApiConstants.OCR_POLL_MAX_RETRIES * ApiConstants.OCR_POLL_DELAY_MS -> {
+                                _processingPollState.update { it.copy(isTimedOut = true) }
+                                "Procesarea a durat prea mult. Po\u021Bi reveni mai t\u00E2rziu."
+                            }
+                            elapsed >= ApiConstants.OCR_POLL_SLOW_WARNING_MS -> {
+                                _processingPollState.update { it.copy(isSlowWarning = true) }
+                                "Procesarea dureaz\u0103 mai mult dec\u00E2t de obicei..."
+                            }
+                            else -> pollState.message
+                        }
+                        _processingPollState.update {
+                            it.copy(
+                                completedJobs = completed,
+                                failedJobs = failed,
+                                message = "$message (${completed + failed} din ${pollState.totalJobs})"
+                            )
+                        }
+                        globalSyncManager.triggerSync()
+                    }
+                }.awaitAll()
+            }
+            val successCount = results.values.count { it.status == "SUCCESS" }
+            val failedCount = results.values.count { it.status == "FAILED" }
+            val timedOut = _processingPollState.value.isTimedOut
+            _processingPollState.update { ProcessingPollState() }
+            globalSyncManager.triggerSync()
+            launch {
+                try { dashboardRepository.regenerateAiSummary() } catch (_: Exception) {}
+            }
+            delay(2_500L)
+            globalSyncManager.triggerSync()
+            _events.emit(UploadFileEvent.ProcessingComplete(
+                totalJobs = pollState.totalJobs,
+                successCount = successCount,
+                failedCount = failedCount,
+                timedOut = timedOut
+            ))
+        }
+    }
+
+    private suspend fun pollExtractionJob(job: ExtractionJob): ExtractionJobResult {
+        var retries = 0
+        while (retries < ApiConstants.OCR_POLL_MAX_RETRIES) {
+            when (val result = ocrRepository.getExtractionStatus(job.documentId, job.runId)) {
+                is ApiResult.Success -> {
+                    val extraction = result.data
+                    if (extraction.status == OcrStatus.SUCCESS || extraction.status == OcrStatus.COMPLETED) {
+                        return ExtractionJobResult(job.documentId, job.runId, "SUCCESS", extraction.reports.size)
+                    }
+                    if (extraction.status == OcrStatus.FAILED) {
+                        return ExtractionJobResult(job.documentId, job.runId, "FAILED")
+                    }
+                }
+                else -> {}
+            }
+            retries++
+            delay(ApiConstants.OCR_POLL_DELAY_MS)
+        }
+        return ExtractionJobResult(job.documentId, job.runId, "TIMEOUT")
     }
 
     private fun resolveFile(uri: String): File? {
@@ -276,6 +431,7 @@ class UploadFileViewModel @Inject constructor(
     }
 
     companion object {
+        private const val TAG = "UploadFileVM"
         private val ALLOWED_EXTENSIONS = setOf("pdf", "jpg", "jpeg", "png")
         private const val MAX_UPLOAD_BYTES = 10L * 1024L * 1024L
 

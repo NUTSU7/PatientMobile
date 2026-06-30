@@ -16,8 +16,10 @@ import com.semanticsoft.patientmobile.domain.repository.MedicalResultRepository
 import com.semanticsoft.patientmobile.util.ApiResult
 import com.semanticsoft.patientmobile.util.toUserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.text.Normalizer
 import javax.inject.Inject
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -52,8 +54,16 @@ data class DashboardUiState(
     val warningCards: List<UiWarningCardItem> = emptyList(),
     val clinicalPillarCards: List<UiClinicalPillarCardItem> = emptyList(),
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val emptyReason: DashboardEmptyReason? = null
 )
+
+enum class DashboardEmptyReason {
+    NO_DOCUMENTS,
+    PROCESSING,
+    NO_RESULTS_EXTRACTED,
+    NON_LAB_DOCUMENT
+}
 
 sealed class DashboardEvent {
     data object RefreshCompleted : DashboardEvent()
@@ -105,7 +115,7 @@ class DashboardViewModel @Inject constructor(
             val userDeferred = async { authRepository.getCurrentUser() }
             val resultsDeferred = async { medicalResultRepository.getLatestResults() }
             val aiDeferred = async { dashboardRepository.getAiSummary() }
-            val docsDeferred = async { documentRepository.getDocuments(page = 0, size = 1) }
+            val docsDeferred = async { documentRepository.getDocuments(page = 0, size = 1, sortBy = "uploadedAt", sortDir = "desc") }
 
             val userResult = userDeferred.await()
             val resultsResult = resultsDeferred.await()
@@ -136,16 +146,50 @@ class DashboardViewModel @Inject constructor(
                         role = role,
                         hasUploadedDocuments = false,
                         isLoading = false,
-                        errorMessage = null
+                        errorMessage = null,
+                        emptyReason = DashboardEmptyReason.NO_DOCUMENTS
                     )
                 }
                 _events.emit(DashboardEvent.RefreshCompleted)
                 return@launch
             }
 
+            if (!hasResults) {
+                val checkReason = detectEmptyReason()
+                if (checkReason != null) {
+                    _state.update {
+                        it.copy(
+                            greetingName = greetingName.ifBlank { "Pacient" },
+                            fullName = fullName,
+                            role = role,
+                            hasUploadedDocuments = true,
+                            isLoading = false,
+                            errorMessage = null,
+                            emptyReason = checkReason
+                        )
+                    }
+                    _events.emit(DashboardEvent.RefreshCompleted)
+                    if (checkReason == DashboardEmptyReason.PROCESSING) {
+                        launch {
+                            delay(5_000L)
+                            refresh()
+                        }
+                    }
+                    return@launch
+                }
+            }
+
             val results = if (resultsResult is ApiResult.Success) resultsResult.data else emptyList()
 
             buildCardsFromResults(greetingName, fullName, role, results, aiResult)
+
+            if (hasResults) {
+                val historyResults = loadFrequentIndicatorsHistory()
+                if (historyResults.isNotEmpty()) {
+                    val updatedIndicators = buildBasicIndicators(historyResults)
+                    _state.update { it.copy(basicIndicators = updatedIndicators) }
+                }
+            }
 
             _events.emit(DashboardEvent.RefreshCompleted)
         }
@@ -169,6 +213,15 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
+    private suspend fun detectEmptyReason(): DashboardEmptyReason? {
+        val docsResult = documentRepository.getDocuments(page = 0, size = 5, sortBy = "uploadedAt", sortDir = "desc")
+        if (docsResult !is ApiResult.Success) return DashboardEmptyReason.NO_RESULTS_EXTRACTED
+        val docs = docsResult.data
+        if (docs.isEmpty()) return DashboardEmptyReason.NO_RESULTS_EXTRACTED
+        val anyReady = docs.any { it.observedAt != null }
+        return if (anyReady) null else DashboardEmptyReason.PROCESSING
+    }
+
     private fun buildCardsFromResults(
         greetingName: String,
         fullName: String,
@@ -178,14 +231,9 @@ class DashboardViewModel @Inject constructor(
     ) {
         val abnormal = results.filter { !it.abnormalFlag.isNullOrBlank() }
         val categories = results.groupBy { it.analysisGroup.ifBlank { "Altele" } }
-        val knownCanonicals = setOf(
-            "WBC", "Hemoglobin", "HCT", "PLT", "RBC",
-            "Glucose", "ALT", "AST", "Creatinine", "Urea",
-            "TSH", "Vitamin D", "Iron", "Ferritin", "Cholesterol"
-        )
 
         val summary = buildSummary(results)
-        val indicators = buildBasicIndicators(results, knownCanonicals)
+        val indicators = buildBasicIndicators(results)
         val markers = buildGeneralMarkers(results)
         val markersByCategory = buildMarkerCategories(categories)
         val attention = buildAttentionItems(abnormal)
@@ -199,8 +247,19 @@ class DashboardViewModel @Inject constructor(
             val ai = aiResult.data
             when (ai.status.uppercase()) {
                 "READY", "COMPLETED" -> aiText = ai.summaryText
-                else -> aiLoading = true
+                else -> {
+                    val currentSummary = _state.value.aiSummary
+                    if (currentSummary.isNotBlank()) {
+                        aiText = currentSummary
+                    } else {
+                        aiLoading = true
+                    }
+                    autoRegenerateAiSummary()
+                }
             }
+        } else if (results.isNotEmpty()) {
+            aiLoading = true
+            autoRegenerateAiSummary()
         }
 
         _state.update {
@@ -219,42 +278,81 @@ class DashboardViewModel @Inject constructor(
                 warningCards = warnings,
                 clinicalPillarCards = pillars,
                 isLoading = false,
-                errorMessage = null
+                errorMessage = null,
+                emptyReason = null
             )
         }
     }
 
     private fun buildSummary(results: List<MedicalResult>): UiMarkerSummary {
-        val normal = results.count { it.abnormalFlag.isNullOrBlank() }
-        val abnormal = results.size - normal
-        val borderline = results.count {
-            it.abnormalFlag?.uppercase()?.let { it == "BORDERLINE" || it == "WARNING" } == true
+        if (results.isEmpty()) {
+            return UiMarkerSummary(normal = 0, borderline = 0, attention = 0, score = 0)
         }
-        val attention = abnormal - borderline
-        val score = if (results.isNotEmpty()) (normal * 100 / results.size) else 72
+        val normal = results.count { it.abnormalFlag?.uppercase() == "NORMAL" }
+        val borderline = results.count {
+            val flag = it.abnormalFlag?.uppercase()
+            flag == "LOW" || flag == "HIGH"
+        }
+        val attention = results.count {
+            val flag = it.abnormalFlag?.uppercase()
+            flag != "NORMAL" && flag != "LOW" && flag != "HIGH"
+        }
+        val score = kotlin.math.round(normal.toDouble() / results.size * 100).toInt()
         return UiMarkerSummary(normal = normal, borderline = borderline, attention = attention, score = score)
     }
 
     private fun buildBasicIndicators(
-        results: List<MedicalResult>,
-        knownCanonicals: Set<String>
+        results: List<MedicalResult>
     ): List<UiBasicIndicatorItem> {
-        return results
-            .filter { it.canonicalName.ifBlank { it.originalTestName } in knownCanonicals }
-            .take(10)
-            .map { r ->
-                UiBasicIndicatorItem(
-                    title = r.originalTestName.ifBlank { r.canonicalName },
-                    value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
-                    unit = r.unit,
-                    status = parseStatus(r.abnormalFlag),
-                    trendDirection = IndicatorTrendDirection.STABLE,
-                    trendDelta = "",
-                    trendDescription = r.referenceText ?: "",
-                    markerPosition = 0.5f,
-                    segments = IndicatorSegments()
-                )
+        if (results.isEmpty()) return emptyList()
+
+        val grouped = results.groupBy { result ->
+            if (!result.testDefinitionId.isNullOrBlank()) {
+                "definition:${result.testDefinitionId}"
+            } else {
+                val displayName = result.canonicalName.ifBlank { result.originalTestName }
+                "name:${normalizeForGrouping(displayName)}"
             }
+        }
+
+        data class GroupData(
+            val displayLabel: String,
+            val frequency: Int,
+            val latestObservedAt: java.time.LocalDate?,
+            val latestItem: MedicalResult
+        )
+
+        val enriched = grouped.values.map { items ->
+            val sorted = items.sortedByDescending { it.observedAt }
+            val first = sorted.first()
+            GroupData(
+                displayLabel = first.canonicalName.ifBlank { first.originalTestName },
+                frequency = items.size,
+                latestObservedAt = sorted.mapNotNull { it.observedAt }.maxOrNull(),
+                latestItem = first
+            )
+        }
+
+        val sortedGroups = enriched.sortedWith(
+            compareByDescending<GroupData> { it.frequency }
+                .thenByDescending { it.latestObservedAt }
+                .thenBy { it.displayLabel }
+        )
+
+        return sortedGroups.take(10).map { group ->
+            val r = group.latestItem
+            UiBasicIndicatorItem(
+                title = group.displayLabel,
+                value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
+                unit = r.unit,
+                status = parseStatus(r.abnormalFlag),
+                trendDirection = IndicatorTrendDirection.STABLE,
+                trendDelta = "",
+                trendDescription = r.referenceText ?: "",
+                markerPosition = 0.5f,
+                segments = IndicatorSegments()
+            )
+        }
     }
 
     private fun buildGeneralMarkers(results: List<MedicalResult>): List<UiGeneralMarkerCardItem> {
@@ -368,6 +466,55 @@ class DashboardViewModel @Inject constructor(
             "COAGULATION", "COAGULARE" -> ClinicalPillarType.COAGULATION
             "IMMUNOLOGY", "IMUNOLOGIE", "INFECTIONS" -> ClinicalPillarType.INFECTIONS_IMMUNOLOGY
             else -> ClinicalPillarType.ORGANS_METABOLISM
+        }
+    }
+
+    private suspend fun loadFrequentIndicatorsHistory(): List<MedicalResult> {
+        val all = mutableListOf<MedicalResult>()
+        var page = 0
+        val maxPages = 50
+        do {
+            val result = medicalResultRepository.getAllResultsPaginated(
+                page = page,
+                size = 100,
+                sortBy = "observedAt",
+                sortDir = "desc"
+            )
+            if (result !is ApiResult.Success) break
+            val pageData = result.data
+            all.addAll(pageData.items)
+            page++
+            if (!pageData.hasNext) break
+        } while (page < maxPages)
+        return all
+    }
+
+    private fun normalizeForGrouping(name: String): String {
+        val nfd = Normalizer.normalize(name, Normalizer.Form.NFD)
+        val stripped = nfd.replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+        val roFallback = stripped
+            .replace('ș', 's').replace('Ş', 's')
+            .replace('ț', 't').replace('Ț', 't')
+            .replace('ă', 'a').replace('Ă', 'a')
+            .replace('â', 'a').replace('Â', 'a')
+            .replace('î', 'i').replace('Î', 'i')
+        return roFallback.lowercase().replace(Regex("\\s+"), " ").trim()
+    }
+
+    private fun autoRegenerateAiSummary() {
+        viewModelScope.launch {
+            when (val result = dashboardRepository.regenerateAiSummary()) {
+                is ApiResult.Success -> {
+                    val response = result.data
+                    when (response.status.uppercase()) {
+                        "READY", "COMPLETED" -> _state.update {
+                            it.copy(aiSummary = response.summaryText, isAiSummaryLoading = false)
+                        }
+                        else -> { }
+                    }
+                }
+                else -> _state.update { it.copy(isAiSummaryLoading = false) }
+            }
         }
     }
 }

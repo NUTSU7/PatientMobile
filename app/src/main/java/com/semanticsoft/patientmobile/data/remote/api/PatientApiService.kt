@@ -19,6 +19,7 @@ import com.semanticsoft.patientmobile.data.remote.api.dto.LoginRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.LogoutRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.MedicalResultDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.MedicalResultHistoryEntry
+import com.semanticsoft.patientmobile.data.remote.api.dto.MedicalReportWithResultsDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.MedicationDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.OcrExtractionDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.PaginatedResponse
@@ -138,11 +139,13 @@ interface PatientApiService {
     @GET("patient/documents/{documentId}/results")
     suspend fun getMedicalResultsByDocument(@Path("documentId") documentId: String): List<MedicalResultDto>
 
-    @GET("patient/results")
+    @GET("patient/medical/results")
     suspend fun getAllResults(
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 20,
-        @Query("analysisGroup") analysisGroup: String? = null
+        @Query("analysisGroup") analysisGroup: String? = null,
+        @Query("sortBy") sortBy: String? = null,
+        @Query("sortDir") sortDir: String? = null
     ): PaginatedResponse<MedicalResultDto>
 
     @GET("patient/results/{resultId}")
@@ -161,6 +164,11 @@ interface PatientApiService {
 
     @GET("patient/documents/{documentId}/reports")
     suspend fun getReportsByDocument(@Path("documentId") documentId: String): List<OcrExtractionDto>
+
+    @GET("patient/medical/reports/{reportId}/results")
+    suspend fun getReportResults(
+        @Path("reportId") reportId: String
+    ): MedicalReportWithResultsDto
 
     // ── Dashboard ──────────────────────────────────────────────────────────
 

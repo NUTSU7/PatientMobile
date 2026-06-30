@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.semanticsoft.patientmobile.ui.screens.medicalHystory.DocumentReadiness
 
 @Composable
 fun DocumentList(
@@ -28,6 +29,7 @@ fun DocumentList(
                 fileName = item.fileName,
                 uploadStatus = item.uploadStatus,
                 resultsCount = item.resultsCount,
+                readiness = item.readiness,
                 onClick = { onDocumentClick(item.documentId) }
             )
         }
@@ -50,5 +52,6 @@ data class DocumentListEntry(
     val documentId: String,
     val fileName: String,
     val uploadStatus: String,
-    val resultsCount: Int
+    val resultsCount: Int,
+    val readiness: DocumentReadiness?
 )

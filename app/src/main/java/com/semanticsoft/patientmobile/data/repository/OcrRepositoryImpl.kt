@@ -1,5 +1,6 @@
 package com.semanticsoft.patientmobile.data.repository
 
+import android.util.Log
 import com.semanticsoft.patientmobile.data.remote.SafeApiCall.safeApiCall
 import com.semanticsoft.patientmobile.data.remote.api.ApiConstants
 import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
@@ -19,8 +20,19 @@ class OcrRepositoryImpl(
 ) : OcrRepository {
 
     override suspend fun startExtraction(documentId: String): ApiResult<String> {
-        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
-        return safeApiCall { apiService.startExtraction(documentId) }.map { it.runId }
+        Log.d(TAG, "startExtraction called for documentId=$documentId")
+        if (!networkStateProvider.isOnline()) {
+            Log.w(TAG, "startExtraction aborted: network offline for documentId=$documentId")
+            return ApiResult.NetworkError
+        }
+        val result = safeApiCall { apiService.startExtraction(documentId) }.map { it.runId }
+        when (result) {
+            is ApiResult.Success -> Log.d(TAG, "startExtraction success: id=${result.data} for documentId=$documentId")
+            is ApiResult.HttpError -> Log.e(TAG, "startExtraction HTTP ${result.code}: ${result.message} for documentId=$documentId")
+            is ApiResult.NetworkError -> Log.e(TAG, "startExtraction NetworkError for documentId=$documentId")
+            is ApiResult.AuthError -> Log.e(TAG, "startExtraction AuthError for documentId=$documentId")
+        }
+        return result
     }
 
     override suspend fun getExtractionStatus(
@@ -92,5 +104,9 @@ class OcrRepositoryImpl(
         }
 
         emit(ApiResult.HttpError(408, "OCR processing timed out"))
+    }
+
+    companion object {
+        private const val TAG = "OcrRepository"
     }
 }

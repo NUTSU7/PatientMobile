@@ -15,10 +15,14 @@ interface DocumentRepository {
         size: Int = 20,
         search: String? = null,
         dateFrom: String? = null,
-        dateTo: String? = null
+        dateTo: String? = null,
+        sortBy: String? = null,
+        sortDir: String? = null
     ): ApiResult<List<PatientDocument>>
     suspend fun getDocumentById(id: String): ApiResult<PatientDocument>
     suspend fun downloadDocument(id: String): ApiResult<File>
+    suspend fun downloadDocumentFile(documentId: String): ApiResult<File>
+    suspend fun getDocumentExplanation(documentId: String): ApiResult<String>
     suspend fun renameDocument(id: String, newName: String): ApiResult<PatientDocument>
     suspend fun deleteDocument(id: String): ApiResult<Unit>
     suspend fun bulkDelete(documentIds: List<String>): ApiResult<Unit>
