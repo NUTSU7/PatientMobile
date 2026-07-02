@@ -1,6 +1,7 @@
 package com.semanticsoft.patientmobile.ui.screens.dashboard.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -39,7 +40,9 @@ fun ResumeAICard(
         val scale = max(0.86f, min(maxWidth.value / 343.2f, 1.06f))
 
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, Color(0xFFC7D2FE), RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFFE9EDFF)),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)

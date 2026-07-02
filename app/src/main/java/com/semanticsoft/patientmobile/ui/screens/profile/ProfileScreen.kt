@@ -49,6 +49,7 @@ import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.screens.profile.components.AccountManagementCard
 import com.semanticsoft.patientmobile.ui.screens.profile.components.ChangePasswordDialog
+import com.semanticsoft.patientmobile.ui.screens.profile.components.DeleteAccountDialog
 import com.semanticsoft.patientmobile.ui.screens.profile.components.ProfileDetailsCard
 import com.semanticsoft.patientmobile.ui.screens.profile.components.ProfileStatsSection
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
@@ -158,13 +159,13 @@ fun ProfileScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0x80000000))
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f))
                     .clickable(
                         interactionSource = interactionSource,
                         indication = null,
                         onClick = { onEvent(ProfileEvent.OnChangePasswordDismiss) }
                     )
-                    .padding(16.dp),
+                    .padding(AppDimens.paddingDefault),
                 contentAlignment = Alignment.Center
             ) {
                 AnimatedVisibility(
@@ -193,7 +194,52 @@ fun ProfileScreen(
                 }
             }
         }
+
+        AnimatedVisibility(
+            visible = state.showDeleteAccountDialog,
+            enter = fadeIn(animationSpec = tween(200)),
+            exit = fadeOut(animationSpec = tween(200))
+        ) {
+            val interactionSource = remember { MutableInteractionSource() }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f))
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = { onEvent(ProfileEvent.OnDeleteAccountDismiss) }
+                    )
+                    .padding(AppDimens.paddingDefault),
+                contentAlignment = Alignment.Center
+            ) {
+                AnimatedVisibility(
+                    visible = state.showDeleteAccountDialog,
+                    enter = scaleIn(initialScale = 0.85f, animationSpec = tween(250)) +
+                        fadeIn(animationSpec = tween(250)),
+                    exit = scaleOut(targetScale = 0.85f, animationSpec = tween(200)) +
+                        fadeOut(animationSpec = tween(200))
+                ) {
+                    Box(
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {}
+                        )
+                    ) {
+                        DeleteAccountDialog(
+                            onDismiss = { onEvent(ProfileEvent.OnDeleteAccountDismiss) },
+                            onSubmit = { password, confirmation ->
+                                onEvent(ProfileEvent.OnDeleteAccountConfirm(password, confirmation))
+                            },
+                            errorMessage = state.deleteAccountError,
+                            isLoading = state.isLoading
+                        )
+                    }
+                }
             }
+        }
+    }
         }
     }
 }

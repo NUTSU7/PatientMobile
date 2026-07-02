@@ -17,6 +17,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -143,9 +146,18 @@ fun EmptyUploadCard(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "🔒 Date securizate", color = Gray500, fontSize = if (isCompact) 13.sp else 14.sp)
-                Text(text = "🤖 Extracție prin AI", color = Gray500, fontSize = if (isCompact) 13.sp else 14.sp)
-                Text(text = "📊 Istoric vizual", color = Gray500, fontSize = if (isCompact) 13.sp else 14.sp)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Outlined.Lock, null, tint = Gray500, modifier = Modifier.size(16.dp))
+                    Text(text = "Date securizate", color = Gray500, fontSize = if (isCompact) 13.sp else 14.sp)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Outlined.SmartToy, null, tint = Gray500, modifier = Modifier.size(16.dp))
+                    Text(text = "Extrac\u021Bie prin AI", color = Gray500, fontSize = if (isCompact) 13.sp else 14.sp)
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Outlined.BarChart, null, tint = Gray500, modifier = Modifier.size(16.dp))
+                    Text(text = "Istoric vizual", color = Gray500, fontSize = if (isCompact) 13.sp else 14.sp)
+                }
             }
 
             Spacer(modifier = Modifier.height(if (isCompact) 18.dp else 22.dp))

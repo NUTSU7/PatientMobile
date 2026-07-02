@@ -51,8 +51,15 @@ data class LogoutRequest(
 
 @Serializable
 data class ChangePasswordRequest(
-    val oldPassword: String,
-    val newPassword: String
+    @SerialName("currentPassword") val currentPassword: String,
+    @SerialName("newPassword") val newPassword: String,
+    @SerialName("confirmNewPassword") val confirmNewPassword: String
+)
+
+@Serializable
+data class DeleteAccountRequest(
+    val password: String,
+    val confirmation: String
 )
 
 @Serializable

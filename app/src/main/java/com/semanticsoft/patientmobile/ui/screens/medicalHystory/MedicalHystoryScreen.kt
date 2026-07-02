@@ -257,8 +257,10 @@ fun MedicalHystoryScreen(
             ) {
                 AnimatedVisibility(
                     visible = state.showAddMedicationDialog,
-                    enter = scaleIn(initialScale = 0.9f, animationSpec = tween(250)),
-                    exit = scaleOut(targetScale = 0.9f, animationSpec = tween(200))
+                    enter = scaleIn(initialScale = 0.85f, animationSpec = tween(250)) +
+                        fadeIn(animationSpec = tween(250)),
+                    exit = scaleOut(targetScale = 0.85f, animationSpec = tween(200)) +
+                        fadeOut(animationSpec = tween(200))
                 ) {
                     Box(
                         modifier = Modifier.clickable(
@@ -283,6 +285,24 @@ fun MedicalHystoryScreen(
                             },
                             initialDurationDays = durationDays.takeIf { it > 0 },
                             isEditing = isEditingMedication,
+                            ocrIsExtracting = state.medicationOcrExtracting,
+                            ocrFeedbackMessage = state.medicationOcrFeedback,
+                            ocrFeedbackError = state.medicationOcrFeedbackError,
+                            ocrAttachmentFileName = state.medicationOcrDraftResult?.attachment?.originalFileName,
+                            ocrInitialName = if (!isEditingMedication) state.medicationOcrDraftResult?.name else null,
+                            ocrInitialDoseValue = if (!isEditingMedication) state.medicationOcrDraftResult?.doseValue else null,
+                            ocrInitialDoseUnit = if (!isEditingMedication) state.medicationOcrDraftResult?.doseUnit else null,
+                            ocrInitialSchedules = if (!isEditingMedication) {
+                                state.medicationOcrDraftResult?.schedules?.map { schedule ->
+                                    ScheduleEntryData(
+                                        administrationTime = schedule.administrationTime,
+                                        mealRelation = schedule.mealRelation
+                                    )
+                                }
+                            } else null,
+                            ocrInitialDurationDays = if (!isEditingMedication) state.medicationOcrDraftResult?.durationDays else null,
+                            ocrUnconfirmedFields = state.medicationOcrDraftResult?.unconfirmedFields ?: emptyList(),
+                            onOcrFileSelected = { path -> viewModel.extractMedicationFromFile(path) },
                             onDismiss = {
                                 focusManager.clearFocus()
                                 viewModel.onDismissAddMedicationDialog()
@@ -325,8 +345,10 @@ fun MedicalHystoryScreen(
             ) {
                 AnimatedVisibility(
                     visible = state.showAddNoteDialog,
-                    enter = scaleIn(initialScale = 0.9f, animationSpec = tween(250)),
-                    exit = scaleOut(targetScale = 0.9f, animationSpec = tween(200))
+                    enter = scaleIn(initialScale = 0.85f, animationSpec = tween(250)) +
+                        fadeIn(animationSpec = tween(250)),
+                    exit = scaleOut(targetScale = 0.85f, animationSpec = tween(200)) +
+                        fadeOut(animationSpec = tween(200))
                 ) {
                     Box(
                         modifier = Modifier.clickable(
@@ -344,6 +366,14 @@ fun MedicalHystoryScreen(
                             initialDoctorLocation = editingNote?.author?.takeUnless { it == "Eu" },
                             initialContent = editingNote?.content,
                             isEditing = isEditingNote,
+                            ocrIsExtracting = state.noteOcrExtracting,
+                            ocrFeedbackMessage = state.noteOcrFeedback,
+                            ocrFeedbackError = state.noteOcrFeedbackError,
+                            ocrAttachmentFileName = state.noteOcrDraftResult?.attachment?.originalFileName,
+                            ocrInitialTitle = if (!isEditingNote) state.noteOcrDraftResult?.suggestedTitle else null,
+                            ocrInitialDoctorLocation = if (!isEditingNote) state.noteOcrDraftResult?.doctorLocation else null,
+                            ocrInitialContent = if (!isEditingNote) state.noteOcrDraftResult?.clinicalObservations else null,
+                            onOcrFileSelected = { path -> viewModel.extractPersonalNoteFromFile(path) },
                             onDismiss = {
                                 focusManager.clearFocus()
                                 viewModel.onDismissAddNoteDialog()
@@ -380,8 +410,10 @@ fun MedicalHystoryScreen(
             ) {
                 AnimatedVisibility(
                     visible = state.showDeleteMedicationDialog,
-                    enter = scaleIn(initialScale = 0.9f, animationSpec = tween(250)),
-                    exit = scaleOut(targetScale = 0.9f, animationSpec = tween(200))
+                    enter = scaleIn(initialScale = 0.85f, animationSpec = tween(250)) +
+                        fadeIn(animationSpec = tween(250)),
+                    exit = scaleOut(targetScale = 0.85f, animationSpec = tween(200)) +
+                        fadeOut(animationSpec = tween(200))
                 ) {
                     Box(
                         modifier = Modifier.clickable(
@@ -434,8 +466,10 @@ fun MedicalHystoryScreen(
             ) {
                 AnimatedVisibility(
                     visible = state.showDeleteNoteDialog,
-                    enter = scaleIn(initialScale = 0.9f, animationSpec = tween(250)),
-                    exit = scaleOut(targetScale = 0.9f, animationSpec = tween(200))
+                    enter = scaleIn(initialScale = 0.85f, animationSpec = tween(250)) +
+                        fadeIn(animationSpec = tween(250)),
+                    exit = scaleOut(targetScale = 0.85f, animationSpec = tween(200)) +
+                        fadeOut(animationSpec = tween(200))
                 ) {
                     Box(
                         modifier = Modifier.clickable(

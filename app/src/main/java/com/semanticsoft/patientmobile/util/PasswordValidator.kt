@@ -3,7 +3,7 @@ package com.semanticsoft.patientmobile.util
 import java.util.Locale
 
 object PasswordValidator {
-    private const val MIN_LENGTH = 15
+    private const val MIN_LENGTH = 8
     private const val MAX_UTF8_BYTES = 72
 
     private val commonPasswordBlocklist = setOf(
@@ -26,7 +26,7 @@ object PasswordValidator {
 
     fun validate(password: String, email: String, firstName: String, lastName: String): Result {
         if (password.length < MIN_LENGTH) {
-            return Result.Error("Password must be at least 15 characters long.")
+            return Result.Error("Password must be at least 8 characters long.")
         }
 
         if (password.toByteArray(Charsets.UTF_8).size > MAX_UTF8_BYTES) {

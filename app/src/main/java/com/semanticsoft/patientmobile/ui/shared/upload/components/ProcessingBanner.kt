@@ -30,7 +30,7 @@ fun ProcessingBanner(
     modifier: Modifier = Modifier
 ) {
     AnimatedVisibility(
-        visible = state.isActive,
+        visible = state.isPolling,
         enter = expandVertically() + fadeIn(),
         exit = shrinkVertically() + fadeOut(),
         modifier = modifier

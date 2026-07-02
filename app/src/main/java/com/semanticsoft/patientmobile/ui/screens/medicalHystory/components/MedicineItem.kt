@@ -35,7 +35,8 @@ fun MedicineItemRow(item: MedicineItem, onDeleteClick: () -> Unit, onClick: () -
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Gray50, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(Gray50)
             .clickable { onClick() }
             .padding(14.dp)
     ) {
@@ -89,7 +90,8 @@ fun MedicineItemRow(item: MedicineItem, onDeleteClick: () -> Unit, onClick: () -
             Box(
                 modifier = Modifier
                     .size(44.dp)
-                    .background(AttentionHigh.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(AttentionHigh.copy(alpha = 0.08f))
                     .clickable { onDeleteClick() },
                 contentAlignment = Alignment.Center
             ) {

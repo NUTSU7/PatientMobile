@@ -4,6 +4,7 @@ import com.semanticsoft.patientmobile.data.local.datastore.TokenManager
 import com.semanticsoft.patientmobile.data.remote.SafeApiCall.safeApiCall
 import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
 import com.semanticsoft.patientmobile.data.remote.api.dto.ChangePasswordRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.DeleteAccountRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.LoginRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.LogoutRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.RefreshRequest
@@ -107,18 +108,25 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun changePassword(
-        oldPassword: String,
-        newPassword: String
+        currentPassword: String,
+        newPassword: String,
+        confirmNewPassword: String
     ): ApiResult<Unit> {
         return safeApiCall {
             apiService.changePassword(
-                ChangePasswordRequest(oldPassword = oldPassword, newPassword = newPassword)
+                ChangePasswordRequest(
+                    currentPassword = currentPassword,
+                    newPassword = newPassword,
+                    confirmNewPassword = confirmNewPassword
+                )
             )
         }.map { }
     }
 
-    override suspend fun deleteAccount(): ApiResult<Unit> {
-        return safeApiCall { apiService.deleteAccount() }.also { result ->
+    override suspend fun deleteAccount(password: String, confirmation: String): ApiResult<Unit> {
+        return safeApiCall {
+            apiService.deleteAccount(DeleteAccountRequest(password = password, confirmation = confirmation))
+        }.also { result ->
             if (result is ApiResult.Success) {
                 tokenManager.clearTokens()
                 tokenManager.clearUser()

@@ -18,8 +18,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.RemoveRedEye
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -156,14 +158,14 @@ fun LoginScreen(
                     isError = state.errorMessage != null || (hasAttemptedLogin && state.password.isBlank()),
                     inputHeight = inputHeight,
                     trailing = {
-                        Icon(
-                            imageVector = Icons.Outlined.RemoveRedEye,
-                            contentDescription = if (passwordVisible) "Ascunde parola" else "Afi\u0219eaz\u0103 parola",
-                            tint = if (passwordVisible) Color(0xFF4F46E5) else Color(0xFF9CA3AF),
-                            modifier = Modifier
-                                .size(16.dp)
-                                .clickable { passwordVisible = !passwordVisible }
-                        )
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
+                                contentDescription = if (passwordVisible) "Ascunde parola" else "Afi\u0219eaz\u0103 parola",
+                                tint = Color(0xFF9CA3AF),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 )
 

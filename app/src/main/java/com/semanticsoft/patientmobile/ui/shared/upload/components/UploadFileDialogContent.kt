@@ -69,13 +69,8 @@ fun UploadFileDialogContent(
     val hasPendingOrError = state.selectedFiles.any {
         it.status == UploadStatus.PENDING || it.status == UploadStatus.ERROR
     }
-    val totalRemaining = state.selectedFiles.count {
-        it.status == UploadStatus.PENDING || it.status == UploadStatus.ERROR
-    } + state.selectedFiles.count { it.status == UploadStatus.UPLOADING }
-
-    val uploadingIndex = if (state.isUploading) {
-        state.selectedFiles.indexOfFirst { it.status == UploadStatus.UPLOADING }
-    } else -1
+    val totalFiles = state.selectedFiles.size
+    val uploadingIndex = state.selectedFiles.indexOfFirst { it.status == UploadStatus.UPLOADING }
     val currentFileNum = if (uploadingIndex >= 0) uploadingIndex + 1 else 0
 
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -207,7 +202,7 @@ fun UploadFileDialogContent(
                         )
                         Spacer(modifier = Modifier.width((8f * scale).dp))
                         Text(
-                            text = "Se \u00EEncarc\u0103 fi\u0219ierul $currentFileNum din $totalRemaining",
+                            text = "Se \u00EEncarc\u0103 fi\u0219ierul $currentFileNum din $totalFiles",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 lineHeight = (20f * scale).sp
                             ),

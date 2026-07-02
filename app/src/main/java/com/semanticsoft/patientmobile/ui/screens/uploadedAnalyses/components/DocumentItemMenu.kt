@@ -26,6 +26,7 @@ import com.semanticsoft.patientmobile.ui.theme.GrayLightBorder
 @Composable
 fun DocumentItemMenu(
     onRenameClick: () -> Unit,
+    onDownloadClick: () -> Unit,
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -59,6 +60,19 @@ fun DocumentItemMenu(
                 onClick = {
                     expanded = false
                     onRenameClick()
+                }
+            )
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = "Descarcă",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                onClick = {
+                    expanded = false
+                    onDownloadClick()
                 }
             )
             DropdownMenuItem(

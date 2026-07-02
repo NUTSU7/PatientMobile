@@ -186,7 +186,7 @@ class UploadFileViewModel @Inject constructor(
                         val documentId = uploadResult.data.id
                         _state.update { current ->
                             val afterSuccess = current.selectedFiles.toMutableList()
-                            afterSuccess.removeAt(pendingIndex)
+                            afterSuccess[pendingIndex] = file.copy(status = UploadStatus.SUCCESS)
                             current.copy(selectedFiles = afterSuccess)
                         }
                         withContext(ioDispatcher) {
@@ -218,7 +218,7 @@ class UploadFileViewModel @Inject constructor(
                         if (uploadResult.code == 409) {
                             _state.update { current ->
                                 val afterSuccess = current.selectedFiles.toMutableList()
-                                afterSuccess.removeAt(pendingIndex)
+                                afterSuccess[pendingIndex] = file.copy(status = UploadStatus.SUCCESS)
                                 current.copy(selectedFiles = afterSuccess)
                             }
                             continue
@@ -283,26 +283,27 @@ class UploadFileViewModel @Inject constructor(
                 }
             }
 
-            val allGone = _state.value.selectedFiles.isEmpty()
+            val allDone = _state.value.selectedFiles.none {
+                it.status == UploadStatus.PENDING || it.status == UploadStatus.PENDING_FORCE || it.status == UploadStatus.UPLOADING
+            }
             val hasErrors = _state.value.selectedFiles.any { it.status == UploadStatus.ERROR }
             val hasNetworkError = _state.value.selectedFiles.any { it.errorType == ErrorType.NETWORK }
 
             _state.update {
                 it.copy(
                     isUploading = false,
-                    uploadComplete = allGone && !hasErrors,
+                    uploadComplete = allDone && !hasErrors,
                     hasNetworkError = hasNetworkError
                 )
             }
 
-            if (allGone && !hasErrors) {
+            if (allDone && !hasErrors) {
+                globalSyncManager.triggerSync()
                 val extractionJobs = _state.value.extractionJobs
                 if (extractionJobs.isNotEmpty()) {
                     startPollingExtractions()
-                } else {
-                    globalSyncManager.triggerSync()
-                    _events.emit(UploadFileEvent.AllFilesUploaded)
                 }
+                _events.emit(UploadFileEvent.AllFilesUploaded)
             }
         }
     }
@@ -381,26 +382,27 @@ class UploadFileViewModel @Inject constructor(
                                     message = "$message (${completed + failed} din ${pollState.totalJobs})"
                                 )
                             }
-                            globalSyncManager.triggerSync()
                         }
                     }.awaitAll()
                 }
                 val successCount = results.values.count { it.status == "SUCCESS" }
                 val failedCount = results.values.count { it.status == "FAILED" }
                 val timedOut = _processingPollState.value.isTimedOut
-                _processingPollState.update { ProcessingPollState() }
+            globalSyncManager.triggerSync()
+            delay(2_500L)
+            globalSyncManager.triggerSync()
+            _events.emit(UploadFileEvent.ProcessingComplete(
+                totalJobs = pollState.totalJobs,
+                successCount = successCount,
+                failedCount = failedCount,
+                timedOut = timedOut
+            ))
+            _processingPollState.update { ProcessingPollState() }
+            launch {
+                try { dashboardRepository.regenerateAiSummary() } catch (_: Exception) {}
+                delay(2_000L)
                 globalSyncManager.triggerSync()
-                launch {
-                    try { dashboardRepository.regenerateAiSummary() } catch (_: Exception) {}
-                }
-                delay(2_500L)
-                globalSyncManager.triggerSync()
-                _events.emit(UploadFileEvent.ProcessingComplete(
-                    totalJobs = pollState.totalJobs,
-                    successCount = successCount,
-                    failedCount = failedCount,
-                    timedOut = timedOut
-                ))
+            }
             } finally {
                 uploadStateManager.setProcessing(false)
             }

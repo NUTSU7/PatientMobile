@@ -5,6 +5,8 @@ import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
 import com.semanticsoft.patientmobile.data.remote.api.dto.CreateMedicationRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.CreateMedicationScheduleRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.CreateNoteRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.MedicationOcrDraftResponseDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.PersonalNoteOcrDraftResponseDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.UpdateMedicationRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.UpdateNoteRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.toDomain
@@ -13,6 +15,12 @@ import com.semanticsoft.patientmobile.domain.model.PersonalNote
 import com.semanticsoft.patientmobile.domain.repository.MedicalHistoryRepository
 import com.semanticsoft.patientmobile.util.ApiResult
 import com.semanticsoft.patientmobile.util.map
+import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 
 class MedicalHistoryRepositoryImpl(
     private val apiService: PatientApiService,
@@ -111,5 +119,36 @@ class MedicalHistoryRepositoryImpl(
     override suspend fun deleteNote(id: String): ApiResult<Unit> {
         if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
         return safeApiCall { apiService.deleteNote(id) }.map { }
+    }
+
+    override suspend fun extractMedicationOcrDraft(filePath: String): ApiResult<MedicationOcrDraftResponseDto> =
+        withContext(Dispatchers.IO) {
+            if (!networkStateProvider.isOnline()) return@withContext ApiResult.NetworkError
+
+            val file = File(filePath)
+            val mimeType = resolveMimeType(file)
+            val requestBody = file.asRequestBody(mimeType.toMediaType())
+            val part = MultipartBody.Part.createFormData("file", file.name, requestBody)
+
+            safeApiCall { apiService.extractMedicationOcrDraft(part) }
+        }
+
+    override suspend fun extractPersonalNoteOcrDraft(filePath: String): ApiResult<PersonalNoteOcrDraftResponseDto> =
+        withContext(Dispatchers.IO) {
+            if (!networkStateProvider.isOnline()) return@withContext ApiResult.NetworkError
+
+            val file = File(filePath)
+            val mimeType = resolveMimeType(file)
+            val requestBody = file.asRequestBody(mimeType.toMediaType())
+            val part = MultipartBody.Part.createFormData("file", file.name, requestBody)
+
+            safeApiCall { apiService.extractPersonalNoteOcrDraft(part) }
+        }
+
+    private fun resolveMimeType(file: File): String = when (file.extension.lowercase()) {
+        "pdf" -> "application/pdf"
+        "jpg", "jpeg" -> "image/jpeg"
+        "png" -> "image/png"
+        else -> "application/octet-stream"
     }
 }

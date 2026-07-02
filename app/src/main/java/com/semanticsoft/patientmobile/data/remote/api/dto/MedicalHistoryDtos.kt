@@ -32,7 +32,7 @@ data class MedicationScheduleDto(
 data class MedicalHistoryAttachmentDto(
     val id: String,
     @SerialName("originalFileName") val originalFileName: String,
-    @SerialName("fileType") val fileType: String,
+    @SerialName("mimeType") val fileType: String,
     @SerialName("fileSizeBytes") val fileSizeBytes: Long
 )
 
@@ -101,4 +101,30 @@ data class UpdateNoteRequest(
     @SerialName("noteDate") val noteDate: String,
     @SerialName("analysisDocumentId") val analysisDocumentId: String? = null,
     @SerialName("attachmentIds") val attachmentIds: List<String>? = null
+)
+
+@Serializable
+data class MedicationOcrDraftResponseDto(
+    val attachment: MedicalHistoryAttachmentDto,
+    @SerialName("rawText") val rawText: String? = null,
+    val name: String? = null,
+    val strength: String? = null,
+    @SerialName("doseValue") val doseValue: Double? = null,
+    @SerialName("doseUnit") val doseUnit: String? = null,
+    @SerialName("frequencyText") val frequencyText: String? = null,
+    @SerialName("durationDays") val durationDays: Int? = null,
+    val schedules: List<MedicationScheduleDto> = emptyList(),
+    @SerialName("unconfirmedFields") val unconfirmedFields: List<String> = emptyList(),
+    val confidence: Map<String, String> = emptyMap()
+)
+
+@Serializable
+data class PersonalNoteOcrDraftResponseDto(
+    val attachment: MedicalHistoryAttachmentDto,
+    @SerialName("rawText") val rawText: String? = null,
+    @SerialName("suggestedTitle") val suggestedTitle: String? = null,
+    @SerialName("doctorLocation") val doctorLocation: String? = null,
+    @SerialName("clinicalObservations") val clinicalObservations: String? = null,
+    @SerialName("noteDate") val noteDate: String? = null,
+    val confidence: Map<String, String> = emptyMap()
 )

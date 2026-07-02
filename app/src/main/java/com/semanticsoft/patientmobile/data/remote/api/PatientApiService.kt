@@ -11,6 +11,7 @@ import com.semanticsoft.patientmobile.data.remote.api.dto.CreateNoteRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.CreateShareLinkRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.CreateSharedLinkDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.DashboardSummaryDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.DeleteAccountRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.DocumentDetailDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.DocumentDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.DuplicateCheckRequest
@@ -21,9 +22,11 @@ import com.semanticsoft.patientmobile.data.remote.api.dto.MedicalResultDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.MedicalResultHistoryEntry
 import com.semanticsoft.patientmobile.data.remote.api.dto.MedicalReportWithResultsDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.MedicationDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.MedicationOcrDraftResponseDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.OcrExtractionDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.PaginatedResponse
 import com.semanticsoft.patientmobile.data.remote.api.dto.PersonalNoteDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.PersonalNoteOcrDraftResponseDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.RefreshRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.RefreshResponse
 import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
@@ -71,7 +74,7 @@ interface PatientApiService {
     suspend fun changePassword(@Body request: ChangePasswordRequest)
 
     @DELETE("auth/account")
-    suspend fun deleteAccount()
+    suspend fun deleteAccount(@Body request: DeleteAccountRequest)
 
     // ── Documents ──────────────────────────────────────────────────────────
 
@@ -220,6 +223,18 @@ interface PatientApiService {
 
     @DELETE("patient/medical-history/personal-notes/{noteId}")
     suspend fun deleteNote(@Path("noteId") id: String)
+
+    @Multipart
+    @POST("patient/medical-history/medications/ocr-drafts")
+    suspend fun extractMedicationOcrDraft(
+        @Part file: MultipartBody.Part
+    ): MedicationOcrDraftResponseDto
+
+    @Multipart
+    @POST("patient/medical-history/personal-notes/ocr-drafts")
+    suspend fun extractPersonalNoteOcrDraft(
+        @Part file: MultipartBody.Part
+    ): PersonalNoteOcrDraftResponseDto
 
     // ── Shared Links ───────────────────────────────────────────────────────
 

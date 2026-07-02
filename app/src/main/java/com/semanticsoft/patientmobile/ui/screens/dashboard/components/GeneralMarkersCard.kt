@@ -23,6 +23,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.data.model.IndicatorStatus
+import com.semanticsoft.patientmobile.ui.theme.statusChipBg
+import com.semanticsoft.patientmobile.ui.theme.statusChipText
+import com.semanticsoft.patientmobile.ui.theme.statusFillColor
 import kotlin.math.max
 import kotlin.math.min
 
@@ -49,9 +52,10 @@ fun GeneralMarkersCard(
             .ifBlank { "In" }
 
         val chipLabel = when (status) {
-            IndicatorStatus.NORMAL -> "Normal"
-            IndicatorStatus.BORDERLINE -> "La limită"
-            IndicatorStatus.ATTENTION -> "Atenție"
+            IndicatorStatus.NORMAL -> "Optim"
+            IndicatorStatus.BORDERLINE -> "La limit\u0103"
+            IndicatorStatus.ATTENTION -> "Aten\u021Bie"
+            IndicatorStatus.NO_REFERENCE -> "F\u0103r\u0103 interval"
         }
 
         Row(
@@ -70,12 +74,12 @@ fun GeneralMarkersCard(
                     modifier = Modifier
                         .size((46f * scale).dp)
                         .background(Color.White, CircleShape)
-                        .border((2f * scale).dp, Color(0xFFE0E7FF), CircleShape),
+                        .border((2f * scale).dp, statusFillColor(status), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = initials,
-                        color = Color(0xFF6366F1),
+                        color = statusFillColor(status),
                         fontSize = 13.sp * scale,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -125,12 +129,12 @@ fun GeneralMarkersCard(
 
                 Box(
                     modifier = Modifier
-                        .background(Color(0xFFEEF2FF), RoundedCornerShape(999.dp))
+                        .background(statusChipBg(status), RoundedCornerShape(999.dp))
                         .padding(horizontal = (10f * scale).dp, vertical = (4f * scale).dp)
                 ) {
                     Text(
                         text = chipLabel,
-                        color = Color(0xFF6366F1),
+                        color = statusChipText(status),
                         fontSize = 10.6f.sp * scale,
                         lineHeight = 15.sp * scale,
                         fontWeight = FontWeight.Bold

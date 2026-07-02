@@ -1,7 +1,9 @@
 package com.semanticsoft.patientmobile.ui.screens.uploadedAnalyses
 
+import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -40,18 +42,21 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
@@ -78,14 +83,35 @@ fun UploadedAnalysesScreen(
     modifier: Modifier = Modifier
 ) {
     SetStatusBar(color = Color.White, darkIcons = true)
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showSortSheet by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
 
     LifecycleResumeEffect(Unit) {
         viewModel.refreshDocuments()
         onPauseOrDispose { }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is UploadedAnalysesEffect.OpenFile -> {
+                    val uri = FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        effect.file
+                    )
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(uri, context.contentResolver.getType(uri) ?: "application/octet-stream")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    context.startActivity(intent)
+                }
+            }
+        }
     }
 
     LaunchedEffect(viewModel) {
@@ -145,7 +171,8 @@ fun UploadedAnalysesScreen(
                                 ) {
                                     Box(
                                         modifier = Modifier
-                                            .background(Color.White, RoundedCornerShape(999.dp))
+                                            .clip(RoundedCornerShape(999.dp))
+                                            .background(Color.White)
                                             .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(999.dp))
                                             .clickable { showSortSheet = true }
                                             .padding(horizontal = 16.dp, vertical = 10.dp)
@@ -174,9 +201,9 @@ fun UploadedAnalysesScreen(
 
                                         Box(
                                             modifier = Modifier
+                                                .clip(RoundedCornerShape(999.dp))
                                                 .background(
-                                                    AttentionHigh.copy(alpha = 0.1f),
-                                                    RoundedCornerShape(999.dp)
+                                                    AttentionHigh.copy(alpha = 0.1f)
                                                 )
                                                 .border(
                                                     1.dp,
@@ -211,9 +238,9 @@ fun UploadedAnalysesScreen(
 
                                         Box(
                                             modifier = Modifier
+                                                .clip(RoundedCornerShape(999.dp))
                                                 .background(
-                                                    Color.White,
-                                                    RoundedCornerShape(999.dp)
+                                                    Color.White
                                                 )
                                                 .border(
                                                     1.dp,
@@ -271,6 +298,7 @@ fun UploadedAnalysesScreen(
                                                 viewModel.toggleDocumentSelection(it)
                                             },
                                             onRenameClick = { viewModel.onShowRenameDialog(it) },
+                                            onDownloadClick = { viewModel.onDownloadDocument(it) },
                                             onDeleteClick = { viewModel.onShowDeleteDialog(it) },
                                             modifier = Modifier.widthIn(max = 1152.dp)
                                         )
@@ -357,8 +385,10 @@ fun UploadedAnalysesScreen(
             ) {
                 AnimatedVisibility(
                     visible = state.showRenameDialog,
-                    enter = scaleIn(initialScale = 0.9f, animationSpec = tween(250)),
-                    exit = scaleOut(targetScale = 0.9f, animationSpec = tween(200))
+                    enter = scaleIn(initialScale = 0.95f, animationSpec = tween(200, easing = FastOutSlowInEasing)) +
+                        fadeIn(animationSpec = tween(200)),
+                    exit = scaleOut(targetScale = 0.95f, animationSpec = tween(150)) +
+                        fadeOut(animationSpec = tween(150))
                 ) {
                     Box(
                         modifier = Modifier.clickable(
@@ -419,8 +449,10 @@ fun UploadedAnalysesScreen(
             ) {
                 AnimatedVisibility(
                     visible = state.showDeleteDialog,
-                    enter = scaleIn(initialScale = 0.9f, animationSpec = tween(250)),
-                    exit = scaleOut(targetScale = 0.9f, animationSpec = tween(200))
+                    enter = scaleIn(initialScale = 0.95f, animationSpec = tween(200, easing = FastOutSlowInEasing)) +
+                        fadeIn(animationSpec = tween(200)),
+                    exit = scaleOut(targetScale = 0.95f, animationSpec = tween(150)) +
+                        fadeOut(animationSpec = tween(150))
                 ) {
                     Box(
                         modifier = Modifier.clickable(
@@ -478,8 +510,10 @@ fun UploadedAnalysesScreen(
             ) {
                 AnimatedVisibility(
                     visible = state.showBulkDeleteDialog,
-                    enter = scaleIn(initialScale = 0.9f, animationSpec = tween(250)),
-                    exit = scaleOut(targetScale = 0.9f, animationSpec = tween(200))
+                    enter = scaleIn(initialScale = 0.95f, animationSpec = tween(200, easing = FastOutSlowInEasing)) +
+                        fadeIn(animationSpec = tween(200)),
+                    exit = scaleOut(targetScale = 0.95f, animationSpec = tween(150)) +
+                        fadeOut(animationSpec = tween(150))
                 ) {
                     Box(
                         modifier = Modifier.clickable(

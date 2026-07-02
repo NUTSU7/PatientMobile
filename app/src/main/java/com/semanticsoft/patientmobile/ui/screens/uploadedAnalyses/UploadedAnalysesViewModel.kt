@@ -10,6 +10,7 @@ import com.semanticsoft.patientmobile.ui.screens.uploadedAnalyses.components.Sor
 import com.semanticsoft.patientmobile.util.ApiResult
 import com.semanticsoft.patientmobile.util.toUserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.File
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,10 @@ sealed class DialogState {
     data class Rename(val documentId: String, val error: String? = null) : DialogState()
     data class SingleDelete(val documentId: String) : DialogState()
     data class BulkDelete(val documentIds: Set<String>) : DialogState()
+}
+
+sealed class UploadedAnalysesEffect {
+    data class OpenFile(val file: File) : UploadedAnalysesEffect()
 }
 
 data class UploadedAnalysesUiState(
@@ -80,6 +85,9 @@ class UploadedAnalysesViewModel @Inject constructor(
 
     private val _refreshErrors = MutableSharedFlow<String>()
     val refreshErrors: SharedFlow<String> = _refreshErrors.asSharedFlow()
+
+    private val _effects = MutableSharedFlow<UploadedAnalysesEffect>()
+    val effects: SharedFlow<UploadedAnalysesEffect> = _effects.asSharedFlow()
 
     init {
         viewModelScope.launch {
@@ -221,6 +229,24 @@ class UploadedAnalysesViewModel @Inject constructor(
                     _state.update {
                         it.copy(isDeleting = false, dialogState = DialogState.None)
                     }
+                    _refreshErrors.emit(result.toUserMessage())
+                }
+            }
+        }
+    }
+
+    // ── Download Document ─────────────────────────────────────────────────
+
+    fun onDownloadDocument(documentId: String) {
+        viewModelScope.launch {
+            when (val result = documentRepository.downloadDocument(documentId)) {
+                is ApiResult.Success -> {
+                    _effects.emit(UploadedAnalysesEffect.OpenFile(result.data))
+                }
+                is ApiResult.HttpError, is ApiResult.NetworkError -> {
+                    _refreshErrors.emit(result.toUserMessage())
+                }
+                is ApiResult.AuthError -> {
                     _refreshErrors.emit(result.toUserMessage())
                 }
             }

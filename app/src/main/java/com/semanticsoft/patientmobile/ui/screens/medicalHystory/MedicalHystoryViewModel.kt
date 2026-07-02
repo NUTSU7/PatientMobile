@@ -15,10 +15,14 @@ import com.semanticsoft.patientmobile.domain.repository.MedicalHistoryRepository
 import com.semanticsoft.patientmobile.domain.repository.MedicalResultRepository
 import com.semanticsoft.patientmobile.domain.repository.OcrRepository
 import com.semanticsoft.patientmobile.domain.model.OcrStatus
+import com.semanticsoft.patientmobile.data.remote.api.dto.MedicationOcrDraftResponseDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.PersonalNoteOcrDraftResponseDto
+import com.semanticsoft.patientmobile.ui.shared.upload.ImageNormalizer
 import com.semanticsoft.patientmobile.util.ApiResult
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.ScheduleEntryData
 import com.semanticsoft.patientmobile.util.toUserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.File
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
@@ -130,7 +134,17 @@ data class MedicalHystoryUiState(
     val noteDialogError: String? = null,
     val deleteMedicationTargetId: String? = null,
     val deleteNoteTargetId: String? = null,
-    val selectedCombinedSectionTab: CombinedSectionTab = CombinedSectionTab.NOTES
+    val selectedCombinedSectionTab: CombinedSectionTab = CombinedSectionTab.NOTES,
+    val medicationOcrDraftResult: MedicationOcrDraftResponseDto? = null,
+    val medicationOcrFeedback: String? = null,
+    val medicationOcrFeedbackError: Boolean = false,
+    val medicationOcrExtracting: Boolean = false,
+    val noteOcrDraftResult: PersonalNoteOcrDraftResponseDto? = null,
+    val noteOcrFeedback: String? = null,
+    val noteOcrFeedbackError: Boolean = false,
+    val noteOcrExtracting: Boolean = false,
+    val ocrMedicationAttachmentIds: List<String> = emptyList(),
+    val ocrNoteAttachmentIds: List<String> = emptyList()
 ) {
     val showAddMedicationDialog: Boolean
         get() = medicationDialogTargetId != null
@@ -416,6 +430,7 @@ class MedicalHystoryViewModel @Inject constructor(
 
     fun onDismissAddMedicationDialog() {
         _state.update { it.copy(medicationDialogTargetId = null, medicationDialogError = null) }
+        clearMedicationOcrDraft()
     }
 
     fun onShowAddNoteDialog() {
@@ -428,6 +443,97 @@ class MedicalHystoryViewModel @Inject constructor(
 
     fun onDismissAddNoteDialog() {
         _state.update { it.copy(noteDialogTargetId = null, noteDialogError = null) }
+        clearNoteOcrDraft()
+    }
+
+    fun extractMedicationFromFile(filePath: String) {
+        val normalizedPath = normalizeIfNeeded(filePath)
+        _state.update { it.copy(medicationOcrExtracting = true, medicationOcrFeedback = null, medicationOcrFeedbackError = false) }
+        viewModelScope.launch {
+            when (val result = medicalHistoryRepository.extractMedicationOcrDraft(normalizedPath)) {
+                is ApiResult.Success -> {
+                    val draft = result.data
+                    val attachmentIds = _state.value.ocrMedicationAttachmentIds + listOf(draft.attachment.id)
+                    _state.update {
+                        it.copy(
+                            medicationOcrDraftResult = draft,
+                            medicationOcrExtracting = false,
+                            medicationOcrFeedback = "Sugestiile OCR au fost aplicate \u00EEn c\u00E2mpuri.",
+                            medicationOcrFeedbackError = false,
+                            ocrMedicationAttachmentIds = attachmentIds
+                        )
+                    }
+                }
+                is ApiResult.HttpError, is ApiResult.NetworkError, is ApiResult.AuthError -> {
+                    _state.update {
+                        it.copy(
+                            medicationOcrExtracting = false,
+                            medicationOcrFeedback = result.toUserMessage(),
+                            medicationOcrFeedbackError = true
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun extractPersonalNoteFromFile(filePath: String) {
+        val normalizedPath = normalizeIfNeeded(filePath)
+        _state.update { it.copy(noteOcrExtracting = true, noteOcrFeedback = null, noteOcrFeedbackError = false) }
+        viewModelScope.launch {
+            when (val result = medicalHistoryRepository.extractPersonalNoteOcrDraft(normalizedPath)) {
+                is ApiResult.Success -> {
+                    val draft = result.data
+                    val attachmentIds = _state.value.ocrNoteAttachmentIds + listOf(draft.attachment.id)
+                    _state.update {
+                        it.copy(
+                            noteOcrDraftResult = draft,
+                            noteOcrExtracting = false,
+                            noteOcrFeedback = "Textul extras a fost aplicat \u00EEn c\u00E2mpuri.",
+                            noteOcrFeedbackError = false,
+                            ocrNoteAttachmentIds = attachmentIds
+                        )
+                    }
+                }
+                is ApiResult.HttpError, is ApiResult.NetworkError, is ApiResult.AuthError -> {
+                    _state.update {
+                        it.copy(
+                            noteOcrExtracting = false,
+                            noteOcrFeedback = result.toUserMessage(),
+                            noteOcrFeedbackError = true
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun clearMedicationOcrDraft() {
+        _state.update {
+            it.copy(
+                medicationOcrDraftResult = null,
+                medicationOcrFeedback = null,
+                medicationOcrFeedbackError = false,
+                medicationOcrExtracting = false,
+                ocrMedicationAttachmentIds = emptyList()
+            )
+        }
+    }
+
+    fun clearNoteOcrDraft() {
+        _state.update {
+            it.copy(
+                noteOcrDraftResult = null,
+                noteOcrFeedback = null,
+                noteOcrFeedbackError = false,
+                noteOcrExtracting = false,
+                ocrNoteAttachmentIds = emptyList()
+            )
+        }
+    }
+
+    fun confirmMedicationOcrReview() {
+        // cleared by dialog dismiss
     }
 
     fun addMedicine(
@@ -484,7 +590,7 @@ class MedicalHystoryViewModel @Inject constructor(
                 effectiveDate = effective,
                 endDate = end,
                 analysisDocumentId = associatedDocumentId,
-                attachmentIds = existing?.attachmentIds ?: emptyList(),
+                attachmentIds = (existing?.attachmentIds ?: emptyList()) + _state.value.ocrMedicationAttachmentIds,
                 ocrReviewConfirmed = associatedDocumentId != null,
                 createdAt = existing?.createdAt
             )
@@ -534,7 +640,7 @@ class MedicalHystoryViewModel @Inject constructor(
                 clinicalObservations = content,
                 noteDate = existing?.noteDate ?: LocalDate.now(),
                 analysisDocumentId = analysisDocumentId,
-                attachmentIds = existing?.attachmentIds ?: emptyList(),
+                attachmentIds = (existing?.attachmentIds ?: emptyList()) + _state.value.ocrNoteAttachmentIds,
                 createdAt = existing?.createdAt
             )
             if (isEditing) {
@@ -728,5 +834,11 @@ class MedicalHystoryViewModel @Inject constructor(
             createdAt = this.createdAt,
             attachmentIds = this.attachmentIds
         )
+    }
+
+    private fun normalizeIfNeeded(filePath: String): String {
+        val file = File(filePath)
+        if (!ImageNormalizer.shouldNormalize(file)) return filePath
+        return ImageNormalizer.normalize(file)?.absolutePath ?: filePath
     }
 }

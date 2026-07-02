@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -95,6 +96,7 @@ fun CombinedMedicationNotesCard(
             if (hasItems) {
                 Box(
                     modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
                         .border(1.dp, Indigo600, RoundedCornerShape(999.dp))
                         .clickable(onClick = addClick)
                         .padding(horizontal = 14.dp, vertical = 6.dp)
@@ -118,9 +120,9 @@ fun CombinedMedicationNotesCard(
                 val isNotesSelected = selectedTab == CombinedSectionTab.NOTES
                 Box(
                     modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
                         .background(
-                            if (isNotesSelected) Color.White else Color.Transparent,
-                            RoundedCornerShape(999.dp)
+                            if (isNotesSelected) Color.White else Color.Transparent
                         )
                         .clickable { onTabSelected(CombinedSectionTab.NOTES) }
                         .padding(horizontal = 18.dp, vertical = 9.dp)
@@ -146,9 +148,9 @@ fun CombinedMedicationNotesCard(
                 val isMedSelected = selectedTab == CombinedSectionTab.MEDICINES
                 Box(
                     modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
                         .background(
-                            if (isMedSelected) Color.White else Color.Transparent,
-                            RoundedCornerShape(999.dp)
+                            if (isMedSelected) Color.White else Color.Transparent
                         )
                         .clickable { onTabSelected(CombinedSectionTab.MEDICINES) }
                         .padding(horizontal = 18.dp, vertical = 9.dp)
@@ -231,7 +233,8 @@ private fun MedicinesEmptyState(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .height(48.dp)
-                .background(Purple500, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
+                .background(Purple500)
                 .clickable(onClick = onAddClick),
             contentAlignment = Alignment.Center
         ) {
@@ -260,7 +263,8 @@ private fun NotesEmptyState(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .height(48.dp)
-                .background(Purple500, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
+                .background(Purple500)
                 .clickable(onClick = onAddClick),
             contentAlignment = Alignment.Center
         ) {

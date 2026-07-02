@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class MedicalResultDto(
     val id: String? = null,
     @SerialName("testDefinitionId") val testDefinitionId: String? = null,
-    @SerialName("documentId") val documentId: String,
+    @SerialName("documentId") val documentId: String = "",
     @SerialName("reportId") val reportId: String? = null,
     @SerialName("originalTestName") val originalTestName: String,
     @SerialName("canonicalName") val canonicalName: String,
