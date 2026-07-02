@@ -1,7 +1,10 @@
 package com.semanticsoft.patientmobile.ui.screens.registration
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -35,10 +38,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
+import com.semanticsoft.patientmobile.ui.components.PasswordCriteriaRow
+import com.semanticsoft.patientmobile.ui.components.PasswordMatchIndicator
+import com.semanticsoft.patientmobile.ui.components.computePasswordCriteria
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.screens.auth.components.AuthInput
 import com.semanticsoft.patientmobile.ui.screens.auth.components.AuthLabel
 import com.semanticsoft.patientmobile.ui.screens.auth.components.AuthTopHeader
+import com.semanticsoft.patientmobile.ui.theme.Gray100
+import com.semanticsoft.patientmobile.ui.theme.Gray200
 import com.semanticsoft.patientmobile.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.ui.theme.Purple500
 
@@ -101,6 +109,7 @@ fun RegistrationScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = sidePadding, vertical = contentVerticalPadding)
             ) {
                 Spacer(modifier = Modifier.height(if (isVeryCompactHeight) 8.dp else 12.dp))
@@ -148,7 +157,7 @@ fun RegistrationScreen(
                 Spacer(modifier = Modifier.height(tinySpacing))
                 AuthInput(
                     value = state.password,
-                    placeholder = "Min. 15 caractere",
+                    placeholder = "Min. 8 caractere",
                     onValueChange = onPasswordChange,
                     isPassword = true,
                     passwordVisible = passwordVisible,
@@ -166,6 +175,26 @@ fun RegistrationScreen(
                         }
                     }
                 )
+
+                if (state.password.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    val criteria = computePasswordCriteria(state.password, state.email)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Gray100, RoundedCornerShape(8.dp))
+                            .border(1.dp, Gray200, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        PasswordCriteriaRow(met = criteria.hasLength, label = "Minim 8 caractere")
+                        PasswordCriteriaRow(met = criteria.hasUppercase, label = "Minim o liter\u0103 majuscul\u0103")
+                        PasswordCriteriaRow(met = criteria.hasSpecial, label = "Minim un caracter special (ex: !, @, #, $, etc.)")
+                        PasswordCriteriaRow(met = criteria.hasDigit, label = "Minim o cifr\u0103")
+                        PasswordCriteriaRow(met = criteria.notCommon, label = "Parola nu este prea comun\u0103")
+                        PasswordCriteriaRow(met = criteria.notPersonal, label = "Parola nu este bazat\u0103 pe date personale")
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(sectionSpacing))
                 AuthLabel("Confirm\u0103 parola")
@@ -190,6 +219,11 @@ fun RegistrationScreen(
                         }
                     }
                 )
+
+                if (state.confirmPassword.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    PasswordMatchIndicator(passwordsMatch = state.password == state.confirmPassword)
+                }
 
                 Spacer(modifier = Modifier.height(beforeButtonSpacing))
                 Box(

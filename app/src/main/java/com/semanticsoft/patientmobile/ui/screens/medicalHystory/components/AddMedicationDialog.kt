@@ -80,6 +80,17 @@ fun AddMedicationDialog(
     initialSchedules: List<ScheduleEntryData>? = null,
     initialDurationDays: Int? = null,
     isEditing: Boolean = false,
+    ocrIsExtracting: Boolean = false,
+    ocrFeedbackMessage: String? = null,
+    ocrFeedbackError: Boolean = false,
+    ocrAttachmentFileName: String? = null,
+    ocrInitialName: String? = null,
+    ocrInitialDoseValue: Double? = null,
+    ocrInitialDoseUnit: String? = null,
+    ocrInitialSchedules: List<ScheduleEntryData>? = null,
+    ocrInitialDurationDays: Int? = null,
+    ocrUnconfirmedFields: List<String> = emptyList(),
+    onOcrFileSelected: (String) -> Unit,
     onDismiss: () -> Unit,
     onSave: (
         name: String,
@@ -111,6 +122,15 @@ fun AddMedicationDialog(
         initialAnalysisDocumentName?.let { associatedDocumentLabel = it }
     }
 
+    LaunchedEffect(ocrInitialName) { ocrInitialName?.let { name = it } }
+    LaunchedEffect(ocrInitialDoseValue) { ocrInitialDoseValue?.let { doseValue = it } }
+    LaunchedEffect(ocrInitialDoseUnit) {
+        ocrInitialDoseUnit?.let { unitStr ->
+            selectedUnit = try { DoseUnit.valueOf(unitStr) } catch (_: Exception) { DoseUnit.CAPSULE }
+        }
+    }
+    LaunchedEffect(ocrInitialDurationDays) { ocrInitialDurationDays?.let { durationDays = it } }
+
     val schedules = remember {
         mutableStateListOf(
             LocalScheduleEntry(hour = "08", minute = "00", mealRelation = MealRelation.AFTER_MEAL.name)
@@ -120,6 +140,21 @@ fun AddMedicationDialog(
         initialSchedules?.let { list ->
             schedules.clear()
             list.forEach { entry ->
+                val parts = entry.administrationTime.split(":")
+                schedules.add(
+                    LocalScheduleEntry(
+                        hour = parts.getOrElse(0) { "08" }.padStart(2, '0'),
+                        minute = parts.getOrElse(1) { "00" }.padStart(2, '0'),
+                        mealRelation = entry.mealRelation
+                    )
+                )
+            }
+        }
+    }
+    LaunchedEffect(ocrInitialSchedules) {
+        ocrInitialSchedules?.let { entries ->
+            schedules.clear()
+            entries.forEach { entry ->
                 val parts = entry.administrationTime.split(":")
                 schedules.add(
                     LocalScheduleEntry(
@@ -187,6 +222,36 @@ fun AddMedicationDialog(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
+
+            OcrAttachmentSection(
+                isExtracting = ocrIsExtracting,
+                feedbackMessage = ocrFeedbackMessage,
+                isFeedbackError = ocrFeedbackError,
+                attachmentFileName = ocrAttachmentFileName,
+                onFileSelected = onOcrFileSelected
+            )
+
+            Spacer(modifier = Modifier.height(AppDimens.gapDefault))
+
+            if (ocrUnconfirmedFields.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(AppDimens.cornerRadiusSmall))
+                        .background(Color(0xFFFFFBEB))
+                        .border(1.dp, Color(0xFFFDE68A), RoundedCornerShape(AppDimens.cornerRadiusSmall))
+                        .padding(10.dp)
+                ) {
+                    Text(
+                        text = "Neconfirmat: ${ocrUnconfirmedFields.joinToString(", ")}. Verific\u0103 manual c\u00E2mpurile \u00EEnainte de salvare.",
+                        color = Color(0xFF92400E),
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(AppDimens.gapDefault))
+            }
 
             DialogFieldLabel("Analiz\u0103 asociat\u0103")
             Spacer(modifier = Modifier.height(AppDimens.gapSmall))

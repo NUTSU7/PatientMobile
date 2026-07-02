@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,8 +44,9 @@ fun PersonalNoteCard(note: PersonalNoteItem, onDeleteClick: () -> Unit, onClick:
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Gray50)
             .clickable { onClick() }
-            .background(Gray50, RoundedCornerShape(16.dp))
     ) {
         Row(
             modifier = Modifier
@@ -95,7 +97,8 @@ fun PersonalNoteCard(note: PersonalNoteItem, onDeleteClick: () -> Unit, onClick:
                 Box(
                     modifier = Modifier
                         .size(44.dp)
-                        .background(AttentionHigh.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(AttentionHigh.copy(alpha = 0.08f))
                         .clickable { onDeleteClick() },
                     contentAlignment = Alignment.Center
                 ) {

@@ -2,17 +2,17 @@ package com.semanticsoft.patientmobile.ui.screens.dashboard.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -21,12 +21,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.semanticsoft.patientmobile.ui.theme.StatusAttentionFill
+import com.semanticsoft.patientmobile.ui.theme.StatusBorderlineFill
+import com.semanticsoft.patientmobile.ui.theme.StatusNormalFill
 import kotlin.math.max
 import kotlin.math.min
 
@@ -37,12 +40,15 @@ fun HealthScoreCard(
     normalCount: Int,
     borderlineCount: Int,
     attentionCount: Int,
-    statusText: String,
+    noReferenceCount: Int = 0,
+    documentCount: Int = 0,
+    statusText: String = "",
+    onStatusFilterClick: (String?) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     BoxWithConstraints(modifier = modifier) {
         val scale = max(0.9f, min(maxWidth.value / 343.2f, 1.15f))
-        val isCompact = maxWidth < 360.dp
+        val interpretableTotal = normalCount + borderlineCount + attentionCount
 
         Card(
             shape = RoundedCornerShape(24.dp),
@@ -64,35 +70,54 @@ fun HealthScoreCard(
                 )
 
                 Text(
-                    text = "Bazat pe ultimele 1 seturi de analize",
+                    text = when {
+                        documentCount == 1 -> "Bazat pe ultimul set de analize"
+                        documentCount > 1 -> "Bazat pe ultimele $documentCount seturi de analize"
+                        else -> "Bazat pe ultimele analize"
+                    },
                     color = Color(0xFF6B7280),
                     fontSize = 12.sp * scale,
                     lineHeight = 16.sp * scale
                 )
 
-                if (isCompact) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy((16f * scale).dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    SegmentedDonut(
+                        normalCount = normalCount,
+                        borderlineCount = borderlineCount,
+                        attentionCount = attentionCount,
+                        total = interpretableTotal,
+                        score = score,
+                        scale = scale
+                    )
+
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy((16f * scale).dp)
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy((8f * scale).dp)
                     ) {
-                        ScoreRing(score = score, scale = scale)
-                        ScoreBars(normalCount, borderlineCount, attentionCount, score, scale)
-                    }
-                } else {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy((16f * scale).dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ScoreRing(score = score, scale = scale)
-                        ScoreBars(
-                            normalCount = normalCount,
-                            borderlineCount = borderlineCount,
-                            attentionCount = attentionCount,
-                            score = score,
+                        StatusPill(
+                            label = "Normal",
+                            count = normalCount,
+                            fillColor = StatusNormalFill,
                             scale = scale,
-                            modifier = Modifier.weight(1f)
+                            onClick = { onStatusFilterClick("NORMAL") }
+                        )
+                        StatusPill(
+                            label = "La limit\u0103",
+                            count = borderlineCount,
+                            fillColor = StatusBorderlineFill,
+                            scale = scale,
+                            onClick = { onStatusFilterClick("BORDERLINE") }
+                        )
+                        StatusPill(
+                            label = "Aten\u021Bie",
+                            count = attentionCount,
+                            fillColor = StatusAttentionFill,
+                            scale = scale,
+                            onClick = { onStatusFilterClick("ATTENTION") }
                         )
                     }
                 }
@@ -102,102 +127,111 @@ fun HealthScoreCard(
 }
 
 @Composable
-private fun ScoreRing(score: Int, scale: Float) {
-    val progress = score.coerceIn(0, 100) / 100f
+private fun SegmentedDonut(
+    normalCount: Int,
+    borderlineCount: Int,
+    attentionCount: Int,
+    total: Int,
+    score: Int,
+    scale: Float
+) {
+    val ringSize = (120f * scale).dp
+    val strokeWidth = 34f * scale
 
     Box(
-        modifier = Modifier.size((120f * scale).dp),
+        modifier = Modifier.size(ringSize),
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val stroke = 52f * scale
-            val center = Offset(size.width / 2f, size.height / 2f)
-            val sweepPurple = 360f * progress
-            val sweepGray = 360f - sweepPurple
+            val cx = size.width / 2f
+            val cy = size.height / 2f
+            val radius = (size.width - strokeWidth) / 2f
+            val gap = if (listOf(normalCount, borderlineCount, attentionCount).count { it > 0 } > 1) 2.2f else 0f
 
-            rotate(-90f, center) {
+            fun drawSegment(count: Int, color: Color, startAngle: Float): Float {
+                if (count <= 0 || total <= 0) return startAngle
+                val sweepAngle = (count.toFloat() / total) * 360f - gap
+                if (sweepAngle <= 0f) return startAngle
                 drawArc(
-                    color = Color(0xFF6366F1),
-                    startAngle = 0f,
-                    sweepAngle = sweepPurple,
+                    color = color,
+                    startAngle = startAngle + gap / 2f - 90f,
+                    sweepAngle = sweepAngle,
                     useCenter = false,
-                    style = Stroke(width = stroke)
+                    topLeft = Offset(cx - radius, cy - radius),
+                    size = Size(radius * 2, radius * 2),
+                    style = Stroke(width = strokeWidth)
                 )
-
-                if (sweepGray > 0f) {
-                    drawArc(
-                        color = Color(0xFFF3F4F6),
-                        startAngle = sweepPurple,
-                        sweepAngle = sweepGray,
-                        useCenter = false,
-                        style = Stroke(width = stroke)
-                    )
-                }
+                return startAngle + sweepAngle + gap
             }
+
+            var angle = 0f
+            angle = drawSegment(normalCount, StatusNormalFill, angle)
+            angle = drawSegment(borderlineCount, StatusBorderlineFill, angle)
+            drawSegment(attentionCount, StatusAttentionFill, angle)
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = score.toString(),
+                text = total.toString(),
                 color = Color(0xFF111827),
                 fontSize = 28.sp * scale,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "PUNCTE",
+                text = "Indicatori",
                 color = Color(0xFF9CA3AF),
                 fontSize = 10.sp * scale,
                 fontWeight = FontWeight.Medium
             )
+            Text(
+                text = "${score}%",
+                color = Color(0xFF111827),
+                fontSize = 13.sp * scale,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = (2f * scale).dp)
+            )
         }
     }
 }
 
 @Composable
-private fun ScoreBars(
-    normalCount: Int,
-    borderlineCount: Int,
-    attentionCount: Int,
-    score: Int,
+private fun StatusPill(
+    label: String,
+    count: Int,
+    fillColor: Color,
     scale: Float,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
-    val total = (normalCount + borderlineCount + attentionCount).coerceAtLeast(1)
-
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy((10f * scale).dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFF8FAFC), RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = (16f * scale).dp, vertical = (12f * scale).dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        ScoreBarLine("Normal", normalCount.toString(), score.coerceIn(0, 100) / 100f, Color(0xFF6366F1), scale)
-        ScoreBarLine("La limită", borderlineCount.toString(), borderlineCount.toFloat() / total.toFloat(), Color(0xFFFACC15), scale)
-        ScoreBarLine("Atenție", attentionCount.toString(), attentionCount.toFloat() / total.toFloat(), Color(0xFFEF4444), scale)
-    }
-}
-
-@Composable
-private fun ScoreBarLine(label: String, value: String, progress: Float, color: Color, scale: Float) {
-    Column(verticalArrangement = Arrangement.spacedBy((4f * scale).dp)) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = label, color = Color(0xFF6B7280), fontSize = 12.sp * scale)
-            Text(text = value, color = Color(0xFF111827), fontSize = 13.sp * scale, fontWeight = FontWeight.SemiBold)
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height((8f * scale).dp)
-                .background(Color(0xFFF3F4F6), RoundedCornerShape(999.dp))
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy((10f * scale).dp)
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(progress.coerceIn(0f, 1f))
-                    .background(color, RoundedCornerShape(999.dp))
+                    .size(11.dp)
+                    .background(fillColor, CircleShape)
+            )
+            Text(
+                text = label,
+                color = Color(0xFF374151),
+                fontSize = 14.sp * scale,
+                fontWeight = FontWeight.SemiBold
             )
         }
+        Text(
+            text = count.toString(),
+            color = Color(0xFF111827),
+            fontSize = 16.sp * scale,
+            fontWeight = FontWeight.ExtraBold
+        )
     }
 }

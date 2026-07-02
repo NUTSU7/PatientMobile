@@ -11,13 +11,15 @@ data class MarkerSummary(
     val normal: Int,
     val borderline: Int,
     val attention: Int,
-    val score: Int
+    val score: Int,
+    val noReference: Int = 0
 )
 
 enum class IndicatorStatus {
     NORMAL,
     BORDERLINE,
-    ATTENTION
+    ATTENTION,
+    NO_REFERENCE
 }
 
 enum class IndicatorTrendDirection {
@@ -41,7 +43,10 @@ data class BasicIndicatorItem(
     val trendDelta: String,
     val trendDescription: String,
     val markerPosition: Float,
-    val segments: IndicatorSegments = IndicatorSegments()
+    val segments: IndicatorSegments = IndicatorSegments(),
+    val historyPoints: List<Float> = emptyList(),
+    val referenceLow: Float? = null,
+    val referenceHigh: Float? = null
 )
 
 data class MarkerCategoryItem(

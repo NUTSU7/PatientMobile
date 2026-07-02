@@ -3,6 +3,7 @@ package com.semanticsoft.patientmobile.data.remote
 import com.semanticsoft.patientmobile.util.ApiResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import retrofit2.HttpException
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -19,9 +20,10 @@ object SafeApiCall {
             if (e.code() == 401) {
                 ApiResult.AuthError
             } else {
+                val bodyMessage = extractErrorMessage(e)
                 ApiResult.HttpError(
                     code = e.code(),
-                    message = e.message().orEmpty()
+                    message = bodyMessage.ifBlank { e.message().orEmpty() }
                 )
             }
         } catch (e: UnknownHostException) {
@@ -39,5 +41,17 @@ object SafeApiCall {
         } catch (e: Exception) {
             ApiResult.HttpError(code = -1, message = e.message ?: "Unexpected error")
         }
+    }
+
+    private fun extractErrorMessage(e: HttpException): String {
+        return runCatching {
+            val body = e.response()?.errorBody()?.string()
+            if (body != null) {
+                val json = JSONObject(body)
+                json.optString("message", "").ifBlank {
+                    json.optString("error", "")
+                }
+            } else ""
+        }.getOrDefault("")
     }
 }

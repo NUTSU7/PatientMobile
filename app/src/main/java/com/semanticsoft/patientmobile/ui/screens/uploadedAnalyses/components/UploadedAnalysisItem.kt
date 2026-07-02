@@ -42,6 +42,7 @@ fun UploadedAnalysisItem(
     onLongPress: (String) -> Unit = {},
     onToggleSelection: (String) -> Unit = {},
     onRenameClick: (String) -> Unit = {},
+    onDownloadClick: (String) -> Unit = {},
     onDeleteClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -103,6 +104,7 @@ fun UploadedAnalysisItem(
                     } else {
                         DocumentItemMenu(
                             onRenameClick = { onRenameClick(document.id) },
+                            onDownloadClick = { onDownloadClick(document.id) },
                             onDeleteClick = { onDeleteClick(document.id) }
                         )
                     }

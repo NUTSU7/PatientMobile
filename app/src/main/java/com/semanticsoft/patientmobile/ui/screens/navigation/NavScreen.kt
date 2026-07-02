@@ -21,7 +21,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.semanticsoft.patientmobile.ui.shared.upload.components.ProcessingBanner
 import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileScreen
 import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileViewModel
 import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileEvent
@@ -118,6 +117,7 @@ fun NavScreen(
             PostLoginNavHost(
                 navController = navController,
                 dashboardState = dashboardState,
+                processingPollState = processingPollState,
                 onUploadClick = {
                     if (!showUploadModal) uploadFileViewModel.reset()
                     showUploadModal = !showUploadModal
@@ -125,11 +125,6 @@ fun NavScreen(
                 onLogout = onLogout,
                 navigateToExplanation = navigateToExplanation,
                 navigateToReportResults = navigateToReportResults
-            )
-
-            ProcessingBanner(
-                state = processingPollState,
-                modifier = Modifier.fillMaxWidth()
             )
 
             AnimatedVisibility(

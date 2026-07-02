@@ -28,7 +28,9 @@ data class ProfileUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val changePasswordError: String? = null,
-    val showChangePasswordDialog: Boolean = false
+    val showChangePasswordDialog: Boolean = false,
+    val showDeleteAccountDialog: Boolean = false,
+    val deleteAccountError: String? = null
 )
 
 sealed class ProfileEvent {
@@ -42,6 +44,11 @@ sealed class ProfileEvent {
     ) : ProfileEvent()
     data object OnExportDataClicked : ProfileEvent()
     data object OnDeleteAccountClicked : ProfileEvent()
+    data object OnDeleteAccountDismiss : ProfileEvent()
+    data class OnDeleteAccountConfirm(
+        val password: String,
+        val confirmation: String
+    ) : ProfileEvent()
     data object OnLogoutClicked : ProfileEvent()
 }
 
@@ -127,18 +134,30 @@ class ProfileViewModel @Inject constructor(
                     _effects.emit(ProfileEffect.ShowSnackbar("Func\u021Bionalitate \u00EEn curs de dezvoltare"))
                 }
             }
-            ProfileEvent.OnDeleteAccountClicked -> onDeleteAccount()
+            ProfileEvent.OnDeleteAccountClicked -> {
+                _state.update {
+                    it.copy(showDeleteAccountDialog = true, deleteAccountError = null)
+                }
+            }
+            ProfileEvent.OnDeleteAccountDismiss -> {
+                _state.update {
+                    it.copy(showDeleteAccountDialog = false, deleteAccountError = null)
+                }
+            }
+            is ProfileEvent.OnDeleteAccountConfirm -> {
+                deleteAccount(event.password, event.confirmation)
+            }
             ProfileEvent.OnLogoutClicked -> onLogout()
         }
     }
 
     private fun changePassword(
-        oldPassword: String,
+        currentPassword: String,
         newPassword: String,
         confirmPassword: String
     ) {
         viewModelScope.launch {
-            if (oldPassword.isBlank() || newPassword.isBlank() || confirmPassword.isBlank()) {
+            if (currentPassword.isBlank() || newPassword.isBlank() || confirmPassword.isBlank()) {
                 _state.update { it.copy(changePasswordError = "Toate c\u00E2mpurile sunt obligatorii") }
                 return@launch
             }
@@ -155,8 +174,8 @@ class ProfileViewModel @Inject constructor(
             )
             if (validation is PasswordValidator.Result.Error) {
                 val msg = when {
-                    validation.message.contains("15 characters") ->
-                        "Parola trebuie s\u0103 aib\u0103 cel pu\u021Bin 15 caractere"
+                    validation.message.contains("8 characters") ->
+                        "Parola trebuie s\u0103 aib\u0103 cel pu\u021Bin 8 caractere"
                     validation.message.contains("72 UTF-8") ->
                         "Parola dep\u0103\u0219e\u0219te limita de 72 bytes"
                     validation.message.contains("personal information") ->
@@ -170,12 +189,13 @@ class ProfileViewModel @Inject constructor(
             }
 
             _state.update { it.copy(isLoading = true, changePasswordError = null) }
-            when (val result = authRepository.changePassword(oldPassword, newPassword)) {
+            when (val result = authRepository.changePassword(currentPassword, newPassword, confirmPassword)) {
                 is ApiResult.Success -> {
                     _state.update { it.copy(isLoading = false, showChangePasswordDialog = false) }
                     _effects.emit(
                         ProfileEffect.ShowSnackbar("Parola a fost actualizat\u0103 cu succes")
                     )
+                    _effects.emit(ProfileEffect.NavigateToLogin)
                 }
                 is ApiResult.HttpError -> {
                     _state.update {
@@ -197,31 +217,39 @@ class ProfileViewModel @Inject constructor(
                 }
                 is ApiResult.AuthError -> {
                     _state.update { it.copy(isLoading = false) }
-                    _effects.emit(ProfileEffect.ShowSnackbar("Sesiunea a expirat. Te rug\u0103m s\u0103 te autentifici din nou."))
+                    _effects.emit(ProfileEffect.NavigateToLogin)
                 }
             }
         }
     }
 
-    private fun onDeleteAccount() {
+    private fun deleteAccount(password: String, confirmation: String) {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
-            when (val result = authRepository.deleteAccount()) {
+            if (password.isBlank()) {
+                _state.update { it.copy(deleteAccountError = "Parola este obligatorie") }
+                return@launch
+            }
+            if (confirmation != "\u0218TERGE CONTUL") {
+                _state.update { it.copy(deleteAccountError = "Confirmarea nu corespunde. Scrie \u201E\u0218TERGE CONTUL\u201D.") }
+                return@launch
+            }
+            _state.update { it.copy(isLoading = true, deleteAccountError = null) }
+            when (val result = authRepository.deleteAccount(password, confirmation)) {
                 is ApiResult.Success -> {
-                    _state.update { it.copy(isLoading = false) }
+                    _state.update { it.copy(isLoading = false, showDeleteAccountDialog = false) }
                     _effects.emit(ProfileEffect.NavigateToLogin)
                 }
                 is ApiResult.HttpError -> {
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = result.message.ifBlank { "\u0218tergerea contului a e\u0219uat" }
+                            deleteAccountError = result.message.ifBlank { "\u0218tergerea contului a e\u0219uat" }
                         )
                     }
                 }
                 is ApiResult.NetworkError -> {
                     _state.update {
-                        it.copy(isLoading = false, errorMessage = "Eroare de re\u021Bea. Verific\u0103 conexiunea.")
+                        it.copy(isLoading = false, deleteAccountError = "Eroare de re\u021Bea. Verific\u0103 conexiunea.")
                     }
                 }
                 is ApiResult.AuthError -> {

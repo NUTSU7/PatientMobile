@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardScreen
 import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardUiState
+import com.semanticsoft.patientmobile.ui.shared.upload.ProcessingPollState
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicalHystoryScreen
 import com.semanticsoft.patientmobile.ui.screens.profile.ProfileScreen
 import com.semanticsoft.patientmobile.ui.screens.uploadedAnalyses.UploadedAnalysesScreen
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 fun PostLoginNavHost(
     navController: NavHostController,
     dashboardState: StateFlow<DashboardUiState>,
+    processingPollState: ProcessingPollState = ProcessingPollState(),
     onUploadClick: () -> Unit,
     onLogout: () -> Unit,
     navigateToExplanation: (String) -> Unit = { },
@@ -34,6 +36,7 @@ fun PostLoginNavHost(
         composable(BottomNavDestination.Home.route) {
             DashboardScreen(
                 state = state,
+                processingPollState = processingPollState,
                 onUploadClick = onUploadClick
             )
         }

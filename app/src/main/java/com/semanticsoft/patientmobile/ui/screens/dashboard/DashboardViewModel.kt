@@ -52,6 +52,7 @@ data class DashboardUiState(
     val markerCategories: List<UiMarkerCategoryItem> = emptyList(),
     val generalMarkerCards: List<UiGeneralMarkerCardItem> = emptyList(),
     val markerSummary: UiMarkerSummary = UiMarkerSummary(0, 0, 0, 0),
+    val documentCount: Int = 0,
     val aiSummary: String = "",
     val isAiSummaryLoading: Boolean = false,
     val warningCards: List<UiWarningCardItem> = emptyList(),
@@ -130,16 +131,17 @@ class DashboardViewModel @Inject constructor(
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             val userDeferred = async { authRepository.getCurrentUser() }
-            val resultsDeferred = async { medicalResultRepository.getLatestResults() }
+            val resultsDeferred = async { medicalResultRepository.getAllResults(page = 0, size = 100) }
             val aiDeferred = async { dashboardRepository.getAiSummary() }
-            val docsDeferred = async { documentRepository.getDocuments(page = 0, size = 1, sortBy = "uploadedAt", sortDir = "desc") }
+            val docsDeferred = async { documentRepository.getDocumentStats() }
 
             val userResult = userDeferred.await()
             val resultsResult = resultsDeferred.await()
             val aiResult = aiDeferred.await()
             val docsResult = docsDeferred.await()
 
-            val hasDocuments = docsResult is ApiResult.Success && docsResult.data.isNotEmpty()
+            val docsTotal = if (docsResult is ApiResult.Success) docsResult.data.totalCount else 0
+            val hasDocuments = docsTotal > 0
             val hasResults = resultsResult is ApiResult.Success && resultsResult.data.isNotEmpty()
 
             var greetingName = ""
@@ -162,6 +164,7 @@ class DashboardViewModel @Inject constructor(
                         fullName = fullName,
                         role = role,
                         hasUploadedDocuments = false,
+                        documentCount = 0,
                         isLoading = false,
                         errorMessage = null,
                         emptyReason = DashboardEmptyReason.NO_DOCUMENTS
@@ -180,6 +183,7 @@ class DashboardViewModel @Inject constructor(
                             fullName = fullName,
                             role = role,
                             hasUploadedDocuments = true,
+                            documentCount = docsTotal,
                             isLoading = false,
                             errorMessage = null,
                             emptyReason = checkReason
@@ -198,7 +202,7 @@ class DashboardViewModel @Inject constructor(
 
             val results = if (resultsResult is ApiResult.Success) resultsResult.data else emptyList()
 
-            buildCardsFromResults(greetingName, fullName, role, results, aiResult)
+            buildCardsFromResults(greetingName, fullName, role, results, aiResult, docsTotal)
 
             if (hasResults) {
                 val historyResults = loadFrequentIndicatorsHistory()
@@ -222,7 +226,11 @@ class DashboardViewModel @Inject constructor(
                         "READY", "COMPLETED" -> _state.update {
                             it.copy(aiSummary = response.summaryText, isAiSummaryLoading = false)
                         }
-                        else -> _state.update { it.copy(isAiSummaryLoading = true, aiSummary = "") }
+                        else -> {
+                            _state.update { it.copy(isAiSummaryLoading = true, aiSummary = "") }
+                            delay(5_000L)
+                            regenerateAiSummary()
+                        }
                     }
                 }
                 else -> _state.update { it.copy(isAiSummaryLoading = false) }
@@ -244,14 +252,14 @@ class DashboardViewModel @Inject constructor(
         fullName: String,
         role: String,
         results: List<MedicalResult>,
-        aiResult: ApiResult<com.semanticsoft.patientmobile.data.remote.api.dto.AiSummaryResponse>
+        aiResult: ApiResult<com.semanticsoft.patientmobile.data.remote.api.dto.AiSummaryResponse>,
+        documentCount: Int
     ) {
         val abnormal = results.filter { !it.abnormalFlag.isNullOrBlank() }
         val categories = results.groupBy { it.analysisGroup.ifBlank { "Altele" } }
 
         val summary = buildSummary(results)
         val indicators = buildBasicIndicators(results)
-        val markers = buildGeneralMarkers(results)
         val markersByCategory = buildMarkerCategories(categories)
         val attention = buildAttentionItems(abnormal)
         val warnings = buildWarningCards(abnormal)
@@ -288,8 +296,9 @@ class DashboardViewModel @Inject constructor(
                 attentionItems = attention,
                 basicIndicators = indicators,
                 markerCategories = markersByCategory,
-                generalMarkerCards = markers,
+                generalMarkerCards = emptyList(),
                 markerSummary = summary,
+                documentCount = documentCount,
                 aiSummary = aiText,
                 isAiSummaryLoading = aiLoading,
                 warningCards = warnings,
@@ -303,19 +312,23 @@ class DashboardViewModel @Inject constructor(
 
     private fun buildSummary(results: List<MedicalResult>): UiMarkerSummary {
         if (results.isEmpty()) {
-            return UiMarkerSummary(normal = 0, borderline = 0, attention = 0, score = 0)
+            return UiMarkerSummary(normal = 0, borderline = 0, attention = 0, score = 0, noReference = 0)
         }
-        val normal = results.count { it.abnormalFlag?.uppercase() == "NORMAL" }
-        val borderline = results.count {
-            val flag = it.abnormalFlag?.uppercase()
-            flag == "LOW" || flag == "HIGH"
+        var normal = 0
+        var borderline = 0
+        var attention = 0
+        var noReference = 0
+        for (r in results) {
+            when (parseStatus(r)) {
+                IndicatorStatus.NORMAL -> normal++
+                IndicatorStatus.BORDERLINE -> borderline++
+                IndicatorStatus.ATTENTION -> attention++
+                IndicatorStatus.NO_REFERENCE -> noReference++
+            }
         }
-        val attention = results.count {
-            val flag = it.abnormalFlag?.uppercase()
-            flag != "NORMAL" && flag != "LOW" && flag != "HIGH"
-        }
-        val score = kotlin.math.round(normal.toDouble() / results.size * 100).toInt()
-        return UiMarkerSummary(normal = normal, borderline = borderline, attention = attention, score = score)
+        val interpretable = normal + borderline + attention
+        val score = if (interpretable > 0) kotlin.math.round(normal.toDouble() / interpretable * 100).toInt() else 0
+        return UiMarkerSummary(normal = normal, borderline = borderline, attention = attention, score = score, noReference = noReference)
     }
 
     private fun buildBasicIndicators(
@@ -323,20 +336,13 @@ class DashboardViewModel @Inject constructor(
     ): List<UiBasicIndicatorItem> {
         if (results.isEmpty()) return emptyList()
 
-        val grouped = results.groupBy { result ->
-            if (!result.testDefinitionId.isNullOrBlank()) {
-                "definition:${result.testDefinitionId}"
-            } else {
-                val displayName = result.canonicalName.ifBlank { result.originalTestName }
-                "name:${normalizeForGrouping(displayName)}"
-            }
-        }
+        val grouped = results.groupBy { getIndicatorKey(it) }
 
         data class GroupData(
             val displayLabel: String,
             val frequency: Int,
             val latestObservedAt: java.time.LocalDate?,
-            val latestItem: MedicalResult
+            val items: List<MedicalResult>
         )
 
         val enriched = grouped.values.map { items ->
@@ -346,7 +352,7 @@ class DashboardViewModel @Inject constructor(
                 displayLabel = first.canonicalName.ifBlank { first.originalTestName },
                 frequency = items.size,
                 latestObservedAt = sorted.mapNotNull { it.observedAt }.maxOrNull(),
-                latestItem = first
+                items = sorted
             )
         }
 
@@ -356,35 +362,57 @@ class DashboardViewModel @Inject constructor(
                 .thenBy { it.displayLabel }
         )
 
-        return sortedGroups.take(10).map { group ->
-            val r = group.latestItem
+        return sortedGroups.map { group ->
+            val r = group.items.first()
+            val numericValues = group.items
+                .sortedBy { it.observedAt }
+                .mapNotNull { it.valueNumeric?.toFloat() }
+            val sampled = sampleHistoryPoints(numericValues, 10)
+            val ref = resolveReferenceRange(group.items)
             UiBasicIndicatorItem(
                 title = group.displayLabel,
                 value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
                 unit = r.unit,
-                status = parseStatus(r.abnormalFlag),
+                status = parseStatus(r),
                 trendDirection = IndicatorTrendDirection.STABLE,
                 trendDelta = "",
                 trendDescription = r.referenceText ?: "",
                 markerPosition = 0.5f,
-                segments = IndicatorSegments()
+                segments = IndicatorSegments(),
+                historyPoints = sampled,
+                referenceLow = ref.first,
+                referenceHigh = ref.second
             )
         }
     }
 
-    private fun buildGeneralMarkers(results: List<MedicalResult>): List<UiGeneralMarkerCardItem> {
-        return results.map { r ->
-            UiGeneralMarkerCardItem(
-                title = r.originalTestName.ifBlank { r.canonicalName },
-                category = r.analysisGroup.ifBlank { "Altele" },
-                value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
-                unit = r.unit,
-                status = parseStatus(r.abnormalFlag),
-                normalRange = r.referenceText ?: buildRangeLabel(r.referenceLow, r.referenceHigh),
-                borderlineRange = "-",
-                attentionRange = "-"
-            )
+    private fun getIndicatorKey(result: MedicalResult): String {
+        return if (!result.testDefinitionId.isNullOrBlank()) {
+            "definition:${result.testDefinitionId}"
+        } else {
+            val displayName = result.canonicalName.ifBlank { result.originalTestName }
+            "name:${normalizeForGrouping(displayName)}"
         }
+    }
+
+    private fun sampleHistoryPoints(values: List<Float>, limit: Int): List<Float> {
+        if (values.isEmpty()) return emptyList()
+        if (values.size <= limit) return values
+        val result = mutableListOf<Float>()
+        for (i in 0 until limit) {
+            val idx = kotlin.math.round(i * (values.size - 1).toFloat() / (limit - 1).toFloat()).toInt()
+            result.add(values[idx])
+        }
+        return result
+    }
+
+    private fun resolveReferenceRange(items: List<MedicalResult>): Pair<Float?, Float?> {
+        for (item in items) {
+            if (item.referenceLow != null && item.referenceHigh != null) {
+                return Pair(item.referenceLow.toFloat(), item.referenceHigh.toFloat())
+            }
+        }
+        return Pair(null, null)
     }
 
     private fun buildMarkerCategories(categories: Map<String, List<MedicalResult>>): List<UiMarkerCategoryItem> {
@@ -463,13 +491,22 @@ class DashboardViewModel @Inject constructor(
         return "$lowStr - $highStr".trim()
     }
 
-    private fun parseStatus(abnormalFlag: String?): IndicatorStatus {
-        if (abnormalFlag.isNullOrBlank()) return IndicatorStatus.NORMAL
-        return when (abnormalFlag.uppercase()) {
-            "HIGH", "LOW", "ATTENTION", "ABNORMAL", "CRITICAL" -> IndicatorStatus.ATTENTION
-            "BORDERLINE", "WARNING" -> IndicatorStatus.BORDERLINE
-            else -> IndicatorStatus.NORMAL
+    private fun parseStatus(result: MedicalResult): IndicatorStatus {
+        val flag = result.abnormalFlag
+        if (flag.isNullOrBlank()) {
+            return if (hasValidReferenceRange(result)) IndicatorStatus.NORMAL else IndicatorStatus.NO_REFERENCE
         }
+        return when (flag.uppercase()) {
+            "NORMAL" -> if (hasValidReferenceRange(result)) IndicatorStatus.NORMAL else IndicatorStatus.NO_REFERENCE
+            "LOW", "HIGH" -> IndicatorStatus.BORDERLINE
+            "ABNORMAL", "ATTENTION", "CRITICAL" -> IndicatorStatus.ATTENTION
+            "BORDERLINE", "WARNING" -> IndicatorStatus.BORDERLINE
+            else -> if (hasValidReferenceRange(result)) IndicatorStatus.NORMAL else IndicatorStatus.NO_REFERENCE
+        }
+    }
+
+    private fun hasValidReferenceRange(result: MedicalResult): Boolean {
+        return result.referenceLow != null && result.referenceHigh != null
     }
 
     private fun parsePillarType(analysisGroup: String): ClinicalPillarType {

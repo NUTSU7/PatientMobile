@@ -1,6 +1,7 @@
 package com.semanticsoft.patientmobile.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import com.semanticsoft.patientmobile.data.model.IndicatorStatus
 
 val AppBackground = Color(0xFFF4F8FC)
 val HeaderBlue = Color(0xFF0E5DA9)
@@ -47,3 +48,38 @@ val ResultNormal = Color(0xFF16A34A)
 val PastelGreenBg = Color(0xFFD1FAE5)
 val PastelOrangeBg = Color(0xFFFFEDD5)
 val SoftIndigoGrey = Color(0xFF374151)
+
+// Status colors (matching web dashboard donut + chips)
+val StatusNormalFill = Color(0xFF22C55E)
+val StatusNormalBg = Color(0xFFDCFCE7)
+val StatusNormalText = Color(0xFF16A34A)
+val StatusBorderlineFill = Color(0xFFF59E0B)
+val StatusBorderlineBg = Color(0xFFFEF3C7)
+val StatusBorderlineText = Color(0xFFD97706)
+val StatusAttentionFill = Color(0xFFEF4444)
+val StatusAttentionBg = Color(0xFFFEE2E2)
+val StatusAttentionText = Color(0xFFDC2626)
+val StatusNoReferenceFill = Color(0xFF94A3B8)
+val StatusNoReferenceBg = Color(0xFFE2E8F0)
+val StatusNoReferenceText = Color(0xFF64748B)
+
+fun statusFillColor(status: IndicatorStatus): Color = when (status) {
+    IndicatorStatus.NORMAL -> StatusNormalFill
+    IndicatorStatus.BORDERLINE -> StatusBorderlineFill
+    IndicatorStatus.ATTENTION -> StatusAttentionFill
+    IndicatorStatus.NO_REFERENCE -> StatusNoReferenceFill
+}
+
+fun statusChipBg(status: IndicatorStatus): Color = when (status) {
+    IndicatorStatus.NORMAL -> StatusNormalBg
+    IndicatorStatus.BORDERLINE -> StatusBorderlineBg
+    IndicatorStatus.ATTENTION -> StatusAttentionBg
+    IndicatorStatus.NO_REFERENCE -> StatusNoReferenceBg
+}
+
+fun statusChipText(status: IndicatorStatus): Color = when (status) {
+    IndicatorStatus.NORMAL -> StatusNormalText
+    IndicatorStatus.BORDERLINE -> StatusBorderlineText
+    IndicatorStatus.ATTENTION -> StatusAttentionText
+    IndicatorStatus.NO_REFERENCE -> StatusNoReferenceText
+}
