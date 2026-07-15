@@ -492,21 +492,25 @@ class DashboardViewModel @Inject constructor(
     }
 
     private fun parseStatus(result: MedicalResult): IndicatorStatus {
+        val hasRef = hasValidReferenceRange(result)
+        if (!hasRef) return IndicatorStatus.NO_REFERENCE
         val flag = result.abnormalFlag
-        if (flag.isNullOrBlank()) {
-            return if (hasValidReferenceRange(result)) IndicatorStatus.NORMAL else IndicatorStatus.NO_REFERENCE
-        }
+        if (flag.isNullOrBlank()) return IndicatorStatus.NORMAL
         return when (flag.uppercase()) {
-            "NORMAL" -> if (hasValidReferenceRange(result)) IndicatorStatus.NORMAL else IndicatorStatus.NO_REFERENCE
-            "LOW", "HIGH" -> IndicatorStatus.BORDERLINE
+            "NORMAL" -> IndicatorStatus.NORMAL
+            "LOW", "HIGH", "BORDERLINE", "WARNING" -> IndicatorStatus.BORDERLINE
             "ABNORMAL", "ATTENTION", "CRITICAL" -> IndicatorStatus.ATTENTION
-            "BORDERLINE", "WARNING" -> IndicatorStatus.BORDERLINE
-            else -> if (hasValidReferenceRange(result)) IndicatorStatus.NORMAL else IndicatorStatus.NO_REFERENCE
+            else -> IndicatorStatus.NORMAL
         }
     }
 
     private fun hasValidReferenceRange(result: MedicalResult): Boolean {
-        return result.referenceLow != null && result.referenceHigh != null
+        val low = result.referenceLow
+        val high = result.referenceHigh
+        if (low != null && high != null) {
+            return high > low
+        }
+        return low != null || high != null
     }
 
     private fun parsePillarType(analysisGroup: String): ClinicalPillarType {

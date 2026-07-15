@@ -27,6 +27,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.semanticsoft.patientmobile.ui.theme.DonutAttentionFill
+import com.semanticsoft.patientmobile.ui.theme.DonutBorderlineFill
+import com.semanticsoft.patientmobile.ui.theme.DonutNormalFill
 import com.semanticsoft.patientmobile.ui.theme.StatusAttentionFill
 import com.semanticsoft.patientmobile.ui.theme.StatusBorderlineFill
 import com.semanticsoft.patientmobile.ui.theme.StatusNormalFill
@@ -165,9 +168,9 @@ private fun SegmentedDonut(
             }
 
             var angle = 0f
-            angle = drawSegment(normalCount, StatusNormalFill, angle)
-            angle = drawSegment(borderlineCount, StatusBorderlineFill, angle)
-            drawSegment(attentionCount, StatusAttentionFill, angle)
+            angle = drawSegment(normalCount, DonutNormalFill, angle)
+            angle = drawSegment(borderlineCount, DonutBorderlineFill, angle)
+            drawSegment(attentionCount, DonutAttentionFill, angle)
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {

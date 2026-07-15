@@ -63,6 +63,11 @@ val StatusNoReferenceFill = Color(0xFF94A3B8)
 val StatusNoReferenceBg = Color(0xFFE2E8F0)
 val StatusNoReferenceText = Color(0xFF64748B)
 
+// Donut-specific colors (matching web dashboard palette)
+val DonutNormalFill = Color(0xFF62D292)
+val DonutBorderlineFill = Color(0xFFFFD275)
+val DonutAttentionFill = Color(0xFFFF9F9F)
+
 fun statusFillColor(status: IndicatorStatus): Color = when (status) {
     IndicatorStatus.NORMAL -> StatusNormalFill
     IndicatorStatus.BORDERLINE -> StatusBorderlineFill
