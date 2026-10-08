@@ -32,11 +32,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.ui.shared.upload.FileErrorIcon
 import com.semanticsoft.patientmobile.ui.shared.upload.SelectedFile
 import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileUiState
 import com.semanticsoft.patientmobile.ui.shared.upload.UploadStatus
+import com.semanticsoft.patientmobile.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.ui.theme.icons.CloseIcon
 import com.semanticsoft.patientmobile.ui.theme.icons.CloudDownloadIcon
 import com.semanticsoft.patientmobile.ui.theme.icons.ImageFileIcon
@@ -46,36 +46,34 @@ import com.semanticsoft.patientmobile.ui.theme.icons.RefreshIcon
 @Composable
 fun UploadZone(
     state: UploadFileUiState,
-    scale: Float,
     onAddMoreClick: () -> Unit,
     onRemoveFile: (Int) -> Unit,
     onRetryFile: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val files = state.selectedFiles
-    val baseHeight = if (scale >= 1.0f) 325f else 272f
-    val zoneHeight = baseHeight * scale
+    val zoneHeight = if (files.isEmpty()) 272.dp else 325.dp
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height((zoneHeight).dp)
+            .height(zoneHeight)
             .background(
                 color = Color(0xFFF9FAFB),
-                shape = RoundedCornerShape((12f * scale).dp)
+                shape = RoundedCornerShape(AppDimens.cornerRadiusMedium)
             )
             .drawWithContent {
                 drawContent()
                 drawRoundRect(
                     color = Color(0xFFA5B4FC),
-                    cornerRadius = CornerRadius((12f * scale).dp.toPx(), (12f * scale).dp.toPx()),
+                    cornerRadius = CornerRadius(12.dp.toPx(), 12.dp.toPx()),
                     style = Stroke(
                         width = 1.dp.toPx(),
                         pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 6f), 0f)
                     )
                 )
             }
-            .padding((16f * scale).dp),
+            .padding(AppDimens.paddingDefault),
         contentAlignment = if (files.isEmpty()) Alignment.Center else Alignment.TopStart
     ) {
         if (files.isEmpty()) {
@@ -88,42 +86,36 @@ fun UploadZone(
             ) {
                 Box(
                     modifier = Modifier
-                        .size((48f * scale).dp)
+                        .size(48.dp)
                         .background(
                             color = Color(0xFFEEF2FF),
-                            shape = RoundedCornerShape((9999f * scale).dp)
+                            shape = RoundedCornerShape(AppDimens.cornerRadiusPill)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = CloudDownloadIcon,
                         contentDescription = "Upload",
-                        modifier = Modifier.size((24f * scale).dp),
+                        modifier = Modifier.size(24.dp),
                         tint = Color(0xFF6366F1)
                     )
                 }
 
-                Spacer(modifier = Modifier.height((12f * scale).dp))
+                Spacer(modifier = Modifier.height(AppDimens.gapDefault))
 
                 Text(
                     text = "Apas\u0103 pentru a selecta fi\u0219iere",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = (13.6f * scale).sp,
-                        fontWeight = FontWeight.Medium,
-                        lineHeight = (24f * scale).sp
-                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
                     color = Color(0xFF374151),
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height((4f * scale).dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = "PDF, JPG, JPEG, PNG",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = (11.9f * scale).sp,
-                        lineHeight = (20f * scale).sp
-                    ),
+                    style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF6B7280),
                     textAlign = TextAlign.Center
                 )
@@ -134,35 +126,28 @@ fun UploadZone(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    verticalArrangement = Arrangement.spacedBy((4f * scale).dp)
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     itemsIndexed(files) { index, file ->
                         FileRow(
                             file = file,
-                            scale = scale,
                             onRemove = { onRemoveFile(index) },
                             onRetry = { onRetryFile(index) }
                         )
                     }
                     if (state.errorFiles.isNotEmpty()) {
                         item {
-                            Spacer(modifier = Modifier.height((4f * scale).dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "Fi\u0219iere respinse:",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = (10.2f * scale).sp,
-                                    lineHeight = (16f * scale).sp
-                                ),
+                                style = MaterialTheme.typography.labelSmall,
                                 color = Color(0xFF6B7280),
-                                modifier = Modifier.padding(vertical = (2f * scale).dp)
+                                modifier = Modifier.padding(vertical = 2.dp)
                             )
                             state.errorFiles.forEach { err ->
                                 Text(
                                     text = "${err.name}: ${err.message}",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontSize = (10.2f * scale).sp,
-                                        lineHeight = (16f * scale).sp
-                                    ),
+                                    style = MaterialTheme.typography.labelSmall,
                                     color = Color(0xFFDC2626)
                                 )
                             }
@@ -170,21 +155,18 @@ fun UploadZone(
                     }
                 }
 
-                Spacer(modifier = Modifier.height((4f * scale).dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = "+ Adaug\u0103 mai multe",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = (13.6f * scale).sp,
-                        lineHeight = (24f * scale).sp,
-                        fontWeight = FontWeight.Medium
-                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Medium,
                     color = Color(0xFF4F46E5),
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(role = Role.Button) { onAddMoreClick() }
-                        .padding(vertical = (2f * scale).dp)
+                        .padding(vertical = 2.dp)
                 )
             }
         }
@@ -194,7 +176,6 @@ fun UploadZone(
 @Composable
 private fun FileRow(
     file: SelectedFile,
-    scale: Float,
     onRemove: () -> Unit,
     onRetry: () -> Unit
 ) {
@@ -217,9 +198,9 @@ private fun FileRow(
             .fillMaxWidth()
             .background(
                 color = bgColor,
-                shape = RoundedCornerShape((8f * scale).dp)
+                shape = RoundedCornerShape(AppDimens.cornerRadiusSmall)
             )
-            .padding((8f * scale).dp),
+            .padding(AppDimens.paddingSmall),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -232,7 +213,7 @@ private fun FileRow(
             Icon(
                 imageVector = if (isPdf) PdfDocumentIcon else ImageFileIcon,
                 contentDescription = null,
-                modifier = Modifier.size((24f * scale).dp),
+                modifier = Modifier.size(24.dp),
                 tint = when {
                     isError -> Color(0xFFDC2626)
                     isPdf -> Color(0xFFEF4444)
@@ -240,20 +221,12 @@ private fun FileRow(
                 }
             )
 
-            Spacer(modifier = Modifier.width((10f * scale).dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = file.name.middleTruncate(
-                        maxLen = when {
-                            scale >= 1.0f -> 28
-                            else -> 22
-                        }
-                    ),
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = (11.9f * scale).sp,
-                        lineHeight = (20f * scale).sp
-                    ),
+                    text = file.name.middleTruncate(maxLen = 28),
+                    style = MaterialTheme.typography.bodySmall,
                     color = when {
                         isDuplicateWarning -> Color(0xFFEA580C)
                         isError -> Color(0xFFDC2626)
@@ -263,10 +236,7 @@ private fun FileRow(
                 )
                 Text(
                     text = if (isDuplicateWarning || isError) (file.errorMessage ?: "Eroare") else formatFileSize(file.sizeBytes),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = (11f * scale).sp,
-                        lineHeight = (18f * scale).sp
-                    ),
+                    style = MaterialTheme.typography.labelSmall,
                     color = when {
                         isDuplicateWarning -> Color(0xFFEA580C)
                         isError -> Color(0xFFDC2626)
@@ -284,17 +254,17 @@ private fun FileRow(
                     imageVector = RefreshIcon,
                     contentDescription = "Re\u00EEncarc\u0103",
                     modifier = Modifier
-                        .size((24f * scale).dp)
+                        .size(24.dp)
                         .clickable { onRetry() },
                     tint = Color(0xFFDC2626)
                 )
-                Spacer(modifier = Modifier.width((6f * scale).dp))
+                Spacer(modifier = Modifier.width(AppDimens.gapSmall))
             }
             Icon(
                 imageVector = CloseIcon,
                 contentDescription = "Elimin\u0103",
                 modifier = Modifier
-                    .size((24f * scale).dp)
+                    .size(24.dp)
                     .clickable { onRemove() },
                 tint = if (isError) Color(0xFFDC2626) else accentColor
             )

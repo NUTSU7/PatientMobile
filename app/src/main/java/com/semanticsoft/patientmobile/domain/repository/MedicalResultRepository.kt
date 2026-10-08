@@ -32,4 +32,11 @@ interface MedicalResultRepository {
     suspend fun getResultsHistory(testDefinitionId: String): ApiResult<List<MedicalResult>>
     suspend fun getAiExplanation(reportId: String): ApiResult<String>
     suspend fun getAiSummary(): ApiResult<AiSummaryResponse>
+    suspend fun updateReport(
+        reportId: String,
+        observedAt: String?,
+        displayTitle: String?,
+        displaySubtitle: String?,
+        sourceLaboratory: String?
+    ): ApiResult<ReportWithResults>
 }

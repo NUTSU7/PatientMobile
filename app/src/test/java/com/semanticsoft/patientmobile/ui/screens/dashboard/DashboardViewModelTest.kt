@@ -4,29 +4,37 @@ import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
 import com.semanticsoft.patientmobile.domain.model.PaginatedMedicalResults
 import com.semanticsoft.patientmobile.domain.model.AuthResponse
 import com.semanticsoft.patientmobile.domain.model.DocumentDuplicateInfo
+import com.semanticsoft.patientmobile.domain.model.DocumentStats
 import com.semanticsoft.patientmobile.domain.model.MedicalReport
 import com.semanticsoft.patientmobile.domain.model.MedicalResult
 import com.semanticsoft.patientmobile.domain.model.OcrStatus
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
+import com.semanticsoft.patientmobile.domain.model.ProcessingStatus
 import com.semanticsoft.patientmobile.domain.model.ReportWithResults
 import com.semanticsoft.patientmobile.domain.model.User
 import com.semanticsoft.patientmobile.data.remote.api.dto.AiSummaryResponse
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.domain.repository.DashboardRepository
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
+import com.semanticsoft.patientmobile.domain.repository.ExtractionTarget
 import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.MedicalResultRepository
+import com.semanticsoft.patientmobile.domain.repository.ProcessingCoordinator
 import com.semanticsoft.patientmobile.testutil.MainDispatcherRule
 import com.semanticsoft.patientmobile.util.ApiResult
 import java.io.File
 import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -38,29 +46,13 @@ class DashboardViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun refresh_setsError_whenDocumentsFail() = runTest {
-        val vm = DashboardViewModel(
-            authRepository = FakeAuthRepository(),
-            dashboardRepository = FakeDashboardRepository(),
-            medicalResultRepository = FakeMedicalResultRepository(),
-            documentRepository = FakeDocumentRepository(ApiResult.NetworkError),
-            globalSyncManager = FakeGlobalSyncManager()
-        )
-
-        vm.refresh()
-        advanceUntilIdle()
-
-        assertFalse(vm.state.value.isLoading)
-    }
-
-    @Test
-    fun refresh_updatesSummary_whenDataAvailable() = runTest {
+    fun refresh_noError_whenResultsAvailable() = runTest {
         val vm = DashboardViewModel(
             authRepository = FakeAuthRepository(),
             dashboardRepository = FakeDashboardRepository(),
             medicalResultRepository = FakeMedicalResultRepository(),
             documentRepository = FakeDocumentRepository(
-                ApiResult.Success(
+                documentsResult = ApiResult.Success(
                     listOf(
                         PatientDocument(
                             id = "d1",
@@ -70,13 +62,76 @@ class DashboardViewModelTest {
                             uploadedAt = Instant.now()
                         )
                     )
-                )
+                ),
+                statsResult = ApiResult.Success(DocumentStats(totalCount = 1, lastUploadedAt = Instant.now()))
             ),
-            globalSyncManager = FakeGlobalSyncManager()
+            globalSyncManager = FakeGlobalSyncManager(),
+            processingCoordinator = FakeProcessingCoordinator()
         )
 
+        val collectJob = launch { vm.state.collect {} }
+        advanceUntilIdle()
         vm.refresh()
         advanceUntilIdle()
+        collectJob.cancel()
+
+        assertFalse(vm.state.value.isLoading)
+        assertFalse(vm.state.value.hasUploadedDocuments.not())
+    }
+
+    @Test
+    fun refresh_setsError_whenAllSourcesFail() = runTest {
+        val vm = DashboardViewModel(
+            authRepository = FakeAuthRepository(),
+            dashboardRepository = FakeDashboardRepository(),
+            medicalResultRepository = FakeMedicalResultRepository(emptyResults = true),
+            documentRepository = FakeDocumentRepository(
+                documentsResult = ApiResult.NetworkError,
+                statsResult = ApiResult.NetworkError
+            ),
+            globalSyncManager = FakeGlobalSyncManager(),
+            processingCoordinator = FakeProcessingCoordinator()
+        )
+
+        val collectJob = launch { vm.state.collect {} }
+        advanceUntilIdle()
+        vm.refresh()
+        advanceUntilIdle()
+        collectJob.cancel()
+
+        assertFalse(vm.state.value.isLoading)
+        assertNotNull(vm.state.value.errorMessage)
+    }
+
+    @Test
+    fun refresh_updatesSummary_whenDataAvailable() = runTest {
+        val vm = DashboardViewModel(
+            authRepository = FakeAuthRepository(),
+            dashboardRepository = FakeDashboardRepository(),
+            medicalResultRepository = FakeMedicalResultRepository(),
+            documentRepository = FakeDocumentRepository(
+                documentsResult = ApiResult.Success(
+                    listOf(
+                        PatientDocument(
+                            id = "d1",
+                            originalFileName = "lab.pdf",
+                            mimeType = "application/pdf",
+                            fileSizeBytes = 100,
+                            uploadedAt = Instant.now()
+                        )
+                    )
+                ),
+                statsResult = ApiResult.Success(DocumentStats(totalCount = 1, lastUploadedAt = Instant.now()))
+            ),
+            globalSyncManager = FakeGlobalSyncManager(),
+            processingCoordinator = FakeProcessingCoordinator()
+        )
+
+        val collectJob = launch { vm.state.collect {} }
+        advanceUntilIdle()
+        vm.refresh()
+        advanceUntilIdle()
+        collectJob.cancel()
 
         assertTrue(vm.state.value.markerSummary.attention >= 0)
         assertFalse(vm.state.value.isLoading)
@@ -108,7 +163,8 @@ class DashboardViewModelTest {
     }
 
     private class FakeDocumentRepository(
-        private val result: ApiResult<List<PatientDocument>>
+        private val documentsResult: ApiResult<List<PatientDocument>>,
+        private val statsResult: ApiResult<DocumentStats> = ApiResult.Success(DocumentStats(0, null))
     ) : DocumentRepository {
         override suspend fun uploadDocument(file: File, force: Boolean): ApiResult<PatientDocument> =
             throw UnsupportedOperationException()
@@ -117,7 +173,7 @@ class DashboardViewModelTest {
         override suspend fun getDocuments(
             page: Int, size: Int, search: String?, dateFrom: String?, dateTo: String?,
             sortBy: String?, sortDir: String?
-        ): ApiResult<List<PatientDocument>> = result
+        ): ApiResult<List<PatientDocument>> = documentsResult
         override suspend fun getDocumentById(id: String): ApiResult<PatientDocument> =
             throw UnsupportedOperationException()
         override suspend fun downloadDocument(id: String): ApiResult<File> =
@@ -134,12 +190,13 @@ class DashboardViewModelTest {
             throw UnsupportedOperationException()
         override suspend fun createShareLink(id: String): ApiResult<com.semanticsoft.patientmobile.domain.model.SharedLink> =
             throw UnsupportedOperationException()
-        override suspend fun getDocumentStats(): ApiResult<com.semanticsoft.patientmobile.domain.model.DocumentStats> =
-            throw UnsupportedOperationException()
+        override suspend fun getDocumentStats(): ApiResult<DocumentStats> = statsResult
     }
 
     private class FakeMedicalResultRepository(
-        private val latestResults: List<MedicalResult> = listOf(
+        private val emptyResults: Boolean = false
+    ) : MedicalResultRepository {
+        private val latestResults: List<MedicalResult> = if (emptyResults) emptyList() else listOf(
             MedicalResult(
                 id = "r1", documentId = "d1", reportId = "rep1",
                 originalTestName = "TSH", canonicalName = "TSH",
@@ -168,7 +225,7 @@ class DashboardViewModelTest {
                 observedAt = LocalDate.parse("2026-03-01")
             )
         )
-    ) : MedicalResultRepository {
+
         override suspend fun getByDocumentId(docId: String): ApiResult<List<MedicalResult>> =
             ApiResult.Success(latestResults)
         override suspend fun getLatestReport(documentId: String): ApiResult<MedicalReport> =
@@ -199,11 +256,26 @@ class DashboardViewModelTest {
             throw UnsupportedOperationException()
         override suspend fun getAiSummary(): ApiResult<AiSummaryResponse> =
             throw UnsupportedOperationException()
+        override suspend fun updateReport(
+            reportId: String,
+            observedAt: String?,
+            displayTitle: String?,
+            displaySubtitle: String?,
+            sourceLaboratory: String?
+        ): ApiResult<ReportWithResults> = throw UnsupportedOperationException()
     }
 
     private class FakeGlobalSyncManager : GlobalSyncManager {
         private val _syncEvents = MutableSharedFlow<Unit>()
         override val syncEvents: SharedFlow<Unit> = _syncEvents
         override suspend fun triggerSync() { _syncEvents.emit(Unit) }
+    }
+
+    private class FakeProcessingCoordinator : ProcessingCoordinator {
+        private val _status = MutableStateFlow(ProcessingStatus())
+        override val status: StateFlow<ProcessingStatus> = _status
+        override fun start(targets: List<ExtractionTarget>) = Unit
+        override fun resumeIfPending() = Unit
+        override fun reset() = Unit
     }
 }

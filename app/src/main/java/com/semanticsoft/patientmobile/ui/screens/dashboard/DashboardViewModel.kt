@@ -8,12 +8,13 @@ import com.semanticsoft.patientmobile.data.model.IndicatorStatus
 import com.semanticsoft.patientmobile.data.model.IndicatorTrendDirection
 import com.semanticsoft.patientmobile.data.model.WarningLevel
 import com.semanticsoft.patientmobile.domain.model.MedicalResult
+import com.semanticsoft.patientmobile.domain.model.ProcessingOutcome
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.domain.repository.DashboardRepository
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
 import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.MedicalResultRepository
-import com.semanticsoft.patientmobile.domain.repository.UploadStateManager
+import com.semanticsoft.patientmobile.domain.repository.ProcessingCoordinator
 import com.semanticsoft.patientmobile.util.ApiResult
 import com.semanticsoft.patientmobile.util.toUserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import com.semanticsoft.patientmobile.data.model.AttentionItem as UiAttentionItem
 import com.semanticsoft.patientmobile.data.model.BasicIndicatorItem as UiBasicIndicatorItem
@@ -83,32 +85,46 @@ class DashboardViewModel @Inject constructor(
     private val medicalResultRepository: MedicalResultRepository,
     private val documentRepository: DocumentRepository,
     private val globalSyncManager: GlobalSyncManager,
-    private val uploadStateManager: UploadStateManager
+    private val processingCoordinator: ProcessingCoordinator
 ) : ViewModel() {
 
     private val _events = MutableSharedFlow<DashboardEvent>()
     val events: SharedFlow<DashboardEvent> = _events.asSharedFlow()
 
+    private var refreshJob: Job? = null
+    private var aiJob: Job? = null
+    private var lastResultsSignature: String? = null
+    private var aiRequestToken = 0L
+
     private val _state = MutableStateFlow(DashboardUiState(isLoading = true))
     val state: StateFlow<DashboardUiState> = combine(
         _state,
-        uploadStateManager.isBatchProcessing
-    ) { internalState, isProcessing ->
-        if (isProcessing) {
-            internalState.copy(
-                isLoading = false,
-                emptyReason = DashboardEmptyReason.PROCESSING,
-                hasUploadedDocuments = true
-            )
+        processingCoordinator.status
+    ) { internalState, processing ->
+        val base = if (processing.isProcessing) {
+            internalState.copy(isAiSummaryLoading = internalState.aiSummary.isBlank())
         } else {
             internalState
         }
+        if (processing.isProcessing &&
+            (base.emptyReason != null || !base.hasUploadedDocuments)
+        ) {
+            base.copy(
+                isLoading = false,
+                emptyReason = if (processing.isTimedOut) {
+                    DashboardEmptyReason.NO_RESULTS_EXTRACTED
+                } else {
+                    DashboardEmptyReason.PROCESSING
+                },
+                hasUploadedDocuments = true
+            )
+        } else {
+            base
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState(isLoading = true))
 
-    private val _refreshErrors = MutableSharedFlow<String>()
-    val refreshErrors: SharedFlow<String> = _refreshErrors.asSharedFlow()
-
     init {
+        refresh()
         viewModelScope.launch {
             globalSyncManager.syncEvents.collect { refresh() }
         }
@@ -118,6 +134,7 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 authRepository.logout()
+                resetTransientState()
                 _events.emit(DashboardEvent.LogoutSuccess)
             } catch (e: Exception) {
                 val message = e.message ?: "Deconectarea a e\u0219uat."
@@ -126,23 +143,31 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
+    private fun resetTransientState() {
+        processingCoordinator.reset()
+        lastResultsSignature = null
+    }
+
     fun refresh() {
-        viewModelScope.launch {
+        refreshJob?.cancel()
+        aiRequestToken++
+        aiJob?.cancel()
+        aiJob = null
+        refreshJob = viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             val userDeferred = async { authRepository.getCurrentUser() }
-            val resultsDeferred = async { medicalResultRepository.getAllResults(page = 0, size = 100) }
-            val aiDeferred = async { dashboardRepository.getAiSummary() }
+            val resultsDeferred = async { medicalResultRepository.getLatestResults() }
             val docsDeferred = async { documentRepository.getDocumentStats() }
 
             val userResult = userDeferred.await()
             val resultsResult = resultsDeferred.await()
-            val aiResult = aiDeferred.await()
             val docsResult = docsDeferred.await()
 
             val docsTotal = if (docsResult is ApiResult.Success) docsResult.data.totalCount else 0
             val hasDocuments = docsTotal > 0
             val hasResults = resultsResult is ApiResult.Success && resultsResult.data.isNotEmpty()
+            val processing = processingCoordinator.status.value
 
             var greetingName = ""
             var fullName = ""
@@ -157,7 +182,23 @@ class DashboardViewModel @Inject constructor(
                 role = user.role.ifBlank { "Pacient" }
             }
 
-            if (!hasDocuments && !hasResults) {
+            if (!hasDocuments && !hasResults && !processing.isProcessing) {
+                val failure = listOf(userResult, resultsResult, docsResult)
+                    .firstOrNull { it !is ApiResult.Success }
+                if (failure != null) {
+                    val message = failure.toUserMessage()
+                    _state.update {
+                        it.copy(
+                            greetingName = greetingName.ifBlank { it.greetingName },
+                            fullName = fullName.ifBlank { it.fullName },
+                            role = role,
+                            isLoading = false,
+                            errorMessage = message
+                        )
+                    }
+                    _events.emit(DashboardEvent.RefreshFailed(message))
+                    return@launch
+                }
                 _state.update {
                     it.copy(
                         greetingName = greetingName.ifBlank { "Pacient" },
@@ -175,76 +216,116 @@ class DashboardViewModel @Inject constructor(
             }
 
             if (!hasResults) {
-                val checkReason = detectEmptyReason()
-                if (checkReason != null) {
-                    _state.update {
-                        it.copy(
-                            greetingName = greetingName.ifBlank { "Pacient" },
-                            fullName = fullName,
-                            role = role,
-                            hasUploadedDocuments = true,
-                            documentCount = docsTotal,
-                            isLoading = false,
-                            errorMessage = null,
-                            emptyReason = checkReason
-                        )
-                    }
-                    _events.emit(DashboardEvent.RefreshCompleted)
-                    if (checkReason == DashboardEmptyReason.PROCESSING) {
-                        launch {
-                            delay(5_000L)
-                            refresh()
-                        }
-                    }
-                    return@launch
+                val checkReason = if (processing.lastOutcome == ProcessingOutcome.NON_LAB) {
+                    DashboardEmptyReason.NON_LAB_DOCUMENT
+                } else {
+                    DashboardEmptyReason.NO_RESULTS_EXTRACTED
                 }
+                _state.update {
+                    it.copy(
+                        greetingName = greetingName.ifBlank { "Pacient" },
+                        fullName = fullName,
+                        role = role,
+                        hasUploadedDocuments = true,
+                        documentCount = docsTotal,
+                        isLoading = false,
+                        errorMessage = null,
+                        emptyReason = checkReason
+                    )
+                }
+                _events.emit(DashboardEvent.RefreshCompleted)
+                return@launch
             }
 
             val results = if (resultsResult is ApiResult.Success) resultsResult.data else emptyList()
 
-            buildCardsFromResults(greetingName, fullName, role, results, aiResult, docsTotal)
-
-            if (hasResults) {
-                val historyResults = loadFrequentIndicatorsHistory()
-                if (historyResults.isNotEmpty()) {
-                    val updatedIndicators = buildBasicIndicators(historyResults)
-                    _state.update { it.copy(basicIndicators = updatedIndicators) }
+            val aiResult = dashboardRepository.getAiSummary()
+            val signature = buildResultsSignature(results, aiResult, docsTotal)
+            if (signature == lastResultsSignature && _state.value.hasUploadedDocuments) {
+                _state.update {
+                    it.copy(
+                        greetingName = greetingName,
+                        fullName = fullName,
+                        role = role,
+                        documentCount = docsTotal,
+                        isLoading = false,
+                        errorMessage = null
+                    )
                 }
+                _events.emit(DashboardEvent.RefreshCompleted)
+                return@launch
             }
+            lastResultsSignature = signature
+
+            val historyResults = loadFrequentIndicatorsHistory()
+            val indicators = if (historyResults.isNotEmpty()) {
+                buildBasicIndicators(historyResults)
+            } else {
+                buildBasicIndicators(results)
+            }
+
+            buildCardsFromResults(greetingName, fullName, role, results, indicators, aiResult, docsTotal)
 
             _events.emit(DashboardEvent.RefreshCompleted)
         }
     }
 
-    fun regenerateAiSummary() {
-        viewModelScope.launch {
-            _state.update { it.copy(isAiSummaryLoading = true, aiSummary = "") }
-            when (val result = dashboardRepository.regenerateAiSummary()) {
-                is ApiResult.Success -> {
-                    val response = result.data
-                    when (response.status.uppercase()) {
-                        "READY", "COMPLETED" -> _state.update {
-                            it.copy(aiSummary = response.summaryText, isAiSummaryLoading = false)
-                        }
-                        else -> {
-                            _state.update { it.copy(isAiSummaryLoading = true, aiSummary = "") }
-                            delay(5_000L)
-                            regenerateAiSummary()
-                        }
-                    }
-                }
-                else -> _state.update { it.copy(isAiSummaryLoading = false) }
-            }
+    private fun buildResultsSignature(
+        results: List<MedicalResult>,
+        aiResult: ApiResult<com.semanticsoft.patientmobile.data.remote.api.dto.AiSummaryResponse>,
+        documentCount: Int
+    ): String {
+        val resultsPart = results.joinToString("|") { r ->
+            listOf(
+                r.id,
+                r.valueNumeric?.toString().orEmpty(),
+                r.valueText.orEmpty(),
+                r.unit,
+                r.abnormalFlag.orEmpty(),
+                r.observedAt?.toString().orEmpty(),
+                r.reportId.orEmpty()
+            ).joinToString(",")
         }
+        val aiPart = when (aiResult) {
+            is ApiResult.Success -> "${aiResult.data.status}:${aiResult.data.summaryText}"
+            is ApiResult.HttpError -> "http:${aiResult.code}"
+            is ApiResult.NetworkError -> "network"
+            is ApiResult.AuthError -> "auth"
+        }
+        return "$documentCount::$resultsPart::$aiPart"
     }
 
-    private suspend fun detectEmptyReason(): DashboardEmptyReason? {
-        val docsResult = documentRepository.getDocuments(page = 0, size = 5, sortBy = "uploadedAt", sortDir = "desc")
-        if (docsResult !is ApiResult.Success) return DashboardEmptyReason.NO_RESULTS_EXTRACTED
-        val docs = docsResult.data
-        if (docs.isEmpty()) return DashboardEmptyReason.NO_RESULTS_EXTRACTED
-        val anyReady = docs.any { it.observedAt != null }
-        return if (anyReady) null else DashboardEmptyReason.PROCESSING
+    fun regenerateAiSummary() {
+        requestAiSummary()
+    }
+
+    private fun requestAiSummary() {
+        if (aiJob?.isActive == true) return
+        val token = ++aiRequestToken
+        aiJob = viewModelScope.launch {
+            _state.update { it.copy(isAiSummaryLoading = true) }
+            var attempts = 0
+            while (attempts < MAX_AI_RETRIES) {
+                if (token != aiRequestToken) return@launch
+                val result = dashboardRepository.regenerateAiSummary()
+                if (token != aiRequestToken) return@launch
+                if (result !is ApiResult.Success) {
+                    _state.update { it.copy(isAiSummaryLoading = false) }
+                    return@launch
+                }
+                if (result.data.status.uppercase() in READY_AI_STATUSES) {
+                    _state.update {
+                        it.copy(aiSummary = result.data.summaryText, isAiSummaryLoading = false)
+                    }
+                    return@launch
+                }
+                attempts++
+                delay(5_000L)
+            }
+            if (token == aiRequestToken) {
+                _state.update { it.copy(isAiSummaryLoading = false) }
+            }
+        }
     }
 
     private fun buildCardsFromResults(
@@ -252,6 +333,7 @@ class DashboardViewModel @Inject constructor(
         fullName: String,
         role: String,
         results: List<MedicalResult>,
+        indicators: List<UiBasicIndicatorItem>,
         aiResult: ApiResult<com.semanticsoft.patientmobile.data.remote.api.dto.AiSummaryResponse>,
         documentCount: Int
     ) {
@@ -259,7 +341,6 @@ class DashboardViewModel @Inject constructor(
         val categories = results.groupBy { it.analysisGroup.ifBlank { "Altele" } }
 
         val summary = buildSummary(results)
-        val indicators = buildBasicIndicators(results)
         val markersByCategory = buildMarkerCategories(categories)
         val attention = buildAttentionItems(abnormal)
         val warnings = buildWarningCards(abnormal)
@@ -268,23 +349,23 @@ class DashboardViewModel @Inject constructor(
         var aiText = ""
         var aiLoading = false
 
-        if (aiResult is ApiResult.Success) {
-            val ai = aiResult.data
-            when (ai.status.uppercase()) {
-                "READY", "COMPLETED" -> aiText = ai.summaryText
-                else -> {
-                    val currentSummary = _state.value.aiSummary
-                    if (currentSummary.isNotBlank()) {
-                        aiText = currentSummary
-                    } else {
-                        aiLoading = true
-                    }
-                    autoRegenerateAiSummary()
-                }
+        val processingState = processingCoordinator.status.value
+        val aiOwnedByProcessing = processingState.isProcessing || processingState.aiRegenerationInFlight
+        val currentSummary = _state.value.aiSummary
+
+        when {
+            aiResult is ApiResult.Success &&
+                aiResult.data.status.uppercase() in READY_AI_STATUSES &&
+                !processingState.isProcessing -> aiText = aiResult.data.summaryText
+
+            currentSummary.isNotBlank() -> aiText = currentSummary
+
+            !processingState.isProcessing -> {
+                aiLoading = true
+                if (!aiOwnedByProcessing) requestAiSummary()
             }
-        } else if (results.isNotEmpty()) {
-            aiLoading = true
-            autoRegenerateAiSummary()
+
+            else -> Unit
         }
 
         _state.update {
@@ -370,6 +451,7 @@ class DashboardViewModel @Inject constructor(
             val sampled = sampleHistoryPoints(numericValues, 10)
             val ref = resolveReferenceRange(group.items)
             UiBasicIndicatorItem(
+                id = getIndicatorKey(r),
                 title = group.displayLabel,
                 value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
                 unit = r.unit,
@@ -530,7 +612,7 @@ class DashboardViewModel @Inject constructor(
     private suspend fun loadFrequentIndicatorsHistory(): List<MedicalResult> {
         val all = mutableListOf<MedicalResult>()
         var page = 0
-        val maxPages = 50
+        val maxPages = 10
         do {
             val result = medicalResultRepository.getAllResultsPaginated(
                 page = page,
@@ -559,20 +641,8 @@ class DashboardViewModel @Inject constructor(
         return roFallback.lowercase().replace(Regex("\\s+"), " ").trim()
     }
 
-    private fun autoRegenerateAiSummary() {
-        viewModelScope.launch {
-            when (val result = dashboardRepository.regenerateAiSummary()) {
-                is ApiResult.Success -> {
-                    val response = result.data
-                    when (response.status.uppercase()) {
-                        "READY", "COMPLETED" -> _state.update {
-                            it.copy(aiSummary = response.summaryText, isAiSummaryLoading = false)
-                        }
-                        else -> { }
-                    }
-                }
-                else -> _state.update { it.copy(isAiSummaryLoading = false) }
-            }
-        }
+    companion object {
+        private const val MAX_AI_RETRIES = 12
+        private val READY_AI_STATUSES = setOf("READY", "COMPLETED")
     }
 }

@@ -4,27 +4,6 @@ enum class UploadStatus { PENDING, PENDING_FORCE, UPLOADING, SUCCESS, ERROR }
 
 enum class ErrorType { DUPLICATE, FILE_ERROR, NETWORK, SYSTEMIC }
 
-data class ProcessingPollState(
-    val isPolling: Boolean = false,
-    val totalJobs: Int = 0,
-    val completedJobs: Int = 0,
-    val failedJobs: Int = 0,
-    val message: String = "",
-    val isSlowWarning: Boolean = false,
-    val isTimedOut: Boolean = false
-) {
-    val pendingJobs: Int get() = totalJobs - completedJobs - failedJobs
-    val isDone: Boolean get() = totalJobs > 0 && pendingJobs <= 0
-    val isActive: Boolean get() = isPolling && !isDone && !isTimedOut
-}
-
-data class ExtractionJobResult(
-    val documentId: String,
-    val runId: String,
-    val status: String,
-    val resultCount: Int = 0
-)
-
 data class ErrorFileEntry(
     val name: String,
     val message: String
@@ -40,7 +19,8 @@ data class SelectedFile(
     val status: UploadStatus = UploadStatus.PENDING,
     val errorMessage: String? = null,
     val errorType: ErrorType? = null,
-    val errorIcon: FileErrorIcon? = null
+    val errorIcon: FileErrorIcon? = null,
+    val documentId: String? = null
 )
 
 data class ExtractionJob(
@@ -55,7 +35,6 @@ data class UploadFileUiState(
     val isSystemicError: Boolean = false,
     val hasNetworkError: Boolean = false,
     val extractionJobs: List<ExtractionJob> = emptyList(),
-    val processingPollState: ProcessingPollState = ProcessingPollState(),
     val errorFiles: List<ErrorFileEntry> = emptyList()
 )
 

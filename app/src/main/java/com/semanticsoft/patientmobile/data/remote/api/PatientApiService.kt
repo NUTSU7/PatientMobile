@@ -21,6 +21,7 @@ import com.semanticsoft.patientmobile.data.remote.api.dto.LogoutRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.MedicalResultDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.MedicalResultHistoryEntry
 import com.semanticsoft.patientmobile.data.remote.api.dto.MedicalReportWithResultsDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.UpdateMedicalReportReviewRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.MedicationDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.MedicationOcrDraftResponseDto
 import com.semanticsoft.patientmobile.data.remote.api.dto.OcrExtractionDto
@@ -171,6 +172,12 @@ interface PatientApiService {
     @GET("patient/medical/reports/{reportId}/results")
     suspend fun getReportResults(
         @Path("reportId") reportId: String
+    ): MedicalReportWithResultsDto
+
+    @PATCH("patient/medical/reports/{reportId}")
+    suspend fun updateMedicalReport(
+        @Path("reportId") reportId: String,
+        @Body request: UpdateMedicalReportReviewRequest
     ): MedicalReportWithResultsDto
 
     // ── Dashboard ──────────────────────────────────────────────────────────

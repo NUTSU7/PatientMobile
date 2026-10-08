@@ -38,7 +38,7 @@ import kotlin.math.min
 
 @Composable
 @Suppress("UNUSED_PARAMETER")
-fun HealthScoreCard(
+fun IndicatorDistributionCard(
     score: Int,
     normalCount: Int,
     borderlineCount: Int,
@@ -65,7 +65,7 @@ fun HealthScoreCard(
                 verticalArrangement = Arrangement.spacedBy((14f * scale).dp)
             ) {
                 Text(
-                    text = "Scor analize",
+                    text = "Distribu\u021Bia indicatorilor",
                     color = Color(0xFF111827),
                     fontSize = 18.sp * scale,
                     lineHeight = 24.sp * scale,

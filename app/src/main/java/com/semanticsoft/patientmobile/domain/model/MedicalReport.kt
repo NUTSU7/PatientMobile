@@ -13,5 +13,9 @@ data class MedicalReport(
     val engineName: String? = null,
     val status: OcrStatus? = null,
     val summary: String? = null,
+    val clinicalType: String? = null,
+    val clinicalSubtype: String? = null,
+    val requiresReview: Boolean? = null,
+    val resultCount: Int? = null,
     @Contextual val createdAt: Instant? = null
 )

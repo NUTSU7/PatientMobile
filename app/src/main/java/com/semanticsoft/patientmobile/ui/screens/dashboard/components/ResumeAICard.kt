@@ -89,7 +89,9 @@ fun ResumeAICard(
                     }
                 } else {
                     Text(
-                        text = summaryText,
+                        text = summaryText.ifBlank {
+                            "Rezumatul AI va ap\u0103rea dup\u0103 procesarea analizelor \u00EEnc\u0103rcate."
+                        },
                         color = Color(0xFF312E81),
                         fontSize = 15.3.sp * scale,
                         lineHeight = 26.sp * scale

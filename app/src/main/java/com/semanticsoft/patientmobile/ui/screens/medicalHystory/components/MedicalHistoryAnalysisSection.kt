@@ -39,7 +39,9 @@ import java.time.ZoneId
 fun MedicalHistoryAnalysisSection(
     state: MedicalHystoryUiState,
     spacing: DashboardSpacing,
-    onDocumentClick: (String) -> Unit
+    onDocumentClick: (String) -> Unit,
+    onReviewClick: (String) -> Unit = {},
+    documentDisplayNames: Map<String, String> = emptyMap()
 ) {
     Column(
         modifier = Modifier
@@ -122,20 +124,23 @@ fun MedicalHistoryAnalysisSection(
                     items = state.filteredDocuments.map { document ->
                         DocumentListEntry(
                             documentId = document.id,
-                            fileName = displayDocumentName(document),
+                            fileName = displayDocumentName(document, documentDisplayNames),
                             uploadStatus = formatAnalysisDate(document),
-                            resultsCount = 0,
+                            resultsCount = state.documentReportCounts[document.id] ?: 0,
                             readiness = state.documentReadiness[document.id]
                         )
                     },
-                    onDocumentClick = onDocumentClick
+                    onDocumentClick = onDocumentClick,
+                    onReviewClick = onReviewClick
                 )
             }
         }
     }
 }
 
-private fun displayDocumentName(document: PatientDocument): String {
+private fun displayDocumentName(document: PatientDocument, displayNames: Map<String, String>): String {
+    val customTitle = displayNames[document.id]
+    if (!customTitle.isNullOrBlank()) return customTitle
     val originalName = document.originalFileName
     val dotIndex = originalName.lastIndexOf('.')
     return if (dotIndex > 0) originalName.substring(0, dotIndex) else originalName

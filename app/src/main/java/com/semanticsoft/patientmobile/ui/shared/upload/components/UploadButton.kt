@@ -16,14 +16,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.semanticsoft.patientmobile.ui.theme.AppDimens
 
 @Suppress("unused")
 @Composable
 fun UploadButton(
     label: String,
     icon: ImageVector,
-    scale: Float,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -31,29 +30,27 @@ fun UploadButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height((48f * scale).dp),
+            .height(AppDimens.buttonHeightXLarge),
         colors = ButtonDefaults.buttonColors(
             containerColor = Color(0xFF5A52E5),
             contentColor = Color.White
         ),
-        shape = RoundedCornerShape((8f * scale).dp),
+        shape = RoundedCornerShape(AppDimens.cornerRadiusSmall),
         contentPadding = ButtonDefaults.ContentPadding
     ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
-            modifier = Modifier.size((20f * scale).dp),
+            modifier = Modifier.size(20.dp),
             tint = Color.Unspecified
         )
 
-        Spacer(modifier = Modifier.size((8f * scale).dp))
+        Spacer(modifier = Modifier.size(AppDimens.gapMedium))
 
         Text(
             text = label,
-            style = MaterialTheme.typography.labelLarge.copy(
-                fontSize = (13.6f * scale).sp,
-                fontWeight = FontWeight.Medium
-            )
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Medium
         )
     }
 }

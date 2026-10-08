@@ -42,6 +42,11 @@ data class MedicalReportWithResultsDto(
     @SerialName("clinicalSubtype") val clinicalSubtype: String? = null,
     @SerialName("summary") val summary: String? = null,
     @SerialName("requiresReview") val requiresReview: Boolean = false,
+    @SerialName("displayTitle") val displayTitle: String? = null,
+    @SerialName("displaySubtitle") val displaySubtitle: String? = null,
+    @SerialName("sourceLaboratory") val sourceLaboratory: String? = null,
+    @SerialName("reviewStatus") val reviewStatus: String? = null,
+    @SerialName("reviewedAt") val reviewedAt: String? = null,
     val results: List<MedicalResultItemDto> = emptyList()
 )
 

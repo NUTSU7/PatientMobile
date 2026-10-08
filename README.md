@@ -197,7 +197,7 @@ These 7 shared primitives are consumed by 2+ features:
 | Feature | Components Folder | Files |
 |---------|-------------------|-------|
 | `auth` | `screens/auth/components/` | `AuthLabel`, `AuthInput` |
-| `dashboard` | `screens/dashboard/components/` | `BasicIndicatorsCard`, `DashboardTopSection`, `EmptyUploadCard`, `GeneralMarkersCard`, `HealthScoreCard`, `MarkerOverviewSection`, `ResumeAICard`, `WarningCard` |
+| `dashboard` | `screens/dashboard/components/` | `BasicIndicatorsCard`, `DashboardTopSection`, `EmptyUploadCard`, `GeneralMarkersCard`, `IndicatorDistributionCard`, `MarkerOverviewSection`, `ResumeAICard`, `WarningCard` |
 | `login` | `screens/login/components/` | (uses `auth/components/`) |
 | `medicalHystory` | `screens/medicalHystory/components/` | `DocumentList`, `DocumentListItem`, `MedicalHistoryAnalysisSection`, `MedicalHistoryFiltersCard`, `MedicalHistoryTopBar`, `MedicinesSection`, `PersonalNotesSection` |
 | `navigation` | `screens/navigation/components/` | `PostLoginDrawerContent`, `DrawerMenuItem` |

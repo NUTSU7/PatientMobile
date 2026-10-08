@@ -4,23 +4,19 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.di.IoDispatcher
-import com.semanticsoft.patientmobile.data.remote.api.ApiConstants
-import com.semanticsoft.patientmobile.domain.model.OcrStatus
+import com.semanticsoft.patientmobile.domain.model.ProcessingStatus
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
+import com.semanticsoft.patientmobile.domain.repository.ExtractionTarget
 import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.OcrRepository
-import com.semanticsoft.patientmobile.domain.repository.UploadStateManager
+import com.semanticsoft.patientmobile.domain.repository.ProcessingCoordinator
 import com.semanticsoft.patientmobile.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
 import java.security.MessageDigest
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,20 +31,25 @@ class UploadFileViewModel @Inject constructor(
     private val documentRepository: DocumentRepository,
     private val globalSyncManager: GlobalSyncManager,
     private val ocrRepository: OcrRepository,
-    private val dashboardRepository: com.semanticsoft.patientmobile.domain.repository.DashboardRepository,
-    private val uploadStateManager: UploadStateManager,
+    private val processingCoordinator: ProcessingCoordinator,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(UploadFileUiState())
     val state: StateFlow<UploadFileUiState> = _state.asStateFlow()
 
-    val processingPollState: StateFlow<ProcessingPollState>
-        get() = _processingPollState
-    private val _processingPollState = MutableStateFlow(ProcessingPollState())
+    val processingStatus: StateFlow<ProcessingStatus>
+        get() = processingCoordinator.status
 
-    private val _events = MutableSharedFlow<UploadFileEvent>()
+    private val _events = MutableSharedFlow<UploadFileEvent>(
+        extraBufferCapacity = 16,
+        onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
+    )
     val events = _events.asSharedFlow()
+
+    fun resumeProcessingIfPending() {
+        processingCoordinator.resumeIfPending()
+    }
 
     fun onFilesSelected(uris: List<String>) {
         val oversizeErrors = mutableListOf<ErrorFileEntry>()
@@ -124,10 +125,12 @@ class UploadFileViewModel @Inject constructor(
                 }
             }
 
+            val duplicateIdByChecksum = mutableMapOf<String, String>()
             if (checksumMap.isNotEmpty()) {
                 val uniqueChecksums = checksumMap.values.toList()
                 when (val dupResult = documentRepository.checkDuplicates(uniqueChecksums)) {
                     is ApiResult.Success -> {
+                        dupResult.data.forEach { duplicateIdByChecksum[it.checksum] = it.existingDocumentId }
                         val matchedChecksums = dupResult.data.map { it.checksum }.toSet()
                         if (matchedChecksums.isNotEmpty()) {
                             _state.update { current ->
@@ -184,41 +187,51 @@ class UploadFileViewModel @Inject constructor(
                 when (val uploadResult = documentRepository.uploadDocument(f, force = forceUpload)) {
                     is ApiResult.Success -> {
                         val documentId = uploadResult.data.id
-                        _state.update { current ->
-                            val afterSuccess = current.selectedFiles.toMutableList()
-                            afterSuccess[pendingIndex] = file.copy(status = UploadStatus.SUCCESS)
-                            current.copy(selectedFiles = afterSuccess)
-                        }
-                        withContext(ioDispatcher) {
-                            Log.d(TAG, "Triggering startExtraction for documentId=$documentId")
-                            when (val extractionResult = ocrRepository.startExtraction(documentId)) {
-                                is ApiResult.Success -> {
-                                    val runId = extractionResult.data
-                                    Log.d(TAG, "startExtraction success: runId=$runId documentId=$documentId")
-                                    _state.update { current ->
-                                        current.copy(
-                                            extractionJobs = current.extractionJobs + ExtractionJob(documentId, runId)
-                                        )
-                                    }
-                                    _events.emit(UploadFileEvent.ExtractionStarted(documentId, runId))
+                        Log.d(TAG, "Triggering startExtraction for documentId=$documentId")
+                        when (val extractionResult = startExtractionWithRetry(documentId)) {
+                            is ApiResult.Success -> {
+                                val runId = extractionResult.data
+                                Log.d(TAG, "startExtraction success: runId=$runId documentId=$documentId")
+                                _state.update { current ->
+                                    val afterSuccess = current.selectedFiles.toMutableList()
+                                    afterSuccess[pendingIndex] = current.selectedFiles[pendingIndex].copy(
+                                        status = UploadStatus.SUCCESS,
+                                        documentId = documentId,
+                                        errorMessage = null
+                                    )
+                                    current.copy(
+                                        selectedFiles = afterSuccess,
+                                        extractionJobs = current.extractionJobs + ExtractionJob(documentId, runId)
+                                    )
                                 }
-                                is ApiResult.HttpError -> {
-                                    Log.e(TAG, "startExtraction HTTP ${extractionResult.code}: ${extractionResult.message} for documentId=$documentId")
-                                }
-                                is ApiResult.NetworkError -> {
-                                    Log.e(TAG, "startExtraction NetworkError for documentId=$documentId")
-                                }
-                                is ApiResult.AuthError -> {
-                                    Log.e(TAG, "startExtraction AuthError for documentId=$documentId")
+                                _events.emit(UploadFileEvent.ExtractionStarted(documentId, runId))
+                            }
+                            else -> {
+                                Log.e(TAG, "startExtraction failed after retries for documentId=$documentId")
+                                _state.update { current ->
+                                    val afterError = current.selectedFiles.toMutableList()
+                                    afterError[pendingIndex] = current.selectedFiles[pendingIndex].copy(
+                                        status = UploadStatus.ERROR,
+                                        documentId = documentId,
+                                        errorMessage = EXTRACTION_FAILED_MESSAGE,
+                                        errorType = ErrorType.NETWORK,
+                                        errorIcon = FileErrorIcon.RETRY
+                                    )
+                                    current.copy(selectedFiles = afterError)
                                 }
                             }
                         }
                     }
                     is ApiResult.HttpError -> {
                         if (uploadResult.code == 409) {
+                            val existingId = checksumMap[pendingIndex]?.let { duplicateIdByChecksum[it] }
                             _state.update { current ->
                                 val afterSuccess = current.selectedFiles.toMutableList()
-                                afterSuccess[pendingIndex] = file.copy(status = UploadStatus.SUCCESS)
+                                afterSuccess[pendingIndex] = current.selectedFiles[pendingIndex].copy(
+                                    status = UploadStatus.SUCCESS,
+                                    documentId = existingId,
+                                    errorMessage = null
+                                )
                                 current.copy(selectedFiles = afterSuccess)
                             }
                             continue
@@ -288,21 +301,26 @@ class UploadFileViewModel @Inject constructor(
             }
             val hasErrors = _state.value.selectedFiles.any { it.status == UploadStatus.ERROR }
             val hasNetworkError = _state.value.selectedFiles.any { it.errorType == ErrorType.NETWORK }
+            val anySuccess = _state.value.selectedFiles.any { it.status == UploadStatus.SUCCESS }
+            val clearFiles = allDone && !hasErrors
 
             _state.update {
                 it.copy(
                     isUploading = false,
-                    uploadComplete = allDone && !hasErrors,
-                    hasNetworkError = hasNetworkError
+                    uploadComplete = clearFiles,
+                    hasNetworkError = hasNetworkError,
+                    selectedFiles = if (clearFiles) emptyList() else it.selectedFiles
                 )
             }
 
-            if (allDone && !hasErrors) {
-                globalSyncManager.triggerSync()
+            if (anySuccess) {
                 val extractionJobs = _state.value.extractionJobs
                 if (extractionJobs.isNotEmpty()) {
-                    startPollingExtractions()
+                    processingCoordinator.start(
+                        extractionJobs.map { ExtractionTarget(it.documentId, it.runId) }
+                    )
                 }
+                globalSyncManager.triggerSync()
                 _events.emit(UploadFileEvent.AllFilesUploaded)
             }
         }
@@ -313,12 +331,73 @@ class UploadFileViewModel @Inject constructor(
         val files = _state.value.selectedFiles.toMutableList()
         if (index !in files.indices) return
         val current = files[index]
+        if (current.documentId != null && current.errorMessage == EXTRACTION_FAILED_MESSAGE) {
+            retryExtraction(index)
+            return
+        }
         files[index] = current.copy(
             status = if (current.errorMessage?.contains("deja") == true) UploadStatus.PENDING_FORCE else UploadStatus.PENDING,
             errorMessage = null, errorType = null, errorIcon = null
         )
         _state.update { it.copy(selectedFiles = files) }
         startUpload()
+    }
+
+    private fun retryExtraction(index: Int) {
+        viewModelScope.launch {
+            val documentId = _state.value.selectedFiles.getOrNull(index)?.documentId ?: return@launch
+            _state.update { current ->
+                val updated = current.selectedFiles.toMutableList()
+                updated[index] = current.selectedFiles[index].copy(
+                    status = UploadStatus.UPLOADING,
+                    errorMessage = null,
+                    errorType = null,
+                    errorIcon = null
+                )
+                current.copy(selectedFiles = updated, isUploading = true)
+            }
+            when (val extractionResult = startExtractionWithRetry(documentId)) {
+                is ApiResult.Success -> {
+                    val runId = extractionResult.data
+                    _state.update { current ->
+                        val updated = current.selectedFiles.toMutableList()
+                        updated[index] = current.selectedFiles[index].copy(status = UploadStatus.SUCCESS)
+                        current.copy(
+                            selectedFiles = updated,
+                            isUploading = false,
+                            extractionJobs = current.extractionJobs + ExtractionJob(documentId, runId)
+                        )
+                    }
+                    processingCoordinator.start(listOf(ExtractionTarget(documentId, runId)))
+                    globalSyncManager.triggerSync()
+                    _events.emit(UploadFileEvent.AllFilesUploaded)
+                }
+                else -> {
+                    _state.update { current ->
+                        val updated = current.selectedFiles.toMutableList()
+                        updated[index] = current.selectedFiles[index].copy(
+                            status = UploadStatus.ERROR,
+                            errorMessage = EXTRACTION_FAILED_MESSAGE,
+                            errorType = ErrorType.NETWORK,
+                            errorIcon = FileErrorIcon.RETRY
+                        )
+                        current.copy(selectedFiles = updated, isUploading = false)
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun startExtractionWithRetry(documentId: String): ApiResult<String> {
+        var attempt = 0
+        var result: ApiResult<String> = ApiResult.NetworkError
+        while (attempt < EXTRACTION_MAX_ATTEMPTS) {
+            result = ocrRepository.startExtraction(documentId)
+            if (result is ApiResult.Success) return result
+            attempt++
+            if (attempt < EXTRACTION_MAX_ATTEMPTS) delay(EXTRACTION_RETRY_DELAY_MS)
+        }
+        return result
     }
 
     fun removeFile(index: Int) {
@@ -335,99 +414,6 @@ class UploadFileViewModel @Inject constructor(
 
     fun reset() {
         _state.update { UploadFileUiState() }
-        _processingPollState.update { ProcessingPollState() }
-    }
-
-    private fun startPollingExtractions() {
-        val jobs = _state.value.extractionJobs
-        if (jobs.isEmpty()) {
-            _processingPollState.update { ProcessingPollState() }
-            return
-        }
-        val pollState = ProcessingPollState(
-            isPolling = true,
-            totalJobs = jobs.size,
-            message = "Fi\u0219ierele s-au \u00EEnc\u0103rcat, iar acum se proceseaz\u0103..."
-        )
-        _processingPollState.update { pollState }
-        viewModelScope.launch {
-            uploadStateManager.setProcessing(true)
-            try {
-                globalSyncManager.triggerSync()
-                val startTime = System.currentTimeMillis()
-                val results = mutableMapOf<String, ExtractionJobResult>()
-                coroutineScope {
-                    jobs.map { job ->
-                        async {
-                            val extracted = pollExtractionJob(job)
-                            synchronized(results) { results[job.documentId] = extracted }
-                            val completed = results.values.count { it.status == "SUCCESS" }
-                            val failed = results.values.count { it.status == "FAILED" }
-                            val elapsed = System.currentTimeMillis() - startTime
-                            val message = when {
-                                elapsed >= ApiConstants.OCR_POLL_MAX_RETRIES * ApiConstants.OCR_POLL_DELAY_MS -> {
-                                    _processingPollState.update { it.copy(isTimedOut = true) }
-                                    "Procesarea a durat prea mult. Po\u021Bi reveni mai t\u00E2rziu."
-                                }
-                                elapsed >= ApiConstants.OCR_POLL_SLOW_WARNING_MS -> {
-                                    _processingPollState.update { it.copy(isSlowWarning = true) }
-                                    "Procesarea dureaz\u0103 mai mult dec\u00E2t de obicei..."
-                                }
-                                else -> pollState.message
-                            }
-                            _processingPollState.update {
-                                it.copy(
-                                    completedJobs = completed,
-                                    failedJobs = failed,
-                                    message = "$message (${completed + failed} din ${pollState.totalJobs})"
-                                )
-                            }
-                        }
-                    }.awaitAll()
-                }
-                val successCount = results.values.count { it.status == "SUCCESS" }
-                val failedCount = results.values.count { it.status == "FAILED" }
-                val timedOut = _processingPollState.value.isTimedOut
-            globalSyncManager.triggerSync()
-            delay(2_500L)
-            globalSyncManager.triggerSync()
-            _events.emit(UploadFileEvent.ProcessingComplete(
-                totalJobs = pollState.totalJobs,
-                successCount = successCount,
-                failedCount = failedCount,
-                timedOut = timedOut
-            ))
-            _processingPollState.update { ProcessingPollState() }
-            launch {
-                try { dashboardRepository.regenerateAiSummary() } catch (_: Exception) {}
-                delay(2_000L)
-                globalSyncManager.triggerSync()
-            }
-            } finally {
-                uploadStateManager.setProcessing(false)
-            }
-        }
-    }
-
-    private suspend fun pollExtractionJob(job: ExtractionJob): ExtractionJobResult {
-        var retries = 0
-        while (retries < ApiConstants.OCR_POLL_MAX_RETRIES) {
-            when (val result = ocrRepository.getExtractionStatus(job.documentId, job.runId)) {
-                is ApiResult.Success -> {
-                    val extraction = result.data
-                    if (extraction.status == OcrStatus.SUCCESS || extraction.status == OcrStatus.COMPLETED) {
-                        return ExtractionJobResult(job.documentId, job.runId, "SUCCESS", extraction.reports.size)
-                    }
-                    if (extraction.status == OcrStatus.FAILED) {
-                        return ExtractionJobResult(job.documentId, job.runId, "FAILED")
-                    }
-                }
-                else -> {}
-            }
-            retries++
-            delay(ApiConstants.OCR_POLL_DELAY_MS)
-        }
-        return ExtractionJobResult(job.documentId, job.runId, "TIMEOUT")
     }
 
     private fun resolveFile(uri: String): File? {
@@ -443,6 +429,9 @@ class UploadFileViewModel @Inject constructor(
         private const val TAG = "UploadFileVM"
         private val ALLOWED_EXTENSIONS = setOf("pdf", "jpg", "jpeg", "png")
         private const val MAX_UPLOAD_BYTES = 10L * 1024L * 1024L
+        private const val EXTRACTION_MAX_ATTEMPTS = 3
+        private const val EXTRACTION_RETRY_DELAY_MS = 2_000L
+        internal const val EXTRACTION_FAILED_MESSAGE = "Extragerea nu a pornit."
 
         private fun resolveMimeType(file: File): String = when (file.extension.lowercase()) {
             "pdf" -> "application/pdf"

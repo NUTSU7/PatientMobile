@@ -3,6 +3,7 @@ package com.semanticsoft.patientmobile.ui.navigation
 sealed class AppDestination(val route: String) {
     data object Login : AppDestination("login")
     data object Registration : AppDestination("registration")
+    data object LabRegistration : AppDestination("lab-registration")
     data object Dashboard : AppDestination("dashboard")
     data object Upload : AppDestination("upload")
     data class AnalysisExplanation(val documentId: String) : AppDestination("analysis_explanation/$documentId") {

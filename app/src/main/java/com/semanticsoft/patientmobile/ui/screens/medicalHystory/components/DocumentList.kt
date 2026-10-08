@@ -16,6 +16,7 @@ import com.semanticsoft.patientmobile.ui.screens.medicalHystory.DocumentReadines
 fun DocumentList(
     items: List<DocumentListEntry>,
     onDocumentClick: (String) -> Unit,
+    onReviewClick: (String) -> Unit = {},
     onRefresh: (() -> Unit)? = null,
     onLoadNextPage: (() -> Unit)? = null,
     modifier: Modifier = Modifier
@@ -30,7 +31,8 @@ fun DocumentList(
                 uploadStatus = item.uploadStatus,
                 resultsCount = item.resultsCount,
                 readiness = item.readiness,
-                onClick = { onDocumentClick(item.documentId) }
+                onClick = { onDocumentClick(item.documentId) },
+                onReviewClick = { onReviewClick(item.documentId) }
             )
         }
 

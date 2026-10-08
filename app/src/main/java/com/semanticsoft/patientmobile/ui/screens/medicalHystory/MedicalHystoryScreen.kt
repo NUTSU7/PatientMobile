@@ -51,6 +51,8 @@ import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.Combi
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.MedicalHistoryAnalysisSection
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.MedicalHystoryEvent
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.MedicalHistoryFiltersCard
+import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.MedicalHistoryReviewDialog
+import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.RetryOcrDialog
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.components.ScheduleEntryData
 import com.semanticsoft.patientmobile.domain.model.MealRelation
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
@@ -157,7 +159,9 @@ fun MedicalHystoryScreen(
                                         MedicalHistoryAnalysisSection(
                                             state = state,
                                             spacing = spacing,
-                                            onDocumentClick = viewModel::onDocumentSelected
+                                            onDocumentClick = viewModel::onDocumentSelected,
+                                            onReviewClick = viewModel::onReviewClick,
+                                            documentDisplayNames = state.documentDisplayNames
                                         )
                                     }
 
@@ -180,7 +184,9 @@ fun MedicalHystoryScreen(
                                     MedicalHistoryAnalysisSection(
                                         state = state,
                                         spacing = spacing,
-                                        onDocumentClick = viewModel::onDocumentSelected
+                                        onDocumentClick = viewModel::onDocumentSelected,
+                                        onReviewClick = viewModel::onReviewClick,
+                                        documentDisplayNames = state.documentDisplayNames
                                     )
                                     CombinedMedicationNotesCard(
                                         state = state,
@@ -494,6 +500,136 @@ fun MedicalHystoryScreen(
                                     }
                                 )
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = state.showRetryDialog,
+            enter = fadeIn(animationSpec = tween(200)),
+            exit = fadeOut(animationSpec = tween(200))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {
+                            focusManager.clearFocus()
+                            viewModel.onDismissRetryDialog()
+                        }
+                    )
+                    .padding(AppDimens.paddingDefault),
+                contentAlignment = Alignment.Center
+            ) {
+                AnimatedVisibility(
+                    visible = state.showRetryDialog,
+                    enter = scaleIn(initialScale = 0.9f, animationSpec = tween(250)) +
+                        fadeIn(animationSpec = tween(250)),
+                    exit = scaleOut(targetScale = 0.9f, animationSpec = tween(200)) +
+                        fadeOut(animationSpec = tween(200))
+                ) {
+                    Box(
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {}
+                        )
+                    ) {
+                        state.retryDialogDocumentId?.let { documentId ->
+                            val documentName = state.documentDisplayNames[documentId]
+                                ?: state.allDocuments.find { it.id == documentId }?.originalFileName
+                                ?: ""
+                            RetryOcrDialog(
+                                documentName = documentName,
+                                onDismiss = {
+                                    focusManager.clearFocus()
+                                    viewModel.onDismissRetryDialog()
+                                },
+                                onConfirm = {
+                                    focusManager.clearFocus()
+                                    viewModel.onRetryExtraction()
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = state.showReviewDialog,
+            enter = fadeIn(animationSpec = tween(200)),
+            exit = fadeOut(animationSpec = tween(200))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {
+                            focusManager.clearFocus()
+                            viewModel.onDismissReviewDialog()
+                        }
+                    )
+                    .padding(AppDimens.paddingDefault),
+                contentAlignment = Alignment.Center
+            ) {
+                AnimatedVisibility(
+                    visible = state.showReviewDialog,
+                    enter = scaleIn(initialScale = 0.9f, animationSpec = tween(250)) +
+                        fadeIn(animationSpec = tween(250)),
+                    exit = scaleOut(targetScale = 0.9f, animationSpec = tween(200)) +
+                        fadeOut(animationSpec = tween(200))
+                ) {
+                    Box(
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {}
+                        )
+                    ) {
+                        if (state.reviewDialogIsLoading) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                LoadingIndicator(message = "Se \u00EEncarc\u0103 detaliile...")
+                            }
+                        } else {
+                            MedicalHistoryReviewDialog(
+                                initialDisplayTitle = state.reviewDialogDisplayTitle,
+                                initialDisplaySubtitle = state.reviewDialogDisplaySubtitle,
+                                initialSourceLaboratory = state.reviewDialogSourceLaboratory,
+                                initialObservedAt = state.reviewDialogObservedAt,
+                                isSaving = false,
+                                errorText = state.reviewDialogError,
+                                onDismiss = {
+                                    focusManager.clearFocus()
+                                    viewModel.onDismissReviewDialog()
+                                },
+                                onSave = { displayTitle, displaySubtitle, sourceLaboratory, observedAt ->
+                                    focusManager.clearFocus()
+                                    val reportId = state.reviewDialogReportId
+                                    if (reportId != null) {
+                                        viewModel.onSaveReview(
+                                            reportId = reportId,
+                                            observedAt = observedAt,
+                                            displayTitle = displayTitle.ifBlank { null },
+                                            displaySubtitle = displaySubtitle.ifBlank { null },
+                                            sourceLaboratory = sourceLaboratory.ifBlank { null }
+                                        )
+                                    }
+                                }
+                            )
                         }
                     }
                 }

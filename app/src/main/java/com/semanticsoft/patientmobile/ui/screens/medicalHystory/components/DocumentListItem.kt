@@ -14,11 +14,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import com.semanticsoft.patientmobile.ui.screens.medicalHystory.DocumentReadiness
+import com.semanticsoft.patientmobile.ui.theme.AttentionHigh
 import com.semanticsoft.patientmobile.ui.theme.Gray500
 import com.semanticsoft.patientmobile.ui.theme.Gray900
 import com.semanticsoft.patientmobile.ui.theme.Indigo600
@@ -42,6 +46,7 @@ fun DocumentListItem(
     resultsCount: Int,
     readiness: DocumentReadiness?,
     onClick: () -> Unit,
+    onReviewClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -71,12 +76,19 @@ fun DocumentListItem(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                if (!(readiness == DocumentReadiness.Checking || readiness == DocumentReadiness.Pending)) {
+                Text(
+                    text = uploadStatus,
+                    color = Gray500,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
 
+                if (readiness == DocumentReadiness.Failed) {
                     Text(
-                        text = uploadStatus,
-                        color = Gray500,
-                        fontSize = 14.sp,
+                        text = "Procesare e\u0219uat\u0103",
+                        color = AttentionHigh,
+                        fontSize = 13.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -92,6 +104,19 @@ fun DocumentListItem(
                     )
                 }
                 DocumentReadiness.Ready -> {
+                    if (onReviewClick != null) {
+                        IconButton(
+                            onClick = onReviewClick,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Edit,
+                                contentDescription = "Editeaz\u0103 analiza",
+                                modifier = Modifier.size(18.dp),
+                                tint = Indigo600
+                            )
+                        }
+                    }
                     if (resultsCount > 0) {
                         Icon(
                             imageVector = Icons.Outlined.CheckCircle,
@@ -100,6 +125,14 @@ fun DocumentListItem(
                             tint = Indigo600
                         )
                     }
+                }
+                DocumentReadiness.Failed -> {
+                    Icon(
+                        imageVector = Icons.Outlined.Error,
+                        contentDescription = "Procesare e\u0219uat\u0103",
+                        modifier = Modifier.size(20.dp),
+                        tint = AttentionHigh
+                    )
                 }
                 DocumentReadiness.Unavailable -> {
                     Icon(

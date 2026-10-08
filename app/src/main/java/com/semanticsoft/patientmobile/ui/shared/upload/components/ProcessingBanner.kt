@@ -22,15 +22,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.ui.shared.upload.ProcessingPollState
+import com.semanticsoft.patientmobile.domain.model.ProcessingStatus
 
 @Composable
 fun ProcessingBanner(
-    state: ProcessingPollState,
+    state: ProcessingStatus,
     modifier: Modifier = Modifier
 ) {
     AnimatedVisibility(
-        visible = state.isPolling,
+        visible = state.isProcessing,
         enter = expandVertically() + fadeIn(),
         exit = shrinkVertically() + fadeOut(),
         modifier = modifier

@@ -27,8 +27,6 @@ import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -37,8 +35,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 
 sealed class MedicalHystoryEvent {
     data class NavigateToReportResults(val reportId: String) : MedicalHystoryEvent()
@@ -58,7 +54,7 @@ enum class CombinedSectionTab {
     NOTES
 }
 
-enum class DocumentReadiness { Checking, Pending, Ready, Unavailable }
+enum class DocumentReadiness { Checking, Pending, Ready, Failed, Unavailable }
 
 data class MedicineItem(
     val id: String,
@@ -124,6 +120,7 @@ data class MedicalHystoryUiState(
     val documentReadiness: Map<String, DocumentReadiness> = emptyMap(),
     val readinessCheckInProgress: Boolean = false,
     val availableYears: List<Int> = emptyList(),
+    val documentDisplayNames: Map<String, String> = emptyMap(),
     val selectedYear: Int? = null,
     val selectedDate: LocalDate? = null,
     val medicines: List<MedicineItem> = emptyList(),
@@ -144,7 +141,17 @@ data class MedicalHystoryUiState(
     val noteOcrFeedbackError: Boolean = false,
     val noteOcrExtracting: Boolean = false,
     val ocrMedicationAttachmentIds: List<String> = emptyList(),
-    val ocrNoteAttachmentIds: List<String> = emptyList()
+    val ocrNoteAttachmentIds: List<String> = emptyList(),
+    val reviewDialogDocumentId: String? = null,
+    val reviewDialogReportId: String? = null,
+    val reviewDialogDisplayTitle: String = "",
+    val reviewDialogDisplaySubtitle: String = "",
+    val reviewDialogSourceLaboratory: String = "",
+    val reviewDialogObservedAt: java.time.LocalDate? = null,
+    val reviewDialogIsLoading: Boolean = false,
+    val reviewDialogError: String? = null,
+    val documentReportCounts: Map<String, Int> = emptyMap(),
+    val retryDialogDocumentId: String? = null
 ) {
     val showAddMedicationDialog: Boolean
         get() = medicationDialogTargetId != null
@@ -157,6 +164,12 @@ data class MedicalHystoryUiState(
 
     val showDeleteNoteDialog: Boolean
         get() = deleteNoteTargetId != null
+
+    val showReviewDialog: Boolean
+        get() = reviewDialogDocumentId != null
+
+    val showRetryDialog: Boolean
+        get() = retryDialogDocumentId != null
 
     val readyDocuments: List<PatientDocument>
         get() = allDocuments.filter { documentReadiness[it.id] == DocumentReadiness.Ready }
@@ -266,16 +279,18 @@ class MedicalHystoryViewModel @Inject constructor(
                 }
             }
 
-            if (errorMessage != null && hasData) {
-                _refreshErrors.emit(errorMessage)
-                return@launch
+            val keepExisting = errorMessage != null && hasData
+            val effectiveDocuments = if (keepExisting) _state.value.allDocuments else documents
+            if (keepExisting) {
+                _refreshErrors.emit(errorMessage!!)
+                errorMessage = null
             }
 
             launch {
-                checkDocumentReadiness(documents)
+                checkDocumentReadiness(effectiveDocuments)
             }
 
-            val years = documents
+            val years = effectiveDocuments
                 .mapNotNull { it.observedAt ?: it.uploadedAt }
                 .map { it.atZone(ZoneId.systemDefault()).year }
                 .distinct()
@@ -287,6 +302,18 @@ class MedicalHystoryViewModel @Inject constructor(
                 years.isNotEmpty() -> years.first()
                 else -> null
             }
+            val selectedDate = _state.value.selectedDate?.takeIf { date ->
+                effectiveDocuments.any { doc ->
+                    (doc.observedAt ?: doc.uploadedAt).atZone(ZoneId.systemDefault()).toLocalDate() == date
+                }
+            } ?: if (selectedYear != null && _state.value.selectedDate == null) {
+                effectiveDocuments
+                    .mapNotNull { (it.observedAt ?: it.uploadedAt).atZone(ZoneId.systemDefault()).toLocalDate() }
+                    .filter { it.year == selectedYear }
+                    .distinct()
+                    .sortedDescending()
+                    .firstOrNull()
+            } else null
 
             val medicines = when (val result = medicalHistoryRepository.getMedications()) {
                 is ApiResult.Success -> {
@@ -331,10 +358,10 @@ class MedicalHystoryViewModel @Inject constructor(
                 it.copy(
                     isLoading = false,
                     errorMessage = errorMessage,
-                    allDocuments = documents,
+                    allDocuments = effectiveDocuments,
                     availableYears = years,
                     selectedYear = selectedYear,
-                    selectedDate = null,
+                    selectedDate = selectedDate,
                     medicines = medicines,
                     notes = notes
                 )
@@ -343,6 +370,10 @@ class MedicalHystoryViewModel @Inject constructor(
     }
 
     fun onDocumentSelected(documentId: String) {
+        if (_state.value.documentReadiness[documentId] == DocumentReadiness.Failed) {
+            _state.update { it.copy(retryDialogDocumentId = documentId) }
+            return
+        }
         viewModelScope.launch {
             val extractionsResult = ocrRepository.listExtractions(documentId)
             if (extractionsResult !is ApiResult.Success) {
@@ -350,7 +381,7 @@ class MedicalHystoryViewModel @Inject constructor(
                 return@launch
             }
             val successRun = extractionsResult.data.firstOrNull {
-                it.status == OcrStatus.COMPLETED || it.status == OcrStatus.SUCCESS
+                it.status == OcrStatus.COMPLETED || it.status == OcrStatus.SUCCESS || it.status == OcrStatus.PARTIAL
             }
             if (successRun == null) {
                 _refreshErrors.emit("Analiza \u00EEnc\u0103 nu a fost procesat\u0103.")
@@ -367,6 +398,31 @@ class MedicalHystoryViewModel @Inject constructor(
                 return@launch
             }
             _events.emit(MedicalHystoryEvent.NavigateToReportResults(firstReport.id))
+        }
+    }
+
+    fun onDismissRetryDialog() {
+        _state.update { it.copy(retryDialogDocumentId = null) }
+    }
+
+    fun onRetryExtraction() {
+        val documentId = _state.value.retryDialogDocumentId ?: return
+        _state.update {
+            val readiness = it.documentReadiness.toMutableMap()
+            readiness[documentId] = DocumentReadiness.Checking
+            it.copy(retryDialogDocumentId = null, documentReadiness = readiness)
+        }
+        viewModelScope.launch {
+            when (val result = ocrRepository.startExtraction(documentId)) {
+                is ApiResult.Success -> {
+                    globalSyncManager.triggerSync()
+                    refresh()
+                }
+                is ApiResult.HttpError, is ApiResult.NetworkError, is ApiResult.AuthError -> {
+                    _refreshErrors.emit(result.toUserMessage())
+                    refresh()
+                }
+            }
         }
     }
 
@@ -715,6 +771,101 @@ class MedicalHystoryViewModel @Inject constructor(
         }
     }
 
+    fun onReviewClick(documentId: String) {
+        val docName = state.value.allDocuments.find { it.id == documentId }?.originalFileName
+        val defaultTitle = docName?.let { name ->
+            val dotIndex = name.lastIndexOf('.')
+            if (dotIndex > 0) name.substring(0, dotIndex) else name
+        }
+        _state.update {
+            it.copy(
+                reviewDialogDocumentId = documentId,
+                reviewDialogIsLoading = true,
+                reviewDialogError = null,
+                reviewDialogDisplayTitle = defaultTitle ?: "",
+                reviewDialogDisplaySubtitle = "",
+                reviewDialogSourceLaboratory = "",
+                reviewDialogObservedAt = null
+            )
+        }
+        viewModelScope.launch {
+            val extractionsResult = ocrRepository.listExtractions(documentId)
+            if (extractionsResult !is ApiResult.Success) {
+                _state.update { it.copy(reviewDialogIsLoading = false, reviewDialogError = "Nu s-au putut \u00EEnc\u0103rca detaliile.") }
+                return@launch
+            }
+            val successRun = extractionsResult.data.firstOrNull {
+                it.status == OcrStatus.COMPLETED || it.status == OcrStatus.SUCCESS || it.status == OcrStatus.PARTIAL
+            }
+            if (successRun == null) {
+                _state.update { it.copy(reviewDialogIsLoading = false, reviewDialogError = "Analiza \u00EEnc\u0103 nu a fost procesat\u0103.") }
+                return@launch
+            }
+            val detailResult = ocrRepository.getExtractionStatus(documentId, successRun.id)
+            if (detailResult !is ApiResult.Success || detailResult.data.reports.isEmpty()) {
+                _state.update { it.copy(reviewDialogIsLoading = false, reviewDialogError = "Nu exist\u0103 rapoarte disponibile.") }
+                return@launch
+            }
+            val reportId = detailResult.data.reports.first().id
+
+            when (val reportResult = medicalResultRepository.getReportDetails(reportId)) {
+                is ApiResult.Success -> {
+                    val report = reportResult.data
+                    _state.update {
+                        it.copy(
+                            reviewDialogReportId = reportId,
+                            reviewDialogDisplayTitle = report.displayTitle
+                                ?: it.reviewDialogDisplayTitle,
+                            reviewDialogDisplaySubtitle = report.displaySubtitle ?: "",
+                            reviewDialogSourceLaboratory = report.sourceLaboratory ?: "",
+                            reviewDialogObservedAt = report.observedAt,
+                            reviewDialogIsLoading = false
+                        )
+                    }
+                }
+                is ApiResult.HttpError, is ApiResult.NetworkError, is ApiResult.AuthError -> {
+                    _state.update {
+                        it.copy(reviewDialogIsLoading = false, reviewDialogError = reportResult.toUserMessage())
+                    }
+                }
+            }
+        }
+    }
+
+    fun onDismissReviewDialog() {
+        _state.update {
+            it.copy(
+                reviewDialogDocumentId = null,
+                reviewDialogReportId = null,
+                reviewDialogIsLoading = false,
+                reviewDialogError = null
+            )
+        }
+    }
+
+    fun onSaveReview(
+        reportId: String,
+        observedAt: String?,
+        displayTitle: String?,
+        displaySubtitle: String?,
+        sourceLaboratory: String?
+    ) {
+        viewModelScope.launch {
+            _state.update { it.copy(reviewDialogError = null) }
+            when (val result = medicalResultRepository.updateReport(
+                reportId, observedAt, displayTitle, displaySubtitle, sourceLaboratory
+            )) {
+                is ApiResult.Success -> {
+                    globalSyncManager.triggerSync()
+                    onDismissReviewDialog()
+                }
+                is ApiResult.HttpError, is ApiResult.NetworkError, is ApiResult.AuthError -> {
+                    _state.update { it.copy(reviewDialogError = result.toUserMessage()) }
+                }
+            }
+        }
+    }
+
     fun attachFile(document: PatientDocument) {
         _state.update { current ->
             val docs = listOf(document) + current.allDocuments
@@ -745,44 +896,83 @@ class MedicalHystoryViewModel @Inject constructor(
     private suspend fun checkDocumentReadiness(documents: List<PatientDocument>) {
         if (documents.isEmpty()) return
         val readinessBuilder = _state.value.documentReadiness.toMutableMap()
+        val displayNamesBuilder = _state.value.documentDisplayNames.toMutableMap()
+        val reportCountsBuilder = _state.value.documentReportCounts.toMutableMap()
+        val docsToCheck = documents.filter { readinessBuilder[it.id] != DocumentReadiness.Ready }
+        if (docsToCheck.isEmpty()) return
         _state.update { it.copy(readinessCheckInProgress = true) }
-        coroutineScope {
-            val semaphore = Semaphore(8)
-            documents.map { doc ->
-                async {
-                    semaphore.withPermit {
-                        checkSingleDocument(doc, readinessBuilder)
-                    }
-                }
-            }.awaitAll()
+        docsToCheck.forEach { doc ->
+            checkSingleDocument(doc, readinessBuilder, displayNamesBuilder, reportCountsBuilder)
         }
-        _state.update { it.copy(readinessCheckInProgress = false) }
+        _state.update {
+            it.copy(
+                readinessCheckInProgress = false,
+                documentReadiness = readinessBuilder.toMap(),
+                documentDisplayNames = displayNamesBuilder.toMap(),
+                documentReportCounts = reportCountsBuilder.toMap()
+            )
+        }
     }
 
     private suspend fun checkSingleDocument(
         doc: PatientDocument,
-        readinessBuilder: MutableMap<String, DocumentReadiness>
+        readinessBuilder: MutableMap<String, DocumentReadiness>,
+        displayNamesBuilder: MutableMap<String, String>,
+        reportCountsBuilder: MutableMap<String, Int>
     ) {
         readinessBuilder[doc.id] = DocumentReadiness.Checking
-        _state.update { it.copy(documentReadiness = readinessBuilder.toMap()) }
         when (val result = ocrRepository.listExtractions(doc.id)) {
             is ApiResult.Success -> {
                 val successRun = result.data.firstOrNull {
-                    it.status == OcrStatus.COMPLETED || it.status == OcrStatus.SUCCESS
+                    it.status == OcrStatus.COMPLETED || it.status == OcrStatus.SUCCESS || it.status == OcrStatus.PARTIAL
                 }
                 if (successRun != null) {
-                    val hasReports = doc.observedAt != null
+                    val hasReports = successRun.reports.isNotEmpty() || doc.observedAt != null
                     readinessBuilder[doc.id] = if (hasReports) DocumentReadiness.Ready else DocumentReadiness.Unavailable
+                    if (hasReports) {
+                        loadDisplayNameForDocument(doc, successRun.id, displayNamesBuilder, reportCountsBuilder, successRun.reports.size)
+                    }
                 } else {
+                    val hasFailed = result.data.any { it.status == OcrStatus.FAILED }
                     val hasPending = result.data.any { it.status == OcrStatus.PENDING || it.status == OcrStatus.PROCESSING }
-                    readinessBuilder[doc.id] = if (hasPending) DocumentReadiness.Pending else DocumentReadiness.Unavailable
+                    readinessBuilder[doc.id] = when {
+                        hasFailed -> DocumentReadiness.Failed
+                        hasPending -> DocumentReadiness.Pending
+                        else -> DocumentReadiness.Unavailable
+                    }
                 }
             }
             else -> {
                 readinessBuilder[doc.id] = DocumentReadiness.Unavailable
             }
         }
-        _state.update { it.copy(documentReadiness = readinessBuilder.toMap()) }
+    }
+
+    private suspend fun loadDisplayNameForDocument(
+        doc: PatientDocument,
+        extractionRunId: String,
+        displayNamesBuilder: MutableMap<String, String>,
+        reportCountsBuilder: MutableMap<String, Int>,
+        knownReportCount: Int
+    ) {
+        val detailResult = ocrRepository.getExtractionStatus(doc.id, extractionRunId)
+        if (detailResult !is ApiResult.Success || detailResult.data.reports.isEmpty()) {
+            if (knownReportCount > 0) reportCountsBuilder[doc.id] = knownReportCount
+            return
+        }
+        val reports = detailResult.data.reports
+        reportCountsBuilder[doc.id] = reports.size
+        val reportId = reports.first().id
+        when (val reportResult = medicalResultRepository.getReportDetails(reportId)) {
+            is ApiResult.Success -> {
+                val title = reportResult.data.displayTitle ?: run {
+                    val dotIndex = doc.originalFileName.lastIndexOf('.')
+                    if (dotIndex > 0) doc.originalFileName.substring(0, dotIndex) else doc.originalFileName
+                }
+                displayNamesBuilder[doc.id] = title
+            }
+            else -> { /* keep fallback */ }
+        }
     }
 
     private fun Medication.toUiItem(

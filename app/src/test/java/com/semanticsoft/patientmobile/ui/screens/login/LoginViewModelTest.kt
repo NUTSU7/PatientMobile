@@ -90,6 +90,22 @@ class LoginViewModelTest {
         assertFalse(vm.state.value.isLoading)
     }
 
+    @Test
+    fun onRoleSelected_defaultsToPatient() = runTest {
+        val vm = LoginViewModel(FakeAuthRepository())
+
+        assertEquals(LoginRole.PATIENT, vm.state.value.selectedRole)
+    }
+
+    @Test
+    fun onRoleSelected_updatesSelectedRole() = runTest {
+        val vm = LoginViewModel(FakeAuthRepository())
+
+        vm.onRoleSelected(LoginRole.LABORATOR)
+
+        assertEquals(LoginRole.LABORATOR, vm.state.value.selectedRole)
+    }
+
     private class FakeAuthRepository(
         private val loginResult: ApiResult<AuthResponse> = ApiResult.Success(
             AuthResponse(

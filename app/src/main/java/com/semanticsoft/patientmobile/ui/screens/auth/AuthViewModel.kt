@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.domain.model.User
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
+import com.semanticsoft.patientmobile.domain.repository.ProcessingCoordinator
 import com.semanticsoft.patientmobile.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -29,7 +30,8 @@ sealed interface AuthEvent {
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val processingCoordinator: ProcessingCoordinator
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<AuthState>(AuthState.Loading)
@@ -68,6 +70,7 @@ class AuthViewModel @Inject constructor(
             try {
                 authRepository.logout()
             } catch (_: Exception) {}
+            processingCoordinator.reset()
             _state.update { AuthState.LoggedOut }
             _events.emit(AuthEvent.NavigateToLogin)
         }

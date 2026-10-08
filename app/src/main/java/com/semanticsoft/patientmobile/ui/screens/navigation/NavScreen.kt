@@ -1,10 +1,9 @@
 package com.semanticsoft.patientmobile.ui.screens.navigation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +17,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -43,9 +43,14 @@ fun NavScreen(
     var showUploadModal by rememberSaveable { mutableStateOf(false) }
     val uploadFileViewModel: UploadFileViewModel = hiltViewModel()
     val uploadFileState by uploadFileViewModel.state.collectAsStateWithLifecycle()
-    val processingPollState by uploadFileViewModel.processingPollState.collectAsStateWithLifecycle()
+    val processingStatus by uploadFileViewModel.processingStatus.collectAsStateWithLifecycle()
     val uploadLaunchers = rememberUploadFileLaunchers(uploadFileViewModel)
     val profileState by dashboardState.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(Unit) {
+        uploadFileViewModel.resumeProcessingIfPending()
+        onPauseOrDispose { }
+    }
 
     LaunchedEffect(uploadFileViewModel) {
         uploadFileViewModel.events.collect { event ->
@@ -117,7 +122,7 @@ fun NavScreen(
             PostLoginNavHost(
                 navController = navController,
                 dashboardState = dashboardState,
-                processingPollState = processingPollState,
+                processingStatus = processingStatus,
                 onUploadClick = {
                     if (!showUploadModal) uploadFileViewModel.reset()
                     showUploadModal = !showUploadModal
@@ -129,10 +134,11 @@ fun NavScreen(
 
             AnimatedVisibility(
                 visible = showUploadModal,
-                enter = slideInVertically { it } + fadeIn(),
-                exit = slideOutVertically { it } + fadeOut()
+                enter = fadeIn(animationSpec = tween(220)),
+                exit = fadeOut(animationSpec = tween(200))
             ) {
                 UploadFileScreen(
+                    visible = showUploadModal,
                     state = uploadFileState,
                     viewModel = uploadFileViewModel,
                     onDismiss = {

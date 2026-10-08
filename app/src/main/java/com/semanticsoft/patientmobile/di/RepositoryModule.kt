@@ -12,6 +12,7 @@ import com.semanticsoft.patientmobile.data.repository.MedicalHistoryRepositoryIm
 import com.semanticsoft.patientmobile.data.repository.MedicalResultRepositoryImpl
 import com.semanticsoft.patientmobile.data.repository.NetworkStateProvider
 import com.semanticsoft.patientmobile.data.repository.OcrRepositoryImpl
+import com.semanticsoft.patientmobile.data.repository.ProcessingCoordinatorImpl
 import com.semanticsoft.patientmobile.data.repository.SharedLinkRepositoryImpl
 import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
@@ -20,6 +21,7 @@ import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
 import com.semanticsoft.patientmobile.domain.repository.MedicalHistoryRepository
 import com.semanticsoft.patientmobile.domain.repository.MedicalResultRepository
 import com.semanticsoft.patientmobile.domain.repository.OcrRepository
+import com.semanticsoft.patientmobile.domain.repository.ProcessingCoordinator
 import com.semanticsoft.patientmobile.domain.repository.SharedLinkRepository
 import dagger.Module
 import dagger.Provides
@@ -91,4 +93,10 @@ object RepositoryModule {
     fun provideGlobalSyncManager(
         impl: GlobalSyncManagerImpl
     ): GlobalSyncManager = impl
+
+    @Provides
+    @Singleton
+    fun provideProcessingCoordinator(
+        impl: ProcessingCoordinatorImpl
+    ): ProcessingCoordinator = impl
 }

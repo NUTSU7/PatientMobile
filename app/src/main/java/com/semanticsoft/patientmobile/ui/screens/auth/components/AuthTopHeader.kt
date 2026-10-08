@@ -1,5 +1,6 @@
 package com.semanticsoft.patientmobile.ui.screens.auth.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -23,23 +24,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.ui.theme.icons.AppLogoIcon
+import com.semanticsoft.patientmobile.ui.theme.icons.PatientMdLogoIcon
 
 @Composable
 fun AuthTopHeader(
     sidePadding: Dp,
     headerHeight: Dp = 320.dp,
-    isCompact: Boolean = false
+    isCompact: Boolean = false,
+    wrapContentHeight: Boolean = false,
+    subtitleText: String = "Patient.md este un portal care te poate ajuta să ai grijă de sănătatea ta.",
+    showSubtitleLabel: Boolean = true,
+    subtitleLabelText: String = "Acum poți:",
+    bullets: List<String> = listOf(
+        "Încarcă analizele tale medicale",
+        "Vizualiza analizele încărcate de tine",
+        "Păstra și monitoriza analizele"
+    )
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(headerHeight)
+            .then(if (wrapContentHeight) Modifier else Modifier.height(headerHeight))
             .background(
                 Brush.linearGradient(
                     colors = listOf(Color(0xFF3B82F6), Color(0xFF6366F1), Color(0xFF9333EA))
@@ -54,52 +64,46 @@ fun AuthTopHeader(
                     bottom = if (isCompact) 14.dp else 20.dp
                 )
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = AppLogoIcon,
-                    contentDescription = null,
-                    tint = Color.Unspecified,
-                    modifier = Modifier.size(if (isCompact) 48.dp else 56.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Patient.md",
-                    color = Color.White,
-                    fontSize = if (isCompact) 22.sp else 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontStyle = FontStyle.Italic
-                )
-            }
+            Image(
+                imageVector = PatientMdLogoIcon,
+                contentDescription = "Patient.md",
+                modifier = Modifier
+                    .width(if (isCompact) 121.dp else 143.dp)
+                    .height(if (isCompact) 28.dp else 33.dp),
+                contentScale = ContentScale.Fit
+            )
 
             Spacer(modifier = Modifier.height(if (isCompact) 14.dp else 18.dp))
             Text(
-                text = "Patient.md este un portal care te poate ajuta să ai grijă de sănătatea ta.",
+                text = subtitleText,
                 color = Color.White,
                 fontSize = if (isCompact) 18.sp else 22.sp,
                 fontWeight = FontWeight.Bold,
                 lineHeight = if (isCompact) 22.sp else 27.sp
             )
 
-            Spacer(modifier = Modifier.height(if (isCompact) 10.dp else 14.dp))
-            Text(
-                text = "Acum poți:",
-                color = Color.White,
-                fontSize = if (isCompact) 15.sp else 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            if (showSubtitleLabel) {
+                Spacer(modifier = Modifier.height(if (isCompact) 10.dp else 14.dp))
+                Text(
+                    text = subtitleLabelText,
+                    color = Color.White,
+                    fontSize = if (isCompact) 15.sp else 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(if (isCompact) 6.dp else 8.dp))
+            } else {
+                Spacer(modifier = Modifier.height(if (isCompact) 10.dp else 14.dp))
+            }
 
-            Spacer(modifier = Modifier.height(if (isCompact) 6.dp else 8.dp))
             Column(verticalArrangement = Arrangement.spacedBy(if (isCompact) 6.dp else 7.dp)) {
-                BulletItem("Încarcă analizele tale medicale", isCompact)
-                BulletItem("Vizualiza analizele încărcate de tine", isCompact)
-                BulletItem("Păstra și monitoriza analizele", isCompact)
+                bullets.forEach { BulletItem(it, isCompact) }
             }
 
             Spacer(modifier = Modifier.height(if (isCompact) 12.dp else 16.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .then(if (wrapContentHeight) Modifier else Modifier.weight(1f)),
                 contentAlignment = Alignment.CenterStart
             ) {
                 Row(
