@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarHost
@@ -44,17 +45,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.data.model.IndicatorStatus
+import com.semanticsoft.patientmobile.domain.model.ProcessingStatus
 import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.common.dashboardSpacing
 import com.semanticsoft.patientmobile.ui.components.ErrorDialog
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.BasicIndicatorsCard
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.EmptyUploadCard
-import com.semanticsoft.patientmobile.ui.screens.dashboard.components.HealthScoreCard
+import com.semanticsoft.patientmobile.ui.screens.dashboard.components.IndicatorDistributionCard
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.IndicatorDetailSheet
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.ProcessingEmptyCard
 import com.semanticsoft.patientmobile.ui.screens.dashboard.components.ResumeAICard
-import com.semanticsoft.patientmobile.ui.shared.upload.ProcessingPollState
 import com.semanticsoft.patientmobile.ui.shared.upload.components.ProcessingBanner
 import com.semanticsoft.patientmobile.ui.theme.AppBackground
 import com.semanticsoft.patientmobile.ui.theme.statusFillColor
@@ -63,7 +64,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun DashboardScreen(
     state: DashboardUiState,
-    processingPollState: ProcessingPollState = ProcessingPollState(),
+    processingStatus: ProcessingStatus = ProcessingStatus(),
     onUploadClick: () -> Unit = {}
 ) {
     SetStatusBar(color = Color.White, darkIcons = true)
@@ -107,9 +108,12 @@ fun DashboardScreen(
                     color = AppBackground
                 ) {
                     Column(modifier = Modifier.fillMaxSize()) {
-                        if (false && processingPollState.isPolling) {
+                        if (state.isLoading && state.greetingName.isNotEmpty()) {
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        }
+                        if (processingStatus.isProcessing && state.emptyReason == null && state.hasUploadedDocuments) {
                             ProcessingBanner(
-                                state = processingPollState,
+                                state = processingStatus,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -126,7 +130,7 @@ fun DashboardScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     val reason = state.emptyReason
-                                    if (reason == DashboardEmptyReason.NO_DOCUMENTS || reason == null) {
+                                    if (reason == DashboardEmptyReason.NO_DOCUMENTS) {
                                         EmptyUploadCard(
                                             modifier = Modifier.fillMaxWidth(),
                                             onUploadClick = onUploadClick
@@ -174,7 +178,7 @@ fun DashboardScreen(
                                             val stackCards = maxWidth < 660.dp
                                             if (stackCards) {
                                                 Column(verticalArrangement = Arrangement.spacedBy(spacing.sectionGap)) {
-                                                    HealthScoreCard(
+                                                    IndicatorDistributionCard(
                                                         score = state.markerSummary.score,
                                                         normalCount = state.markerSummary.normal,
                                                         borderlineCount = state.markerSummary.borderline,
@@ -206,7 +210,7 @@ fun DashboardScreen(
                                                 }
                                             } else {
                                                 Row(horizontalArrangement = Arrangement.spacedBy(spacing.sectionGap)) {
-                                                    HealthScoreCard(
+                                                    IndicatorDistributionCard(
                                                         score = state.markerSummary.score,
                                                         normalCount = state.markerSummary.normal,
                                                         borderlineCount = state.markerSummary.borderline,
@@ -287,7 +291,7 @@ fun DashboardScreen(
                                             }
                                         }
 
-                                        items(filteredIndicators, key = { "${it.title}_${it.value}" }) { indicator ->
+                                        items(filteredIndicators, key = { it.id }) { indicator ->
                                             BasicIndicatorsCard(
                                                 title = indicator.title,
                                                 value = indicator.value,

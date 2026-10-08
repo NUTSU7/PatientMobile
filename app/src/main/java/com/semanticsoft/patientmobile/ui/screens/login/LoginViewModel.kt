@@ -15,9 +15,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+enum class LoginRole(val label: String) {
+    PATIENT("Pacient"),
+    LABORATOR("Laborator")
+}
+
 data class LoginUiState(
     val email: String = "",
     val password: String = "",
+    val selectedRole: LoginRole = LoginRole.PATIENT,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -44,6 +50,10 @@ class LoginViewModel @Inject constructor(
 
     fun onPasswordChange(value: String) {
         _state.update { it.copy(password = value, errorMessage = null) }
+    }
+
+    fun onRoleSelected(role: LoginRole) {
+        _state.update { it.copy(selectedRole = role) }
     }
 
     fun login() {

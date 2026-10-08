@@ -1,5 +1,7 @@
 package com.semanticsoft.patientmobile.ui.shared.upload.components
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -14,7 +16,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Collections
 import androidx.compose.material.icons.filled.Description
@@ -44,11 +48,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.ui.shared.upload.ErrorType
 import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileUiState
 import com.semanticsoft.patientmobile.ui.shared.upload.UploadFileViewModel
 import com.semanticsoft.patientmobile.ui.shared.upload.UploadStatus
+import com.semanticsoft.patientmobile.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.ui.theme.AttentionHigh
 import com.semanticsoft.patientmobile.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.ui.theme.Purple500
@@ -63,7 +67,6 @@ fun UploadFileDialogContent(
     onCameraClick: () -> Unit,
     onGalleryClick: () -> Unit,
     onFilePickerClick: () -> Unit,
-    scale: Float,
     modifier: Modifier = Modifier
 ) {
     val hasPendingOrError = state.selectedFiles.any {
@@ -79,30 +82,28 @@ fun UploadFileDialogContent(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(max = (540f * scale).dp),
-        shape = RoundedCornerShape((16f * scale).dp),
+            .heightIn(max = 540.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding((20f * scale).dp),
+                .padding(AppDimens.paddingLarge)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height((36f * scale).dp)
-                    .padding(bottom = (12f * scale).dp)
+                    .height(36.dp)
+                    .padding(bottom = 12.dp)
             ) {
                 Text(
                     text = "\u00CEncarc\u0103 analize",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = (20.4f * scale).sp,
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = (32f * scale).sp
-                    ),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     color = Color(0xFF111827),
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -113,13 +114,13 @@ fun UploadFileDialogContent(
                 IconButton(
                     onClick = onDismiss,
                     modifier = Modifier
-                        .size((36f * scale).dp)
+                        .size(36.dp)
                         .align(Alignment.TopEnd)
                 ) {
                     Icon(
                         imageVector = CloseIcon,
                         contentDescription = "Close",
-                        modifier = Modifier.size((20f * scale).dp),
+                        modifier = Modifier.size(20.dp),
                         tint = Color(0xFF9CA3AF)
                     )
                 }
@@ -127,18 +128,14 @@ fun UploadFileDialogContent(
 
             Text(
                 text = "Adaug\u0103 rezultatele tale de laborator",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = (13.6f * scale).sp,
-                    lineHeight = (24f * scale).sp
-                ),
+                style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF6B7280),
-                modifier = Modifier.padding(bottom = (12f * scale).dp),
+                modifier = Modifier.padding(bottom = 12.dp),
                 textAlign = TextAlign.Center
             )
 
             UploadZone(
                 state = state,
-                scale = scale,
                 onAddMoreClick = {
                     if (!state.isUploading) showBottomSheet = true
                 },
@@ -147,7 +144,7 @@ fun UploadFileDialogContent(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height((8f * scale).dp))
+            Spacer(modifier = Modifier.height(AppDimens.gapMedium))
 
             val systemicErrorMessage = state.selectedFiles.firstOrNull {
                 it.errorType == ErrorType.SYSTEMIC
@@ -156,16 +153,13 @@ fun UploadFileDialogContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height((20f * scale).dp),
+                    .height(20.dp),
                 contentAlignment = Alignment.Center
             ) {
                 if (systemicErrorMessage != null) {
                     Text(
                         text = systemicErrorMessage,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = (11.9f * scale).sp,
-                            lineHeight = (20f * scale).sp
-                        ),
+                        style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFFB91C1C),
                         textAlign = TextAlign.Center,
                         maxLines = 1
@@ -184,70 +178,71 @@ fun UploadFileDialogContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height((46f * scale).dp)
+                    .height(AppDimens.buttonHeightLarge)
                     .alpha(if (buttonEnabled) 1f else 0.5f)
                     .background(
                         brush = Brush.horizontalGradient(gradientColors),
-                        shape = RoundedCornerShape(999.dp)
+                        shape = RoundedCornerShape(AppDimens.cornerRadiusPill)
                     )
                     .clickable(enabled = buttonEnabled) { viewModel.startUpload() },
                 contentAlignment = Alignment.Center
             ) {
-                if (state.isUploading) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size((24f * scale).dp),
-                            strokeWidth = (2f * scale).dp,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.width((8f * scale).dp))
-                        Text(
-                            text = "Se \u00EEncarc\u0103 fi\u0219ierul $currentFileNum din $totalFiles",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                lineHeight = (20f * scale).sp
-                            ),
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
+                Crossfade(
+                    targetState = when {
+                        state.isUploading -> ButtonLabel.UPLOADING
+                        isRetryState -> ButtonLabel.RETRY
+                        else -> ButtonLabel.IDLE
+                    },
+                    animationSpec = tween(150)
+                ) { label ->
+                    when (label) {
+                        ButtonLabel.UPLOADING -> {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Se \u00EEncarc\u0103 fi\u0219ierul $currentFileNum din $totalFiles",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.9f)
+                                )
+                            }
+                        }
+                        ButtonLabel.RETRY -> {
+                            Text(
+                                text = "Eroare. Re\u00EEncearc\u0103?",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
+                            )
+                        }
+                        ButtonLabel.IDLE -> {
+                            Text(
+                                text = "\u00CEncarc\u0103",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
+                            )
+                        }
                     }
-                } else if (isRetryState) {
-                    Text(
-                        text = "Eroare. Re\u00EEncearc\u0103?",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontSize = (14f * scale).sp,
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        color = Color.White
-                    )
-                } else {
-                    Text(
-                        text = "\u00CEncarc\u0103",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontSize = (14f * scale).sp,
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        color = Color.White
-                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height((8f * scale).dp))
+            Spacer(modifier = Modifier.height(AppDimens.gapMedium))
 
             Text(
                 text = "Po\u021Bi \u00EEnc\u0103rca: PDF, JPG, JPEG, PNG.",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontSize = (10.2f * scale).sp,
-                    lineHeight = (16f * scale).sp
-                ),
+                style = MaterialTheme.typography.labelSmall,
                 color = Color(0xFF9CA3AF),
                 textAlign = TextAlign.Center
             )
 
             Text(
                 text = "Max 10 MB per fi\u0219ier.",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontSize = (10.2f * scale).sp,
-                    lineHeight = (16f * scale).sp
-                ),
+                style = MaterialTheme.typography.labelSmall,
                 color = Color(0xFF9CA3AF),
                 textAlign = TextAlign.Center
             )
@@ -258,22 +253,22 @@ fun UploadFileDialogContent(
                 onDismissRequest = { showBottomSheet = false },
                 sheetState = sheetState,
                 shape = RoundedCornerShape(
-                    topStart = (16f * scale).dp,
-                    topEnd = (16f * scale).dp
+                    topStart = 16.dp,
+                    topEnd = 16.dp
                 )
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = (32f * scale).dp)
+                        .padding(bottom = 32.dp)
                 ) {
                     Text(
                         text = "Selecteaz\u0103 sursa",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(
-                            horizontal = (24f * scale).dp,
-                            vertical = (12f * scale).dp
+                            horizontal = AppDimens.paddingXLarge,
+                            vertical = AppDimens.paddingMedium
                         )
                     )
 
@@ -302,7 +297,7 @@ fun UploadFileDialogContent(
                                 Icon(
                                     imageVector = iconRef,
                                     contentDescription = null,
-                                    modifier = Modifier.size((24f * scale).dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             },
                             colors = ListItemDefaults.colors(
@@ -319,4 +314,10 @@ fun UploadFileDialogContent(
             }
         }
     }
+}
+
+private enum class ButtonLabel {
+    IDLE,
+    UPLOADING,
+    RETRY
 }

@@ -35,6 +35,7 @@ data class IndicatorSegments(
 )
 
 data class BasicIndicatorItem(
+    val id: String = "",
     val title: String,
     val value: String,
     val unit: String,

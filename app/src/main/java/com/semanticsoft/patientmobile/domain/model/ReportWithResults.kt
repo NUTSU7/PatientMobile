@@ -12,5 +12,10 @@ data class ReportWithResults(
     val clinicalSubtype: String? = null,
     val summary: String? = null,
     val requiresReview: Boolean = false,
+    val displayTitle: String? = null,
+    val displaySubtitle: String? = null,
+    val sourceLaboratory: String? = null,
+    val reviewStatus: String? = null,
+    val reviewedAt: java.time.Instant? = null,
     val results: List<MedicalResult> = emptyList()
 )

@@ -117,6 +117,10 @@ fun OcrReportDto.toDomain(): MedicalReport = MedicalReport(
     title = title.orEmpty(),
     status = try { status?.let(OcrStatus::valueOf) } catch (_: Exception) { null },
     summary = summary,
+    clinicalType = clinicalType,
+    clinicalSubtype = clinicalSubtype,
+    requiresReview = requiresReview,
+    resultCount = resultCount,
     createdAt = parseInstantSafe(createdAt)
 )
 

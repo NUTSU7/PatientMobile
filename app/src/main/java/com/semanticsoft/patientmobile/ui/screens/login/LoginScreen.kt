@@ -33,7 +33,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.ui.components.LoadingIndicator
@@ -41,6 +44,7 @@ import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.screens.auth.components.AuthInput
 import com.semanticsoft.patientmobile.ui.screens.auth.components.AuthLabel
 import com.semanticsoft.patientmobile.ui.screens.auth.components.AuthTopHeader
+import com.semanticsoft.patientmobile.ui.screens.login.components.LoginRoleSelector
 import com.semanticsoft.patientmobile.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.ui.theme.Purple500
 
@@ -49,8 +53,10 @@ fun LoginScreen(
     state: LoginUiState,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
+    onRoleSelected: (LoginRole) -> Unit,
     onLoginClick: () -> Unit,
-    onGoToRegister: () -> Unit
+    onGoToRegister: () -> Unit,
+    onGoToLabRegister: () -> Unit
 ) {
     SetStatusBar(color = Color(0xFF3B82F6), darkIcons = false)
     var passwordVisible by remember { mutableStateOf(false) }
@@ -124,6 +130,14 @@ fun LoginScreen(
                     lineHeight = titleLineHeight
                 )
                 Spacer(modifier = Modifier.height(if (isVeryCompactHeight) 20.dp else 28.dp))
+                AuthLabel("M\u0103 loghez ca")
+                Spacer(modifier = Modifier.height(tinySpacing))
+                LoginRoleSelector(
+                    selectedRole = state.selectedRole,
+                    onRoleSelected = onRoleSelected,
+                    inputHeight = inputHeight
+                )
+                Spacer(modifier = Modifier.height(sectionSpacing))
                 AuthLabel("Adresa de email")
                 Spacer(modifier = Modifier.height(tinySpacing))
                 AuthInput(
@@ -230,6 +244,33 @@ fun LoginScreen(
                     TextButton(onClick = onGoToRegister, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
                         Text(
                             text = "\u00CEnregistreaz\u0103-te aici.",
+                            color = Color(0xFF4F46E5),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "E\u0219ti laborator?",
+                        color = Color(0xFF6B7280),
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    TextButton(onClick = onGoToLabRegister, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
+                        Text(
+                            text = buildAnnotatedString {
+                                append("\u00CEnregistreaz\u0103-te ca partener ")
+                                withStyle(SpanStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)) {
+                                    append("\u2192")
+                                }
+                            },
                             color = Color(0xFF4F46E5),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium

@@ -27,6 +27,9 @@ import com.semanticsoft.patientmobile.ui.screens.navigation.NavScreen
 import com.semanticsoft.patientmobile.ui.screens.registration.RegistrationEvent
 import com.semanticsoft.patientmobile.ui.screens.registration.RegistrationScreen
 import com.semanticsoft.patientmobile.ui.screens.registration.RegistrationViewModel
+import com.semanticsoft.patientmobile.ui.screens.registrationLab.RegistrationLabEvent
+import com.semanticsoft.patientmobile.ui.screens.registrationLab.RegistrationLabScreen
+import com.semanticsoft.patientmobile.ui.screens.registrationLab.RegistrationLabViewModel
 import com.semanticsoft.patientmobile.ui.screens.reportResults.ReportResultsScreen
 import com.semanticsoft.patientmobile.ui.screens.reportResults.ReportResultsViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -81,8 +84,10 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
                 state = state,
                 onEmailChange = vm::onEmailChange,
                 onPasswordChange = vm::onPasswordChange,
+                onRoleSelected = vm::onRoleSelected,
                 onLoginClick = vm::login,
-                onGoToRegister = { navController.navigate(AppDestination.Registration.route) }
+                onGoToRegister = { navController.navigate(AppDestination.Registration.route) },
+                onGoToLabRegister = { navController.navigate(AppDestination.LabRegistration.route) }
             )
         }
 
@@ -110,6 +115,38 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
                 onPasswordChange = vm::onPasswordChange,
                 onConfirmPasswordChange = vm::onConfirmPasswordChange,
                 onRegisterClick = vm::register,
+                onGoToLogin = { navController.popBackStack() }
+            )
+        }
+
+        composable(AppDestination.LabRegistration.route) {
+            val vm: RegistrationLabViewModel = hiltViewModel()
+            val state by vm.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(vm) {
+                vm.events.collectLatest { event ->
+                    when (event) {
+                        is RegistrationLabEvent.RegistrationSuccess -> {
+                            navController.navigate(AppDestination.Dashboard.route) {
+                                popUpTo(AppDestination.Login.route)
+                            }
+                        }
+                        is RegistrationLabEvent.RegistrationFailure -> Unit
+                    }
+                }
+            }
+
+            RegistrationLabScreen(
+                state = state,
+                onLabNameChange = vm::onLabNameChange,
+                onCountryChange = vm::onCountryChange,
+                onCuiChange = vm::onCuiChange,
+                onContactNameChange = vm::onContactNameChange,
+                onRoleChange = vm::onRoleChange,
+                onEmailChange = vm::onEmailChange,
+                onPhoneChange = vm::onPhoneChange,
+                onMessageChange = vm::onMessageChange,
+                onRegisterClick = vm::onRegisterClick,
                 onGoToLogin = { navController.popBackStack() }
             )
         }

@@ -73,6 +73,7 @@ fun DialogTextField(
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    enabled: Boolean = true,
     trailing: @Composable (() -> Unit)? = null
 ) {
     Row(
@@ -91,10 +92,11 @@ fun DialogTextField(
             BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
-                textStyle = TextStyle(color = Gray900, fontSize = 16.sp),
+                textStyle = TextStyle(color = if (enabled) Gray900 else Gray400, fontSize = 16.sp),
                 singleLine = true,
                 keyboardOptions = keyboardOptions,
                 cursorBrush = SolidColor(Gray900),
+                enabled = enabled,
                 modifier = Modifier.fillMaxWidth()
             )
         }

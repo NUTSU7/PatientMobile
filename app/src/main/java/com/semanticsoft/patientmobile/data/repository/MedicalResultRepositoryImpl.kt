@@ -3,7 +3,9 @@ package com.semanticsoft.patientmobile.data.repository
 import com.semanticsoft.patientmobile.data.remote.SafeApiCall.safeApiCall
 import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
 import com.semanticsoft.patientmobile.data.remote.api.dto.AiSummaryResponse
+import com.semanticsoft.patientmobile.data.remote.api.dto.UpdateMedicalReportReviewRequest
 import com.semanticsoft.patientmobile.data.remote.api.dto.normalizeTestName
+import com.semanticsoft.patientmobile.data.remote.api.dto.parseInstantSafe
 import com.semanticsoft.patientmobile.data.remote.api.dto.toDomain
 import com.semanticsoft.patientmobile.domain.model.MedicalReport
 import com.semanticsoft.patientmobile.domain.model.MedicalResult
@@ -148,6 +150,11 @@ class MedicalResultRepositoryImpl(
                 clinicalSubtype = dto.clinicalSubtype,
                 summary = dto.summary,
                 requiresReview = dto.requiresReview,
+                displayTitle = dto.displayTitle,
+                displaySubtitle = dto.displaySubtitle,
+                sourceLaboratory = dto.sourceLaboratory,
+                reviewStatus = dto.reviewStatus,
+                reviewedAt = dto.reviewedAt?.let { parseInstantSafe(it) },
                 results = dto.results.map { item ->
                     MedicalResult(
                         id = item.id,
@@ -199,6 +206,62 @@ class MedicalResultRepositoryImpl(
         if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
 
         return safeApiCall { apiService.getAiSummary() }
+    }
+
+    override suspend fun updateReport(
+        reportId: String,
+        observedAt: String?,
+        displayTitle: String?,
+        displaySubtitle: String?,
+        sourceLaboratory: String?
+    ): ApiResult<ReportWithResults> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
+
+        return safeApiCall {
+            apiService.updateMedicalReport(
+                reportId,
+                UpdateMedicalReportReviewRequest(
+                    observedAt = observedAt,
+                    displayTitle = displayTitle,
+                    displaySubtitle = displaySubtitle,
+                    sourceLaboratory = sourceLaboratory
+                )
+            )
+        }.map { dto ->
+            ReportWithResults(
+                reportId = dto.reportId,
+                documentId = dto.documentId,
+                observedAt = dto.observedAt?.let(::parseObservedAt),
+                clinicalType = dto.clinicalType,
+                clinicalSubtype = dto.clinicalSubtype,
+                summary = dto.summary,
+                requiresReview = dto.requiresReview,
+                displayTitle = dto.displayTitle,
+                displaySubtitle = dto.displaySubtitle,
+                sourceLaboratory = dto.sourceLaboratory,
+                reviewStatus = dto.reviewStatus,
+                reviewedAt = dto.reviewedAt?.let { parseInstantSafe(it) },
+                results = dto.results.map { item ->
+                    MedicalResult(
+                        id = item.id,
+                        testDefinitionId = item.testDefinitionId,
+                        documentId = dto.documentId,
+                        reportId = dto.reportId,
+                        originalTestName = item.originalTestName,
+                        canonicalName = item.canonicalName.normalizeTestName(),
+                        analysisGroup = item.analysisGroup,
+                        valueNumeric = item.valueNumeric,
+                        valueText = item.valueText,
+                        unit = item.unit,
+                        referenceLow = item.referenceLow,
+                        referenceHigh = item.referenceHigh,
+                        referenceText = item.referenceText,
+                        abnormalFlag = item.abnormalFlag,
+                        observedAt = item.observedAt?.let(::parseObservedAt)
+                    )
+                }
+            )
+        }
     }
 
     @Suppress("UNCHECKED_CAST")

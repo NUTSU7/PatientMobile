@@ -21,5 +21,9 @@ data class OcrReportDto(
     @SerialName("engineName") val engineName: String? = null,
     val status: String? = null,
     val summary: String? = null,
+    @SerialName("clinicalType") val clinicalType: String? = null,
+    @SerialName("clinicalSubtype") val clinicalSubtype: String? = null,
+    @SerialName("requiresReview") val requiresReview: Boolean? = null,
+    @SerialName("resultCount") val resultCount: Int? = null,
     @SerialName("createdAt") val createdAt: String? = null
 )

@@ -2,16 +2,21 @@ package com.semanticsoft.patientmobile.ui.shared.upload
 
 import com.semanticsoft.patientmobile.domain.model.DocumentDuplicateInfo
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
+import com.semanticsoft.patientmobile.domain.model.ProcessingStatus
 import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
+import com.semanticsoft.patientmobile.domain.repository.ExtractionTarget
 import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.OcrRepository
+import com.semanticsoft.patientmobile.domain.repository.ProcessingCoordinator
 import com.semanticsoft.patientmobile.util.ApiResult
 import java.io.File
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -33,6 +38,7 @@ class UploadFileViewModelTest {
             temp.writeText("x")
             val vm = UploadFileViewModel(
                 FakeDocumentRepository(), FakeGlobalSyncManager(), FakeOcrRepository(),
+                FakeProcessingCoordinator(),
                 StandardTestDispatcher(testScheduler)
             )
             vm.onFilesSelected(listOf(temp.absolutePath))
@@ -53,6 +59,7 @@ class UploadFileViewModelTest {
             val vm = UploadFileViewModel(
                 FakeDocumentRepository(uploadResult = ApiResult.HttpError(415, "Unsupported")),
                 FakeGlobalSyncManager(), FakeOcrRepository(),
+                FakeProcessingCoordinator(),
                 StandardTestDispatcher(testScheduler)
             )
             vm.onFilesSelected(listOf(temp.absolutePath))
@@ -74,6 +81,7 @@ class UploadFileViewModelTest {
             temp.writeText("x")
             val vm = UploadFileViewModel(
                 FakeDocumentRepository(), FakeGlobalSyncManager(), FakeOcrRepository(),
+                FakeProcessingCoordinator(),
                 StandardTestDispatcher(testScheduler)
             )
             vm.onFilesSelected(listOf(temp.absolutePath))
@@ -95,6 +103,7 @@ class UploadFileViewModelTest {
             temp.writeText("x")
             val vm = UploadFileViewModel(
                 FakeDocumentRepository(), FakeGlobalSyncManager(), FakeOcrRepository(),
+                FakeProcessingCoordinator(),
                 StandardTestDispatcher(testScheduler)
             )
             vm.onFilesSelected(listOf(temp.absolutePath))
@@ -131,7 +140,7 @@ class UploadFileViewModelTest {
                 override suspend fun createShareLink(id: String) = throw UnsupportedOperationException()
                 override suspend fun getDocumentStats() = throw UnsupportedOperationException()
             }
-            val vm = UploadFileViewModel(repo, FakeGlobalSyncManager(), FakeOcrRepository(), StandardTestDispatcher(testScheduler))
+            val vm = UploadFileViewModel(repo, FakeGlobalSyncManager(), FakeOcrRepository(), FakeProcessingCoordinator(), StandardTestDispatcher(testScheduler))
             vm.onFilesSelected(listOf(temp.absolutePath))
             vm.startUpload()
             advanceUntilIdle()
@@ -158,6 +167,7 @@ class UploadFileViewModelTest {
                 FakeDocumentRepository(uploadResult = ApiResult.Success(PatientDocument(documentId, temp.name, "application/pdf", temp.length(), Instant.now()))),
                 FakeGlobalSyncManager(),
                 FakeOcrRepository(startExtractionResult = ApiResult.Success(runId)),
+                FakeProcessingCoordinator(),
                 StandardTestDispatcher(testScheduler)
             )
             vm.onFilesSelected(listOf(temp.absolutePath))
@@ -185,6 +195,7 @@ class UploadFileViewModelTest {
                 FakeDocumentRepository(uploadResult = ApiResult.Success(PatientDocument(documentId, temp.name, "application/pdf", temp.length(), Instant.now()))),
                 FakeGlobalSyncManager(),
                 FakeOcrRepository(startExtractionResult = ApiResult.HttpError(503, "Service unavailable")),
+                FakeProcessingCoordinator(),
                 StandardTestDispatcher(testScheduler)
             )
             vm.onFilesSelected(listOf(temp.absolutePath))
@@ -229,5 +240,13 @@ class UploadFileViewModelTest {
         override suspend fun getExtractionStatus(documentId: String, runId: String) = throw UnsupportedOperationException()
         override suspend fun listExtractions(documentId: String) = throw UnsupportedOperationException()
         override fun pollOcrStatus(documentId: String, runId: String) = throw UnsupportedOperationException()
+    }
+
+    private class FakeProcessingCoordinator : ProcessingCoordinator {
+        private val _status = MutableStateFlow(ProcessingStatus())
+        override val status: StateFlow<ProcessingStatus> = _status
+        override fun start(targets: List<ExtractionTarget>) = Unit
+        override fun resumeIfPending() = Unit
+        override fun reset() = Unit
     }
 }
