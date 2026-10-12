@@ -1,9 +1,9 @@
 package com.semanticsoft.patientmobile.domain.repository.patient
 
-import com.semanticsoft.patientmobile.core.network.dto.patient.MedicationOcrDraftResponseDto
-import com.semanticsoft.patientmobile.core.network.dto.patient.PersonalNoteOcrDraftResponseDto
 import com.semanticsoft.patientmobile.domain.model.patient.Medication
+import com.semanticsoft.patientmobile.domain.model.patient.MedicationOcrDraft
 import com.semanticsoft.patientmobile.domain.model.patient.PersonalNote
+import com.semanticsoft.patientmobile.domain.model.patient.PersonalNoteOcrDraft
 import com.semanticsoft.patientmobile.core.util.ApiResult
 
 interface MedicalHistoryRepository {
@@ -17,6 +17,6 @@ interface MedicalHistoryRepository {
     suspend fun updateNote(id: String, note: PersonalNote): ApiResult<PersonalNote>
     suspend fun deleteNote(id: String): ApiResult<Unit>
 
-    suspend fun extractMedicationOcrDraft(filePath: String): ApiResult<MedicationOcrDraftResponseDto>
-    suspend fun extractPersonalNoteOcrDraft(filePath: String): ApiResult<PersonalNoteOcrDraftResponseDto>
+    suspend fun extractMedicationOcrDraft(filePath: String): ApiResult<MedicationOcrDraft>
+    suspend fun extractPersonalNoteOcrDraft(filePath: String): ApiResult<PersonalNoteOcrDraft>
 }

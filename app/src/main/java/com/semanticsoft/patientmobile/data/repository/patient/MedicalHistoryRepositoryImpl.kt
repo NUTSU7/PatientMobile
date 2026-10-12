@@ -7,8 +7,8 @@ import com.semanticsoft.patientmobile.core.network.api.PatientApiService
 import com.semanticsoft.patientmobile.core.network.dto.patient.CreateMedicationRequest
 import com.semanticsoft.patientmobile.core.network.dto.patient.CreateMedicationScheduleRequest
 import com.semanticsoft.patientmobile.core.network.dto.patient.CreateNoteRequest
-import com.semanticsoft.patientmobile.core.network.dto.patient.MedicationOcrDraftResponseDto
-import com.semanticsoft.patientmobile.core.network.dto.patient.PersonalNoteOcrDraftResponseDto
+import com.semanticsoft.patientmobile.domain.model.patient.MedicationOcrDraft
+import com.semanticsoft.patientmobile.domain.model.patient.PersonalNoteOcrDraft
 import com.semanticsoft.patientmobile.core.network.dto.patient.UpdateMedicationRequest
 import com.semanticsoft.patientmobile.core.network.dto.patient.UpdateNoteRequest
 import com.semanticsoft.patientmobile.data.mapper.patient.toDomain
@@ -123,7 +123,7 @@ class MedicalHistoryRepositoryImpl(
         return safeApiCall { apiService.deleteNote(id) }.map { }
     }
 
-    override suspend fun extractMedicationOcrDraft(filePath: String): ApiResult<MedicationOcrDraftResponseDto> =
+    override suspend fun extractMedicationOcrDraft(filePath: String): ApiResult<MedicationOcrDraft> =
         withContext(Dispatchers.IO) {
             if (!networkStateProvider.isOnline()) return@withContext ApiResult.NetworkError
 
@@ -132,10 +132,10 @@ class MedicalHistoryRepositoryImpl(
             val requestBody = file.asRequestBody(mimeType.toMediaType())
             val part = MultipartBody.Part.createFormData("file", file.name, requestBody)
 
-            safeApiCall { apiService.extractMedicationOcrDraft(part) }
+            safeApiCall { apiService.extractMedicationOcrDraft(part) }.map { it.toDomain() }
         }
 
-    override suspend fun extractPersonalNoteOcrDraft(filePath: String): ApiResult<PersonalNoteOcrDraftResponseDto> =
+    override suspend fun extractPersonalNoteOcrDraft(filePath: String): ApiResult<PersonalNoteOcrDraft> =
         withContext(Dispatchers.IO) {
             if (!networkStateProvider.isOnline()) return@withContext ApiResult.NetworkError
 
@@ -144,7 +144,7 @@ class MedicalHistoryRepositoryImpl(
             val requestBody = file.asRequestBody(mimeType.toMediaType())
             val part = MultipartBody.Part.createFormData("file", file.name, requestBody)
 
-            safeApiCall { apiService.extractPersonalNoteOcrDraft(part) }
+            safeApiCall { apiService.extractPersonalNoteOcrDraft(part) }.map { it.toDomain() }
         }
 
     private fun resolveMimeType(file: File): String = when (file.extension.lowercase()) {

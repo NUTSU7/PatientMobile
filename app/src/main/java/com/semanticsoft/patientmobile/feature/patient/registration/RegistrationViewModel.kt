@@ -2,7 +2,7 @@ package com.semanticsoft.patientmobile.feature.patient.registration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.semanticsoft.patientmobile.core.network.dto.auth.RegisterRequest
+import com.semanticsoft.patientmobile.domain.model.common.RegistrationRequest
 import com.semanticsoft.patientmobile.domain.repository.common.AuthRepository
 import com.semanticsoft.patientmobile.core.util.ApiResult
 import com.semanticsoft.patientmobile.core.util.PasswordValidator
@@ -72,7 +72,7 @@ class RegistrationViewModel @Inject constructor(
         val firstName = nameParts.firstOrNull().orEmpty()
         val lastName = if (nameParts.size > 1) nameParts.drop(1).joinToString(" ") else firstName
 
-        val request = RegisterRequest(
+        val request = RegistrationRequest(
             email = _state.value.email.trim(),
             password = _state.value.password,
             confirmPassword = _state.value.confirmPassword,

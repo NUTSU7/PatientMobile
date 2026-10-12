@@ -1,13 +1,13 @@
-package com.semanticsoft.patientmobile.data.model
+package com.semanticsoft.patientmobile.domain.model.patient
 
-data class AttentionItem(
+data class UiAttentionItem(
     val marker: String,
     val value: String,
     val unit: String,
     val severity: String
 )
 
-data class MarkerSummary(
+data class UiMarkerSummary(
     val normal: Int,
     val borderline: Int,
     val attention: Int,

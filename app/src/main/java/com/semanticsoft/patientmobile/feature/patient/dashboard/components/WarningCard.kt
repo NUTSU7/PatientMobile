@@ -26,9 +26,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.R
-import com.semanticsoft.patientmobile.data.model.WarningCardItem
-import com.semanticsoft.patientmobile.data.model.WarningIndicatorItem
-import com.semanticsoft.patientmobile.data.model.WarningLevel
+import com.semanticsoft.patientmobile.domain.model.patient.WarningCardItem
+import com.semanticsoft.patientmobile.domain.model.patient.WarningIndicatorItem
+import com.semanticsoft.patientmobile.domain.model.patient.WarningLevel
 import com.semanticsoft.patientmobile.core.ui.theme.icons.WarningIcon
 import kotlin.math.max
 import kotlin.math.min

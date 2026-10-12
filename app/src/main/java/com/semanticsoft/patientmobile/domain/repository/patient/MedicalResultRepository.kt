@@ -1,6 +1,6 @@
 package com.semanticsoft.patientmobile.domain.repository.patient
 
-import com.semanticsoft.patientmobile.core.network.dto.patient.AiSummaryResponse
+import com.semanticsoft.patientmobile.domain.model.patient.AiSummary
 import com.semanticsoft.patientmobile.domain.model.patient.MedicalReport
 import com.semanticsoft.patientmobile.domain.model.patient.MedicalResult
 import com.semanticsoft.patientmobile.domain.model.patient.PaginatedMedicalResults
@@ -31,7 +31,7 @@ interface MedicalResultRepository {
     suspend fun getLatestResults(): ApiResult<List<MedicalResult>>
     suspend fun getResultsHistory(testDefinitionId: String): ApiResult<List<MedicalResult>>
     suspend fun getAiExplanation(reportId: String): ApiResult<String>
-    suspend fun getAiSummary(): ApiResult<AiSummaryResponse>
+    suspend fun getAiSummary(): ApiResult<AiSummary>
     suspend fun updateReport(
         reportId: String,
         observedAt: String?,

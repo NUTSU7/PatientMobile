@@ -16,7 +16,7 @@ import com.semanticsoft.patientmobile.domain.repository.patient.ExtractionTarget
 import com.semanticsoft.patientmobile.domain.repository.common.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.patient.OcrRepository
 import com.semanticsoft.patientmobile.core.util.ApiResult
-import com.semanticsoft.patientmobile.core.network.dto.patient.AiSummaryResponse
+import com.semanticsoft.patientmobile.domain.model.patient.AiSummary
 import java.io.File
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -152,11 +152,11 @@ class ProcessingCoordinatorImplTest {
 
     private class FakeDashboardRepository : DashboardRepository {
         var regenerateCalled = false
-        override suspend fun getAiSummary(): ApiResult<AiSummaryResponse> =
-            ApiResult.Success(AiSummaryResponse("", "STALE"))
-        override suspend fun regenerateAiSummary(): ApiResult<AiSummaryResponse> {
+        override suspend fun getAiSummary(): ApiResult<AiSummary> =
+            ApiResult.Success(AiSummary("", "STALE"))
+        override suspend fun regenerateAiSummary(): ApiResult<AiSummary> {
             regenerateCalled = true
-            return ApiResult.Success(AiSummaryResponse("summary", "READY"))
+            return ApiResult.Success(AiSummary("summary", "READY"))
         }
         override suspend fun requestExplanation(reportId: String): ApiResult<String> =
             throw UnsupportedOperationException()

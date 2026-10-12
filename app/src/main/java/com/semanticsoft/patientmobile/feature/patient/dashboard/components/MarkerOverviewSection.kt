@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.data.model.MarkerCategoryItem
+import com.semanticsoft.patientmobile.domain.model.patient.MarkerCategoryItem
 import kotlin.math.max
 import kotlin.math.min
 

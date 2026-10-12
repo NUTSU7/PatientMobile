@@ -6,7 +6,7 @@ import com.semanticsoft.patientmobile.core.network.dto.auth.AuthResponse as Auth
 import com.semanticsoft.patientmobile.core.network.dto.auth.LoginRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.RefreshRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.RefreshResponse
-import com.semanticsoft.patientmobile.core.network.dto.auth.RegisterRequest
+import com.semanticsoft.patientmobile.domain.model.common.RegistrationRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.UserDto
 import com.semanticsoft.patientmobile.core.util.ApiResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -53,7 +53,7 @@ class AuthRepositoryImplTest {
 
     @Test
     fun register_returnsHttpError_whenApiReturns400() = runTest {
-        val request = RegisterRequest(
+        val request = RegistrationRequest(
             email = "john@example.com",
             password = "Sup3rStrongPassword!",
             confirmPassword = "Sup3rStrongPassword!",
@@ -67,7 +67,7 @@ class AuthRepositoryImplTest {
             400,
             errorJson.toResponseBody("application/json".toMediaType())
         )
-        whenever(apiService.register(request)).thenThrow(HttpException(errorResponse))
+        whenever(apiService.register(any())).thenThrow(HttpException(errorResponse))
 
         val repository = AuthRepositoryImpl(apiService, tokenManager)
         val result = repository.register(request)

@@ -11,6 +11,7 @@ import com.semanticsoft.patientmobile.core.network.dto.auth.RefreshRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.RefreshResponse
 import com.semanticsoft.patientmobile.core.network.dto.auth.RegisterRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.UserDto
+import com.semanticsoft.patientmobile.domain.model.common.RegistrationRequest
 import com.semanticsoft.patientmobile.domain.model.common.User
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -26,7 +27,7 @@ class AuthFlowInstrumentedTest {
     @Test
     fun registerLoginRefreshLogout_flow() = runBlocking {
         val registerResult = repository.register(
-            RegisterRequest(
+            RegistrationRequest(
                 email = "john@example.com",
                 password = "Sup3rStrongPassword!",
                 confirmPassword = "Sup3rStrongPassword!",

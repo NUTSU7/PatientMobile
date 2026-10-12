@@ -1,6 +1,6 @@
 package com.semanticsoft.patientmobile.feature.auth.login
 
-import com.semanticsoft.patientmobile.core.network.dto.auth.RegisterRequest
+import com.semanticsoft.patientmobile.domain.model.common.RegistrationRequest
 import com.semanticsoft.patientmobile.domain.model.common.AuthResponse
 import com.semanticsoft.patientmobile.domain.model.common.User
 import com.semanticsoft.patientmobile.domain.model.common.UserRole
@@ -105,7 +105,7 @@ class LoginViewModelTest {
     ) : AuthRepository {
         override suspend fun login(email: String, password: String): ApiResult<AuthResponse> = loginResult
 
-        override suspend fun register(request: RegisterRequest): ApiResult<AuthResponse> =
+        override suspend fun register(request: RegistrationRequest): ApiResult<AuthResponse> =
             login(request.email, request.password)
 
         override suspend fun refresh(): ApiResult<AuthResponse> = loginResult

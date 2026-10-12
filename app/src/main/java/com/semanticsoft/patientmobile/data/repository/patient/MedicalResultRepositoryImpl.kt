@@ -4,7 +4,7 @@ import com.semanticsoft.patientmobile.core.network.AlwaysOnlineStateProvider
 import com.semanticsoft.patientmobile.core.network.NetworkStateProvider
 import com.semanticsoft.patientmobile.core.network.SafeApiCall.safeApiCall
 import com.semanticsoft.patientmobile.core.network.api.PatientApiService
-import com.semanticsoft.patientmobile.core.network.dto.patient.AiSummaryResponse
+import com.semanticsoft.patientmobile.domain.model.patient.AiSummary
 import com.semanticsoft.patientmobile.core.network.dto.patient.UpdateMedicalReportReviewRequest
 import com.semanticsoft.patientmobile.core.network.dto.patient.normalizeTestName
 import com.semanticsoft.patientmobile.data.mapper.common.parseInstantSafe
@@ -204,10 +204,10 @@ class MedicalResultRepositoryImpl(
         }.map { it.explanation }
     }
 
-    override suspend fun getAiSummary(): ApiResult<AiSummaryResponse> {
+    override suspend fun getAiSummary(): ApiResult<AiSummary> {
         if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
 
-        return safeApiCall { apiService.getAiSummary() }
+        return safeApiCall { apiService.getAiSummary() }.map { it.toDomain() }
     }
 
     override suspend fun updateReport(

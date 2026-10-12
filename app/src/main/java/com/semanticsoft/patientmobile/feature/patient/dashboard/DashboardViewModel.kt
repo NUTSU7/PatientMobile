@@ -2,11 +2,12 @@ package com.semanticsoft.patientmobile.feature.patient.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.semanticsoft.patientmobile.data.model.ClinicalPillarType
-import com.semanticsoft.patientmobile.data.model.IndicatorSegments
-import com.semanticsoft.patientmobile.data.model.IndicatorStatus
-import com.semanticsoft.patientmobile.data.model.IndicatorTrendDirection
-import com.semanticsoft.patientmobile.data.model.WarningLevel
+import com.semanticsoft.patientmobile.domain.model.patient.ClinicalPillarType
+import com.semanticsoft.patientmobile.domain.model.patient.IndicatorSegments
+import com.semanticsoft.patientmobile.domain.model.patient.IndicatorStatus
+import com.semanticsoft.patientmobile.domain.model.patient.IndicatorTrendDirection
+import com.semanticsoft.patientmobile.domain.model.patient.WarningLevel
+import com.semanticsoft.patientmobile.domain.model.patient.AiSummary
 import com.semanticsoft.patientmobile.domain.model.patient.MedicalResult
 import com.semanticsoft.patientmobile.domain.model.patient.ProcessingOutcome
 import com.semanticsoft.patientmobile.domain.repository.common.AuthRepository
@@ -33,14 +34,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import com.semanticsoft.patientmobile.data.model.AttentionItem as UiAttentionItem
-import com.semanticsoft.patientmobile.data.model.BasicIndicatorItem as UiBasicIndicatorItem
-import com.semanticsoft.patientmobile.data.model.ClinicalPillarCardItem as UiClinicalPillarCardItem
-import com.semanticsoft.patientmobile.data.model.GeneralMarkerCardItem as UiGeneralMarkerCardItem
-import com.semanticsoft.patientmobile.data.model.MarkerCategoryItem as UiMarkerCategoryItem
-import com.semanticsoft.patientmobile.data.model.MarkerSummary as UiMarkerSummary
-import com.semanticsoft.patientmobile.data.model.WarningCardItem as UiWarningCardItem
-import com.semanticsoft.patientmobile.data.model.WarningIndicatorItem as UiWarningIndicatorItem
+import com.semanticsoft.patientmobile.domain.model.patient.UiAttentionItem
+import com.semanticsoft.patientmobile.domain.model.patient.BasicIndicatorItem as UiBasicIndicatorItem
+import com.semanticsoft.patientmobile.domain.model.patient.ClinicalPillarCardItem as UiClinicalPillarCardItem
+import com.semanticsoft.patientmobile.domain.model.patient.GeneralMarkerCardItem as UiGeneralMarkerCardItem
+import com.semanticsoft.patientmobile.domain.model.patient.MarkerCategoryItem as UiMarkerCategoryItem
+import com.semanticsoft.patientmobile.domain.model.patient.UiMarkerSummary
+import com.semanticsoft.patientmobile.domain.model.patient.WarningCardItem as UiWarningCardItem
+import com.semanticsoft.patientmobile.domain.model.patient.WarningIndicatorItem as UiWarningIndicatorItem
 
 data class DashboardUiState(
     val greetingName: String = "",
@@ -272,7 +273,7 @@ class DashboardViewModel @Inject constructor(
 
     private fun buildResultsSignature(
         results: List<MedicalResult>,
-        aiResult: ApiResult<com.semanticsoft.patientmobile.core.network.dto.patient.AiSummaryResponse>,
+        aiResult: ApiResult<AiSummary>,
         documentCount: Int
     ): String {
         val resultsPart = results.joinToString("|") { r ->
@@ -334,7 +335,7 @@ class DashboardViewModel @Inject constructor(
         role: String,
         results: List<MedicalResult>,
         indicators: List<UiBasicIndicatorItem>,
-        aiResult: ApiResult<com.semanticsoft.patientmobile.core.network.dto.patient.AiSummaryResponse>,
+        aiResult: ApiResult<AiSummary>,
         documentCount: Int
     ) {
         val abnormal = results.filter { !it.abnormalFlag.isNullOrBlank() }
