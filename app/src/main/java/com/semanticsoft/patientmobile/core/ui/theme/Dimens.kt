@@ -27,6 +27,7 @@ object AppDimens {
 
     val cornerRadiusSmall = 8.dp
     val cornerRadiusMedium = 12.dp
+    val cornerRadiusXLarge = 16.dp
     val cornerRadiusLarge = 24.dp
     val cornerRadiusPill = 999.dp
 }

@@ -49,6 +49,16 @@ val AccentPurple = Color(0xFF6366F1)
 val GrayLightBg = Color(0xFFF3F4F6)
 val GrayLightBorder = Color(0xFFE5E7EB)
 
+// Laborator onboarding palette (Figma: ActivateAccount / DPA)
+val TextTertiary = Color(0xFF586273)
+val TermsText = Color(0xFF474554)
+val CheckboxBorder = Color(0xFFC8C4D7)
+val HelperTextMuted = Color(0xFF787586)
+val LaboratorCardTint = Color(0xFFF1F3FF)
+val LaboratorBadgeBg = Color(0xFFE9EDFF)
+val LaboratorStepIconBg = Color(0xFFDCE2F7)
+val LaboratorDocHeaderBg = Color(0xFFE1E8FD)
+
 // Medical result color-coded values
 val ResultHigh = Color(0xFFDC2626)
 val ResultLow = Color(0xFFEA580C)

@@ -24,6 +24,12 @@ import com.semanticsoft.patientmobile.feature.auth.forgotPassword.ForgotPassword
 import com.semanticsoft.patientmobile.feature.auth.login.LoginEvent
 import com.semanticsoft.patientmobile.feature.auth.login.LoginScreen
 import com.semanticsoft.patientmobile.feature.auth.login.LoginViewModel
+import com.semanticsoft.patientmobile.feature.laborator.activateAccount.ActivateAccountEvent
+import com.semanticsoft.patientmobile.feature.laborator.activateAccount.ActivateAccountScreen
+import com.semanticsoft.patientmobile.feature.laborator.activateAccount.ActivateAccountViewModel
+import com.semanticsoft.patientmobile.feature.laborator.dpa.DpaEvent
+import com.semanticsoft.patientmobile.feature.laborator.dpa.DpaScreen
+import com.semanticsoft.patientmobile.feature.laborator.dpa.DpaViewModel
 import com.semanticsoft.patientmobile.feature.laborator.navigation.LaboratorNavScreen
 import com.semanticsoft.patientmobile.feature.laborator.registration.RegistrationLabEvent
 import com.semanticsoft.patientmobile.feature.laborator.registration.RegistrationLabScreen
@@ -96,6 +102,11 @@ fun RootNavHost(navController: NavHostController = rememberNavController()) {
                 onEmailChange = vm::onEmailChange,
                 onPasswordChange = vm::onPasswordChange,
                 onLoginClick = vm::login,
+                onLaboratorAccess = {
+                    navController.navigate(AppDestination.LaboratorActivateAccount.route) {
+                        popUpTo(AppDestination.Login.route) { inclusive = true }
+                    }
+                },
                 onGoToRegister = { navController.navigate(AppDestination.PatientRegistration.route) },
                 onGoToLabRegister = { navController.navigate(AppDestination.LaboratorRegistration.route) },
                 onGoToForgotPassword = { navController.navigate(AppDestination.ForgotPassword.route) }
@@ -190,6 +201,57 @@ fun RootNavHost(navController: NavHostController = rememberNavController()) {
                 onMessageChange = vm::onMessageChange,
                 onRegisterClick = vm::onRegisterClick,
                 onGoToLogin = { navController.popBackStack() }
+            )
+        }
+
+        composable(AppDestination.LaboratorActivateAccount.route) {
+            val vm: ActivateAccountViewModel = hiltViewModel()
+            val state by vm.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(vm) {
+                vm.events.collectLatest { event ->
+                    when (event) {
+                        ActivateAccountEvent.Activated -> {
+                            navController.navigate(AppDestination.LaboratorDpa.route) {
+                                popUpTo(AppDestination.LaboratorActivateAccount.route) { inclusive = true }
+                            }
+                        }
+                    }
+                }
+            }
+
+            ActivateAccountScreen(
+                state = state,
+                onPasswordChange = vm::onPasswordChange,
+                onConfirmPasswordChange = vm::onConfirmPasswordChange,
+                onTermsAcceptedChange = vm::onTermsAcceptedChange,
+                onActivateClick = vm::onActivateClick,
+                onTermsClick = {},
+                onPrivacyClick = {}
+            )
+        }
+
+        composable(AppDestination.LaboratorDpa.route) {
+            val vm: DpaViewModel = hiltViewModel()
+            val state by vm.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(vm) {
+                vm.events.collectLatest { event ->
+                    when (event) {
+                        DpaEvent.ContinueToPortal -> {
+                            navController.navigate(AppDestination.Laborator.route) {
+                                popUpTo(AppDestination.LaboratorDpa.route) { inclusive = true }
+                            }
+                        }
+                    }
+                }
+            }
+
+            DpaScreen(
+                state = state,
+                onAcceptedChange = vm::onAcceptedChange,
+                onContinueClick = vm::onContinueClick,
+                onDownloadPdfClick = {}
             )
         }
 
