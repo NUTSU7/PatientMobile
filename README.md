@@ -98,7 +98,7 @@ Full guidelines in `RULES.md`.
 
 ## Roles
 
-Role is a **typed enum** — `domain/model/UserRole.kt`:
+Role is a **typed enum** — `domain/model/common/UserRole.kt`:
 
 ```kotlin
 enum class UserRole { PATIENT, LABORATOR, UNKNOWN }
@@ -115,7 +115,7 @@ enum class UserRole { PATIENT, LABORATOR, UNKNOWN }
 
 | Role | Shell | Features |
 |------|-------|----------|
-| `PATIENT` | `feature/patient/navigation/` | dashboard, medicalHistory, uploadedAnalyses, medicalResults, profile, analysisExplanation, reportResults, registration |
+| `PATIENT` | `feature/patient/navigation/` | dashboard, medicalHistory, uploadedAnalyses, profile, analysisExplanation, reportResults, registration |
 | `LABORATOR` | `feature/laborator/navigation/` | dashboard, submissions, results, profile, registration |
 
 Shared, role-agnostic registration primitives live in `core/ui/components/auth/`
@@ -175,9 +175,7 @@ PatientMobile/
 │   │   │   │   │   │   ├── navigation/       # PatientNavScreen, PatientTab,
 │   │   │   │   │   │   │                     # PatientPostLoginNavHost, components/
 │   │   │   │   │   │   ├── dashboard/
-│   │   │   │   │   │   ├── documents/
 │   │   │   │   │   │   ├── medicalHistory/
-│   │   │   │   │   │   ├── medicalResults/
 │   │   │   │   │   │   ├── uploadedAnalyses/
 │   │   │   │   │   │   ├── analysisExplanation/
 │   │   │   │   │   │   ├── reportResults/
@@ -292,12 +290,14 @@ A center FAB opens the shared upload flow (`core/ui/shared/upload/`).
 
 ### Dashboard (`feature/patient/dashboard/`)
 
-- Displays greeting/user info, attention items, basic health indicators, marker categories,
-  general marker cards, AI summary, warning cards, and clinical pillar cards.
+- Displays greeting/user info, basic health indicators with history sparklines, the marker
+  summary (optim / la limită / atenție counts + health score), document count, and the AI
+  summary with regenerate/loading states.
+- Handles the empty and OCR-processing states via `EmptyUploadCard` / `ProcessingEmptyCard`.
 - Always fetches fresh data from the backend; no demo/fake data fallbacks.
 - `DashboardViewModel.kt` fetches documents and medical results and owns screen state; pure
-  computation (marker summary, basic indicators, warning cards, clinical pillars, grouping)
-  lives in `BuildDashboardUseCase`.
+  computation (marker summary, basic indicators, results signature) lives in
+  `BuildDashboardUseCase`.
 
 ### File Upload (`core/ui/shared/upload/`)
 
@@ -393,7 +393,6 @@ The REST surface is split across three Retrofit interfaces, all created from the
 | GET | `/patient/medical/reports/{reportId}/results` | Report with results |
 | PATCH | `/patient/medical/reports/{reportId}` | Update report review |
 | POST | `/patient/medical/reports/{reportId}/ai-explanation` | AI explanation for report |
-| GET | `/patient/dashboard` | Dashboard summary |
 | GET | `/patient/dashboard/ai-summary` | AI summary |
 | POST | `/patient/dashboard/ai-summary/regenerate` | Regenerate AI summary |
 | POST | `/patient/dashboard/summary` | Request AI explanation |
@@ -442,15 +441,15 @@ The REST surface is split across three Retrofit interfaces, all created from the
 
 | Repository | File | Responsibility |
 |------------|------|----------------|
-| `AuthRepository` | `AuthRepositoryImpl.kt` | Login, register, refresh, logout, user profile |
+| `AuthRepository` | `common/AuthRepositoryImpl.kt` | Login, register, refresh, logout, user profile |
 | `DocumentRepository` | `patient/DocumentRepositoryImpl.kt` | Upload/list/download, rename, delete, share, duplicate check |
 | `MedicalResultRepository` | `patient/MedicalResultRepositoryImpl.kt` | Results by document/report/global; history |
 | `OcrRepository` | `patient/OcrRepositoryImpl.kt` | Trigger OCR, poll status, cache results |
-| `DashboardRepository` | `patient/DashboardRepositoryImpl.kt` | Dashboard summary, AI explanations |
+| `DashboardRepository` | `patient/DashboardRepositoryImpl.kt` | AI summary fetch/regenerate, report AI explanations |
 | `MedicalHistoryRepository` | `patient/MedicalHistoryRepositoryImpl.kt` | CRUD medications and personal notes |
-| `SharedLinkRepository` | `shared/SharedLinkRepositoryImpl.kt` | Consume shared document links |
-| `GlobalSyncManager` | `shared/GlobalSyncManagerImpl.kt` | Cross-screen sync broadcast |
-| `ProcessingCoordinator` | `shared/ProcessingCoordinatorImpl.kt` | OCR processing orchestration |
+| `SharedLinkRepository` | `patient/SharedLinkRepositoryImpl.kt` | Consume shared document links |
+| `GlobalSyncManager` | `common/GlobalSyncManagerImpl.kt` | Cross-screen sync broadcast |
+| `ProcessingCoordinator` | `patient/ProcessingCoordinatorImpl.kt` | OCR processing orchestration |
 | `LaboratorRepository` | — | **Contract only** (`domain/repository/laborator/`) — no implementation yet |
 
 ### Global Sync Engine
@@ -473,7 +472,7 @@ All repository methods return `ApiResult<T>`:
 | `AuthError` | 401 Unauthorized — session expired |
 
 Utilities: `safeApiCall { }`, `ApiResult.map { }`, `ApiResult.toUserMessage()`.
-`util/Resource.kt` is **deprecated** — use `ApiResult<T>`.
+`core/util/Resource.kt` is **deprecated** — use `ApiResult<T>`.
 
 ---
 
@@ -497,9 +496,9 @@ Configured in `app/build.gradle.kts`:
 
 | Test Category | Location |
 |---------------|----------|
-| ViewModel Tests | `feature/{role}/{feature}/` |
-| Repository Tests | `data/repository/` |
-| Utility Tests | `util/` |
+| ViewModel Tests | `feature/{auth,patient}/` (e.g. `LoginViewModelTest`, `DashboardViewModelTest`, `RegistrationViewModelTest`) |
+| Repository Tests | `data/repository/{common,patient}/` |
+| Utility Tests | `core/util/`, `core/ui/shared/upload/` |
 | Coroutine Rule | `testutil/MainDispatcherRule.kt` |
 
 **Libraries**: JUnit 4, Mockito, Mockito-Kotlin, kotlinx-coroutines-test, Arch Core Testing
