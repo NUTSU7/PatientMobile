@@ -53,6 +53,8 @@ internal fun ConfirmCodeCard(
     onCodeChange: (String) -> Unit,
     onResendClick: () -> Unit,
     onBackToLogin: () -> Unit,
+    resendCooldownSeconds: Int = 0,
+    errorMessage: String? = null,
     modifier: Modifier = Modifier
 ) {
     val cardShape = RoundedCornerShape(AppDimens.cornerRadiusLarge)
@@ -91,7 +93,19 @@ internal fun ConfirmCodeCard(
             onCodeChange = onCodeChange
         )
 
-        ResendSection(onResendClick = onResendClick)
+        ResendSection(
+            onResendClick = onResendClick,
+            cooldownSeconds = resendCooldownSeconds
+        )
+
+        if (!errorMessage.isNullOrBlank()) {
+            Text(
+                text = errorMessage,
+                color = Color(0xFFB91C1C),
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -210,7 +224,10 @@ private fun CodeInput(
 }
 
 @Composable
-private fun ResendSection(onResendClick: () -> Unit) {
+private fun ResendSection(
+    onResendClick: () -> Unit,
+    cooldownSeconds: Int
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -223,11 +240,11 @@ private fun ResendSection(onResendClick: () -> Unit) {
             textAlign = TextAlign.Center
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
-Text(
-            text = "retrimite codul",
-                color = Indigo600,
+            Text(
+                text = if (cooldownSeconds > 0) "retrimite codul ($cooldownSeconds)s" else "retrimite codul",
+                color = if (cooldownSeconds > 0) Gray500 else Indigo600,
                 fontSize = 12.sp,
-                modifier = Modifier.clickable(onClick = onResendClick)
+                modifier = Modifier.clickable(enabled = cooldownSeconds == 0, onClick = onResendClick)
             )
             Text(
                 text = ".",

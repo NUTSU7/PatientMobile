@@ -170,6 +170,14 @@ class DashboardViewModelTest {
             throw UnsupportedOperationException()
         override suspend fun deleteAccount(password: String, confirmation: String): ApiResult<Unit> =
             throw UnsupportedOperationException()
+        override suspend fun requestPasswordReset(email: String): ApiResult<Unit> =
+            throw UnsupportedOperationException()
+        override suspend fun resetPassword(
+            email: String,
+            code: String,
+            newPassword: String,
+            confirmNewPassword: String
+        ): ApiResult<Unit> = throw UnsupportedOperationException()
     }
 
     private class FakeDashboardRepository : DashboardRepository {

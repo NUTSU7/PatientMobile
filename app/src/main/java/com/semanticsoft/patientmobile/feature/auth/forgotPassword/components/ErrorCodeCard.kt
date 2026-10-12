@@ -43,6 +43,9 @@ import com.semanticsoft.patientmobile.core.ui.theme.icons.ClockResetIcon
 internal fun ErrorCodeCard(
     onRequestNewCode: () -> Unit,
     onBackToLogin: () -> Unit,
+    isLoading: Boolean = false,
+    resendCooldownSeconds: Int = 0,
+    errorMessage: String? = null,
     modifier: Modifier = Modifier
 ) {
     val cardShape = RoundedCornerShape(AppDimens.cornerRadiusLarge)
@@ -75,10 +78,20 @@ internal fun ErrorCodeCard(
         )
 
         GradientPillButton(
-            text = "Solicită un cod nou",
+            text = if (resendCooldownSeconds > 0) "Solicită un cod nou ($resendCooldownSeconds)s" else "Solicită un cod nou",
             onClick = onRequestNewCode,
-            icon = ArrowClockwiseIcon
+            icon = ArrowClockwiseIcon,
+            enabled = !isLoading && resendCooldownSeconds == 0
         )
+
+        if (!errorMessage.isNullOrBlank()) {
+            Text(
+                text = errorMessage,
+                color = Color(0xFFB91C1C),
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 

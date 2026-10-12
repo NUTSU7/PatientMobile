@@ -38,7 +38,9 @@ class LoginViewModelTest {
 
     @Test
     fun login_emitsError_forInvalidCredentials() = runTest {
-        val vm = LoginViewModel(LoginUseCase(FakeAuthRepository(loginResult = ApiResult.AuthError)))
+        val vm = LoginViewModel(
+            LoginUseCase(FakeAuthRepository(loginResult = ApiResult.AuthError))
+        )
         vm.onEmailChange("john@example.com")
         vm.onPasswordChange("wrong")
 
@@ -118,5 +120,13 @@ class LoginViewModelTest {
             throw UnsupportedOperationException()
         override suspend fun deleteAccount(password: String, confirmation: String): ApiResult<Unit> =
             throw UnsupportedOperationException()
+        override suspend fun requestPasswordReset(email: String): ApiResult<Unit> =
+            throw UnsupportedOperationException()
+        override suspend fun resetPassword(
+            email: String,
+            code: String,
+            newPassword: String,
+            confirmNewPassword: String
+        ): ApiResult<Unit> = throw UnsupportedOperationException()
     }
 }
