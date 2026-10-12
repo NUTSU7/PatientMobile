@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -26,10 +27,15 @@ fun BottomNavItem(
     icon: ImageVector,
     label: String,
     selected: Boolean,
+    tintable: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val tint = if (selected) Indigo600 else Gray500
+    val tint = when {
+        tintable -> if (selected) Indigo600 else Gray500
+        selected -> Color.Unspecified
+        else -> Gray500
+    }
     val textColor = if (selected) Indigo600 else Gray500
 
     Column(

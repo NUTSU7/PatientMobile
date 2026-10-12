@@ -1,15 +1,19 @@
 package com.semanticsoft.patientmobile.feature.patient.navigation
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.semanticsoft.patientmobile.core.ui.theme.icons.DashboardIcon
+import com.semanticsoft.patientmobile.core.ui.theme.icons.MedicalHistoryIcon
+import com.semanticsoft.patientmobile.core.ui.theme.icons.ProfileIcon
+import com.semanticsoft.patientmobile.core.ui.theme.icons.UploadedAnalysesIcon
 
-sealed class PatientTab(val route: String, val label: String, val icon: ImageVector) {
-    data object Home : PatientTab("home", "Acasă", Icons.Filled.Home)
-    data object History : PatientTab("history", "Istoric", Icons.Outlined.Description)
-    data object Analyses : PatientTab("analyses", "Analize", Icons.Outlined.FolderOpen)
-    data object Profile : PatientTab("profile", "Profil", Icons.Filled.Person)
+sealed class PatientTab(
+    val route: String,
+    val label: String,
+    val icon: ImageVector,
+    val tintable: Boolean = true
+) {
+    data object Home : PatientTab("home", "Acasă", DashboardIcon, tintable = false)
+    data object History : PatientTab("history", "Istoric", MedicalHistoryIcon, tintable = false)
+    data object Analyses : PatientTab("analyses", "Analize", UploadedAnalysesIcon, tintable = false)
+    data object Profile : PatientTab("profile", "Profil", ProfileIcon, tintable = false)
 }
