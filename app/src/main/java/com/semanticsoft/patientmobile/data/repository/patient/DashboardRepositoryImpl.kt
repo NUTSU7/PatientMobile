@@ -1,14 +1,14 @@
 package com.semanticsoft.patientmobile.data.repository.patient
 
-import com.semanticsoft.patientmobile.data.repository.AlwaysOnlineStateProvider
-import com.semanticsoft.patientmobile.data.repository.NetworkStateProvider
-import com.semanticsoft.patientmobile.data.remote.SafeApiCall.safeApiCall
-import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
-import com.semanticsoft.patientmobile.data.remote.api.dto.patient.AiExplainRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.patient.AiSummaryResponse
+import com.semanticsoft.patientmobile.core.network.AlwaysOnlineStateProvider
+import com.semanticsoft.patientmobile.core.network.NetworkStateProvider
+import com.semanticsoft.patientmobile.core.network.SafeApiCall.safeApiCall
+import com.semanticsoft.patientmobile.core.network.api.PatientApiService
+import com.semanticsoft.patientmobile.core.network.dto.patient.AiExplainRequest
+import com.semanticsoft.patientmobile.core.network.dto.patient.AiSummaryResponse
 import com.semanticsoft.patientmobile.domain.repository.patient.DashboardRepository
-import com.semanticsoft.patientmobile.util.ApiResult
-import com.semanticsoft.patientmobile.util.map
+import com.semanticsoft.patientmobile.core.util.ApiResult
+import com.semanticsoft.patientmobile.core.util.map
 
 class DashboardRepositoryImpl(
     private val apiService: PatientApiService,

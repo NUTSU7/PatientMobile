@@ -5,7 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.view.WindowCompat
-import com.semanticsoft.patientmobile.ui.theme.PatientMobileTheme
+import com.semanticsoft.patientmobile.core.ui.theme.PatientMobileTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

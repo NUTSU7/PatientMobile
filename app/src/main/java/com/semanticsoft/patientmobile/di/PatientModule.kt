@@ -1,8 +1,8 @@
 package com.semanticsoft.patientmobile.di
 
 import android.content.Context
-import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
-import com.semanticsoft.patientmobile.data.repository.NetworkStateProvider
+import com.semanticsoft.patientmobile.core.network.api.PatientApiService
+import com.semanticsoft.patientmobile.core.network.NetworkStateProvider
 import com.semanticsoft.patientmobile.data.repository.patient.DashboardRepositoryImpl
 import com.semanticsoft.patientmobile.data.repository.patient.DocumentRepositoryImpl
 import com.semanticsoft.patientmobile.data.repository.patient.MedicalHistoryRepositoryImpl

@@ -1,10 +1,10 @@
 package com.semanticsoft.patientmobile.domain.repository.patient
 
-import com.semanticsoft.patientmobile.domain.model.DocumentDuplicateInfo
-import com.semanticsoft.patientmobile.domain.model.DocumentStats
-import com.semanticsoft.patientmobile.domain.model.PatientDocument
-import com.semanticsoft.patientmobile.domain.model.SharedLink
-import com.semanticsoft.patientmobile.util.ApiResult
+import com.semanticsoft.patientmobile.domain.model.patient.DocumentDuplicateInfo
+import com.semanticsoft.patientmobile.domain.model.patient.DocumentStats
+import com.semanticsoft.patientmobile.domain.model.patient.PatientDocument
+import com.semanticsoft.patientmobile.domain.model.patient.SharedLink
+import com.semanticsoft.patientmobile.core.util.ApiResult
 import java.io.File
 
 interface DocumentRepository {

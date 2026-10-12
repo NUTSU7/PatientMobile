@@ -5,9 +5,9 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import com.semanticsoft.patientmobile.data.local.session.EncryptedTokenManager
-import com.semanticsoft.patientmobile.data.local.session.TokenManager
-import com.semanticsoft.patientmobile.data.local.preferences.UserPreferencesManager
+import com.semanticsoft.patientmobile.core.datastore.EncryptedTokenManager
+import com.semanticsoft.patientmobile.core.datastore.TokenManager
+import com.semanticsoft.patientmobile.core.datastore.UserPreferencesManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
