@@ -4,14 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.domain.model.patient.AiSummary
 import com.semanticsoft.patientmobile.domain.model.patient.BasicIndicatorItem as UiBasicIndicatorItem
-import com.semanticsoft.patientmobile.domain.model.patient.ClinicalPillarCardItem as UiClinicalPillarCardItem
-import com.semanticsoft.patientmobile.domain.model.patient.GeneralMarkerCardItem as UiGeneralMarkerCardItem
-import com.semanticsoft.patientmobile.domain.model.patient.MarkerCategoryItem as UiMarkerCategoryItem
 import com.semanticsoft.patientmobile.domain.model.patient.MedicalResult
 import com.semanticsoft.patientmobile.domain.model.patient.ProcessingOutcome
-import com.semanticsoft.patientmobile.domain.model.patient.UiAttentionItem
 import com.semanticsoft.patientmobile.domain.model.patient.UiMarkerSummary
-import com.semanticsoft.patientmobile.domain.model.patient.WarningCardItem as UiWarningCardItem
 import com.semanticsoft.patientmobile.domain.repository.common.AuthRepository
 import com.semanticsoft.patientmobile.domain.repository.common.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.patient.DashboardRepository
@@ -44,19 +39,12 @@ data class DashboardUiState(
     val greetingName: String = "",
     val fullName: String = "",
     val role: String = "",
-    val profilePhotoResId: Int? = null,
     val hasUploadedDocuments: Boolean = false,
-    val lastAnalysisDate: String = "",
-    val attentionItems: List<UiAttentionItem> = emptyList(),
     val basicIndicators: List<UiBasicIndicatorItem> = emptyList(),
-    val markerCategories: List<UiMarkerCategoryItem> = emptyList(),
-    val generalMarkerCards: List<UiGeneralMarkerCardItem> = emptyList(),
     val markerSummary: UiMarkerSummary = UiMarkerSummary(0, 0, 0, 0),
     val documentCount: Int = 0,
     val aiSummary: String = "",
     val isAiSummaryLoading: Boolean = false,
-    val warningCards: List<UiWarningCardItem> = emptyList(),
-    val clinicalPillarCards: List<UiClinicalPillarCardItem> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val emptyReason: DashboardEmptyReason? = null
@@ -339,16 +327,11 @@ class DashboardViewModel @Inject constructor(
                 fullName = fullName,
                 role = role,
                 hasUploadedDocuments = true,
-                attentionItems = cards.attentionItems,
                 basicIndicators = indicators,
-                markerCategories = cards.markerCategories,
-                generalMarkerCards = emptyList(),
                 markerSummary = cards.markerSummary,
                 documentCount = documentCount,
                 aiSummary = aiText,
                 isAiSummaryLoading = aiLoading,
-                warningCards = cards.warningCards,
-                clinicalPillarCards = cards.clinicalPillarCards,
                 isLoading = false,
                 errorMessage = null,
                 emptyReason = null

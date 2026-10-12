@@ -40,7 +40,6 @@ fun SparklineChart(
 
         val dataMin = effectivePoints.min()
         val dataMax = effectivePoints.max()
-        val dataRange = if (dataMax - dataMin > 0f) dataMax - dataMin else 1f
 
         val expandRange = showReferenceLines && referenceLow != null && referenceHigh != null
         val yMin = if (expandRange) {
