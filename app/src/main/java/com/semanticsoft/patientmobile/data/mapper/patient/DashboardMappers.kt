@@ -1,5 +1,6 @@
 package com.semanticsoft.patientmobile.data.mapper.patient
 
+import com.semanticsoft.patientmobile.core.network.dto.patient.AiSummaryResponse
 import com.semanticsoft.patientmobile.core.network.dto.patient.AttentionItemDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.BasicIndicatorDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.ClinicalPillarCardDto
@@ -8,6 +9,7 @@ import com.semanticsoft.patientmobile.core.network.dto.patient.GeneralMarkerDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.MarkerCategoryDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.MarkerSummaryDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.WarningCardDto
+import com.semanticsoft.patientmobile.domain.model.patient.AiSummary
 import com.semanticsoft.patientmobile.domain.model.patient.AttentionItem
 import com.semanticsoft.patientmobile.domain.model.patient.BasicIndicator
 import com.semanticsoft.patientmobile.domain.model.patient.ClinicalPillarCard
@@ -83,4 +85,11 @@ fun ClinicalPillarCardDto.toDomain(): ClinicalPillarCard = ClinicalPillarCard(
     type = type,
     reportCount = reportCount,
     alert = alert
+)
+
+fun AiSummaryResponse.toDomain(): AiSummary = AiSummary(
+    summaryText = summaryText,
+    status = status,
+    generatedAt = generatedAt,
+    latestReportId = latestReportId
 )

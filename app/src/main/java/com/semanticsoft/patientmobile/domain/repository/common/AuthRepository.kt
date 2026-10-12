@@ -1,13 +1,13 @@
 package com.semanticsoft.patientmobile.domain.repository.common
 
-import com.semanticsoft.patientmobile.core.network.dto.auth.RegisterRequest
 import com.semanticsoft.patientmobile.domain.model.common.AuthResponse
+import com.semanticsoft.patientmobile.domain.model.common.RegistrationRequest
 import com.semanticsoft.patientmobile.domain.model.common.User
 import com.semanticsoft.patientmobile.core.util.ApiResult
 
 interface AuthRepository {
     suspend fun login(email: String, password: String): ApiResult<AuthResponse>
-    suspend fun register(request: RegisterRequest): ApiResult<AuthResponse>
+    suspend fun register(request: RegistrationRequest): ApiResult<AuthResponse>
     suspend fun refresh(): ApiResult<AuthResponse>
     suspend fun logout()
     suspend fun getCurrentUser(): ApiResult<User>

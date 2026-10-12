@@ -15,8 +15,8 @@ import com.semanticsoft.patientmobile.domain.repository.patient.MedicalHistoryRe
 import com.semanticsoft.patientmobile.domain.repository.patient.MedicalResultRepository
 import com.semanticsoft.patientmobile.domain.repository.patient.OcrRepository
 import com.semanticsoft.patientmobile.domain.model.patient.OcrStatus
-import com.semanticsoft.patientmobile.core.network.dto.patient.MedicationOcrDraftResponseDto
-import com.semanticsoft.patientmobile.core.network.dto.patient.PersonalNoteOcrDraftResponseDto
+import com.semanticsoft.patientmobile.domain.model.patient.MedicationOcrDraft
+import com.semanticsoft.patientmobile.domain.model.patient.PersonalNoteOcrDraft
 import com.semanticsoft.patientmobile.core.ui.shared.upload.ImageNormalizer
 import com.semanticsoft.patientmobile.core.util.ApiResult
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.ScheduleEntryData
@@ -132,11 +132,11 @@ data class MedicalHistoryUiState(
     val deleteMedicationTargetId: String? = null,
     val deleteNoteTargetId: String? = null,
     val selectedCombinedSectionTab: CombinedSectionTab = CombinedSectionTab.NOTES,
-    val medicationOcrDraftResult: MedicationOcrDraftResponseDto? = null,
+    val medicationOcrDraftResult: MedicationOcrDraft? = null,
     val medicationOcrFeedback: String? = null,
     val medicationOcrFeedbackError: Boolean = false,
     val medicationOcrExtracting: Boolean = false,
-    val noteOcrDraftResult: PersonalNoteOcrDraftResponseDto? = null,
+    val noteOcrDraftResult: PersonalNoteOcrDraft? = null,
     val noteOcrFeedback: String? = null,
     val noteOcrFeedbackError: Boolean = false,
     val noteOcrExtracting: Boolean = false,

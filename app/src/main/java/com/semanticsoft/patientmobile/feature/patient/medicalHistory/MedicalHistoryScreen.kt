@@ -302,7 +302,7 @@ fun MedicalHistoryScreen(
                                 state.medicationOcrDraftResult?.schedules?.map { schedule ->
                                     ScheduleEntryData(
                                         administrationTime = schedule.administrationTime,
-                                        mealRelation = schedule.mealRelation
+                                        mealRelation = schedule.mealRelation.name
                                     )
                                 }
                             } else null,

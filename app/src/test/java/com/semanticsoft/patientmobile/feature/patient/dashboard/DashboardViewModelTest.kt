@@ -1,6 +1,6 @@
 package com.semanticsoft.patientmobile.feature.patient.dashboard
 
-import com.semanticsoft.patientmobile.core.network.dto.auth.RegisterRequest
+import com.semanticsoft.patientmobile.domain.model.common.RegistrationRequest
 import com.semanticsoft.patientmobile.domain.model.patient.PaginatedMedicalResults
 import com.semanticsoft.patientmobile.domain.model.common.AuthResponse
 import com.semanticsoft.patientmobile.domain.model.patient.DocumentDuplicateInfo
@@ -13,7 +13,7 @@ import com.semanticsoft.patientmobile.domain.model.patient.ProcessingStatus
 import com.semanticsoft.patientmobile.domain.model.patient.ReportWithResults
 import com.semanticsoft.patientmobile.domain.model.common.User
 import com.semanticsoft.patientmobile.domain.model.common.UserRole
-import com.semanticsoft.patientmobile.core.network.dto.patient.AiSummaryResponse
+import com.semanticsoft.patientmobile.domain.model.patient.AiSummary
 import com.semanticsoft.patientmobile.domain.repository.common.AuthRepository
 import com.semanticsoft.patientmobile.domain.repository.patient.DashboardRepository
 import com.semanticsoft.patientmobile.domain.repository.patient.DocumentRepository
@@ -141,7 +141,7 @@ class DashboardViewModelTest {
     private class FakeAuthRepository : AuthRepository {
         override suspend fun login(email: String, password: String): ApiResult<AuthResponse> =
             throw UnsupportedOperationException()
-        override suspend fun register(request: RegisterRequest): ApiResult<AuthResponse> =
+        override suspend fun register(request: RegistrationRequest): ApiResult<AuthResponse> =
             throw UnsupportedOperationException()
         override suspend fun refresh(): ApiResult<AuthResponse> = throw UnsupportedOperationException()
         override suspend fun logout() = Unit
@@ -155,10 +155,10 @@ class DashboardViewModelTest {
     }
 
     private class FakeDashboardRepository : DashboardRepository {
-        override suspend fun getAiSummary(): ApiResult<AiSummaryResponse> =
-            ApiResult.Success(AiSummaryResponse(summaryText = "Summary", status = "READY"))
-        override suspend fun regenerateAiSummary(): ApiResult<AiSummaryResponse> =
-            ApiResult.Success(AiSummaryResponse(summaryText = "Regenerated", status = "READY"))
+        override suspend fun getAiSummary(): ApiResult<AiSummary> =
+            ApiResult.Success(AiSummary(summaryText = "Summary", status = "READY"))
+        override suspend fun regenerateAiSummary(): ApiResult<AiSummary> =
+            ApiResult.Success(AiSummary(summaryText = "Regenerated", status = "READY"))
         override suspend fun requestExplanation(reportId: String): ApiResult<String> =
             throw UnsupportedOperationException()
     }
@@ -255,7 +255,7 @@ class DashboardViewModelTest {
             throw UnsupportedOperationException()
         override suspend fun getAiExplanation(reportId: String): ApiResult<String> =
             throw UnsupportedOperationException()
-        override suspend fun getAiSummary(): ApiResult<AiSummaryResponse> =
+        override suspend fun getAiSummary(): ApiResult<AiSummary> =
             throw UnsupportedOperationException()
         override suspend fun updateReport(
             reportId: String,

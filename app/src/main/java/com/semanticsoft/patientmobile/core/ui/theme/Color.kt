@@ -1,7 +1,7 @@
 package com.semanticsoft.patientmobile.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
-import com.semanticsoft.patientmobile.data.model.IndicatorStatus
+import com.semanticsoft.patientmobile.domain.model.patient.IndicatorStatus
 
 val AppBackground = Color(0xFFF4F8FC)
 val HeaderBlue = Color(0xFF0E5DA9)

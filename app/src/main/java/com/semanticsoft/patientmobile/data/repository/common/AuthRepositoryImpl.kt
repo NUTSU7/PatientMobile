@@ -11,6 +11,7 @@ import com.semanticsoft.patientmobile.core.network.dto.auth.RefreshRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.RegisterRequest
 import com.semanticsoft.patientmobile.data.mapper.common.toDomain
 import com.semanticsoft.patientmobile.domain.model.common.AuthResponse as DomainAuthResponse
+import com.semanticsoft.patientmobile.domain.model.common.RegistrationRequest
 import com.semanticsoft.patientmobile.domain.model.common.User
 import com.semanticsoft.patientmobile.domain.repository.common.AuthRepository
 import com.semanticsoft.patientmobile.core.util.ApiResult
@@ -47,8 +48,19 @@ class AuthRepositoryImpl(
         }
     }
 
-    override suspend fun register(request: RegisterRequest): ApiResult<DomainAuthResponse> {
-        return safeApiCall { apiService.register(request) }.map { response ->
+    override suspend fun register(request: RegistrationRequest): ApiResult<DomainAuthResponse> {
+        return safeApiCall {
+            apiService.register(
+                RegisterRequest(
+                    email = request.email,
+                    password = request.password,
+                    confirmPassword = request.confirmPassword,
+                    firstName = request.firstName,
+                    lastName = request.lastName,
+                    dateOfBirth = request.dateOfBirth
+                )
+            )
+        }.map { response ->
             tokenManager.saveTokens(response.accessToken, response.refreshToken)
             val domainAuth = response.toDomain()
             tokenManager.saveUser(domainAuth.user)

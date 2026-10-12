@@ -44,7 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.data.model.IndicatorStatus
+import com.semanticsoft.patientmobile.domain.model.patient.IndicatorStatus
 import com.semanticsoft.patientmobile.domain.model.patient.ProcessingStatus
 import com.semanticsoft.patientmobile.core.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.core.ui.common.dashboardSpacing
@@ -73,7 +73,7 @@ fun DashboardScreen(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     var activeStatusFilter by rememberSaveable { mutableStateOf("Toate") }
-    var selectedDetailIndicator by remember { mutableStateOf<com.semanticsoft.patientmobile.data.model.BasicIndicatorItem?>(null) }
+    var selectedDetailIndicator by remember { mutableStateOf<com.semanticsoft.patientmobile.domain.model.patient.BasicIndicatorItem?>(null) }
 
     val allIndicators = state.basicIndicators
 
