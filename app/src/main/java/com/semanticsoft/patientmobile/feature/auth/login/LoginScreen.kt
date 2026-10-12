@@ -1,5 +1,6 @@
 package com.semanticsoft.patientmobile.feature.auth.login
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,8 +19,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -37,6 +44,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.components.LoadingIndicator
@@ -44,7 +52,9 @@ import com.semanticsoft.patientmobile.core.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.core.ui.components.auth.AuthInput
 import com.semanticsoft.patientmobile.core.ui.components.auth.AuthLabel
 import com.semanticsoft.patientmobile.core.ui.components.auth.AuthTopHeader
+import com.semanticsoft.patientmobile.core.ui.theme.Gray400
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
+import com.semanticsoft.patientmobile.core.ui.theme.InputBackground
 import com.semanticsoft.patientmobile.core.ui.theme.Purple500
 
 @Composable
@@ -59,6 +69,7 @@ fun LoginScreen(
 ) {
     SetStatusBar(color = Color(0xFF3B82F6), darkIcons = false)
     var passwordVisible by remember { mutableStateOf(false) }
+    var selectedRole by remember { mutableStateOf("Pacient") }
     var hasAttemptedLogin by remember { mutableStateOf(false) }
 
     val missingCredentialsMessage = when {
@@ -129,6 +140,14 @@ fun LoginScreen(
                     lineHeight = titleLineHeight
                 )
                 Spacer(modifier = Modifier.height(if (isVeryCompactHeight) 20.dp else 28.dp))
+                AuthLabel("Mă loghez ca")
+                Spacer(modifier = Modifier.height(tinySpacing))
+                RoleField(
+                    text = selectedRole,
+                    onRoleChange = { selectedRole = it },
+                    inputHeight = inputHeight
+                )
+                Spacer(modifier = Modifier.height(sectionSpacing))
                 AuthLabel("Adresa de email")
                 Spacer(modifier = Modifier.height(tinySpacing))
                 AuthInput(
@@ -266,6 +285,95 @@ fun LoginScreen(
                             color = Color(0xFF4F46E5),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RoleField(
+    text: String,
+    onRoleChange: (String) -> Unit,
+    inputHeight: Dp
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val options = listOf("Pacient", "Laborator")
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(inputHeight)
+            .background(InputBackground, RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp)
+            .clickable { expanded = true }
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.PersonOutline,
+                contentDescription = null,
+                tint = Gray400,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = text,
+                color = Color(0xFF111827),
+                fontSize = 14.sp,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = Icons.Outlined.KeyboardArrowDown,
+                contentDescription = null,
+                tint = Gray400,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = Color.Transparent,
+            shadowElevation = 0.dp,
+            tonalElevation = 0.dp
+        ) {
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                border = BorderStroke(1.dp, Color(0xFFE5E7EB))
+            ) {
+                Column(modifier = Modifier.width(220.dp)) {
+                    options.forEach { option ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = option,
+                                    color = Color(0xFF111827),
+                                    fontSize = 14.sp,
+                                    fontWeight = if (text == option) FontWeight.SemiBold else FontWeight.Medium
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.PersonOutline,
+                                    contentDescription = null,
+                                    tint = if (text == option) Indigo600 else Gray400,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            },
+                            onClick = {
+                                onRoleChange(option)
+                                expanded = false
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(if (text == option) Color(0xFFF5F3FF) else Color.Transparent)
                         )
                     }
                 }
