@@ -1,17 +1,15 @@
 package com.semanticsoft.patientmobile.data.remote.interceptors
 
-import android.content.Context
 import android.util.Log
 import com.semanticsoft.patientmobile.BuildConfig
-import com.semanticsoft.patientmobile.data.local.datastore.SecureTokenStore
+import com.semanticsoft.patientmobile.data.local.session.TokenManager
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
 
 class AuthInterceptor(
-    context: Context
+    private val tokenManager: TokenManager
 ) : Interceptor {
-    private val tokenStore = SecureTokenStore(context.applicationContext)
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
@@ -35,7 +33,7 @@ class AuthInterceptor(
             return request
         }
 
-        val token = tokenStore.getAccessToken().orEmpty()
+        val token = tokenManager.getAccessToken().orEmpty()
         if (token.isBlank()) return request
 
         return request.newBuilder()

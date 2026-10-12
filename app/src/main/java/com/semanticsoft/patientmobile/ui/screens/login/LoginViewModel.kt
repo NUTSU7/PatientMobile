@@ -2,6 +2,7 @@ package com.semanticsoft.patientmobile.ui.screens.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.semanticsoft.patientmobile.domain.model.UserRole
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,21 +16,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class LoginRole(val label: String) {
-    PATIENT("Pacient"),
-    LABORATOR("Laborator")
-}
-
 data class LoginUiState(
     val email: String = "",
     val password: String = "",
-    val selectedRole: LoginRole = LoginRole.PATIENT,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
 
 sealed class LoginEvent {
-    data object LoginSuccess : LoginEvent()
+    data class LoginSuccess(val role: UserRole) : LoginEvent()
     data class LoginFailure(val message: String) : LoginEvent()
 }
 
@@ -52,10 +47,6 @@ class LoginViewModel @Inject constructor(
         _state.update { it.copy(password = value, errorMessage = null) }
     }
 
-    fun onRoleSelected(role: LoginRole) {
-        _state.update { it.copy(selectedRole = role) }
-    }
-
     fun login() {
         if (_state.value.isLoading) return
 
@@ -71,7 +62,7 @@ class LoginViewModel @Inject constructor(
             when (val result = authRepository.login(currentEmail.trim(), currentPassword)) {
                 is ApiResult.Success -> {
                     _state.update { it.copy(isLoading = false, errorMessage = null) }
-                    _events.emit(LoginEvent.LoginSuccess)
+                    _events.emit(LoginEvent.LoginSuccess(result.data.user.role))
                 }
 
                 is ApiResult.AuthError -> {

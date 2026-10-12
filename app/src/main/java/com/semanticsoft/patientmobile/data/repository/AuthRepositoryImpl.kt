@@ -1,15 +1,15 @@
 package com.semanticsoft.patientmobile.data.repository
 
-import com.semanticsoft.patientmobile.data.local.datastore.TokenManager
+import com.semanticsoft.patientmobile.data.local.session.TokenManager
 import com.semanticsoft.patientmobile.data.remote.SafeApiCall.safeApiCall
-import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
-import com.semanticsoft.patientmobile.data.remote.api.dto.ChangePasswordRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.DeleteAccountRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.LoginRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.LogoutRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.RefreshRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.toDomain
+import com.semanticsoft.patientmobile.data.remote.api.AuthApiService
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.ChangePasswordRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.DeleteAccountRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.LoginRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.LogoutRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.RefreshRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.RegisterRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.mappers.toDomain
 import com.semanticsoft.patientmobile.domain.model.AuthResponse as DomainAuthResponse
 import com.semanticsoft.patientmobile.domain.model.User
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
@@ -17,7 +17,7 @@ import com.semanticsoft.patientmobile.util.ApiResult
 import com.semanticsoft.patientmobile.util.map
 
 class AuthRepositoryImpl(
-    private val apiService: PatientApiService,
+    private val apiService: AuthApiService,
     private val tokenManager: TokenManager
 ) : AuthRepository {
 

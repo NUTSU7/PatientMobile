@@ -1,42 +1,32 @@
 package com.semanticsoft.patientmobile.data.remote.api
 
-import com.semanticsoft.patientmobile.data.remote.api.dto.AiExplainRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.AiExplainResponse
-import com.semanticsoft.patientmobile.data.remote.api.dto.AiSummaryResponse
-import com.semanticsoft.patientmobile.data.remote.api.dto.AuthResponse
-import com.semanticsoft.patientmobile.data.remote.api.dto.ChangePasswordRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.BulkDeleteRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.CreateMedicationRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.CreateNoteRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.CreateShareLinkRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.CreateSharedLinkDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.DashboardSummaryDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.DeleteAccountRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.DocumentDetailDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.DocumentDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.DuplicateCheckRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.DuplicateCheckResponse
-import com.semanticsoft.patientmobile.data.remote.api.dto.LoginRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.LogoutRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.MedicalResultDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.MedicalResultHistoryEntry
-import com.semanticsoft.patientmobile.data.remote.api.dto.MedicalReportWithResultsDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.UpdateMedicalReportReviewRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.MedicationDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.MedicationOcrDraftResponseDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.OcrExtractionDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.PaginatedResponse
-import com.semanticsoft.patientmobile.data.remote.api.dto.PersonalNoteDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.PersonalNoteOcrDraftResponseDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.RefreshRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.RefreshResponse
-import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.RenameDocumentRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.SharedLinkDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.StartExtractionResponse
-import com.semanticsoft.patientmobile.data.remote.api.dto.UpdateMedicationRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.UpdateNoteRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.UserDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.AiExplainRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.AiExplainResponse
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.AiSummaryResponse
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.BulkDeleteRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.CreateMedicationRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.CreateNoteRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.CreateShareLinkRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.shared.CreateSharedLinkDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.DashboardSummaryDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.DocumentDetailDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.DocumentDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.DuplicateCheckRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.DuplicateCheckResponse
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.MedicalResultDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.MedicalResultHistoryEntry
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.MedicalReportWithResultsDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.UpdateMedicalReportReviewRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.MedicationDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.MedicationOcrDraftResponseDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.OcrExtractionDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.shared.PaginatedResponse
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.PersonalNoteDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.PersonalNoteOcrDraftResponseDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.RenameDocumentRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.StartExtractionResponse
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.UpdateMedicationRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.UpdateNoteRequest
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -53,29 +43,6 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface PatientApiService {
-
-    // ── Auth ────────────────────────────────────────────────────────────────
-
-    @POST("auth/register")
-    suspend fun register(@Body request: RegisterRequest): AuthResponse
-
-    @POST("auth/login")
-    suspend fun login(@Body request: LoginRequest): AuthResponse
-
-    @POST("auth/refresh")
-    suspend fun refresh(@Body request: RefreshRequest): RefreshResponse
-
-    @POST("auth/logout")
-    suspend fun logout(@Body request: LogoutRequest)
-
-    @GET("auth/me")
-    suspend fun getCurrentUser(): UserDto
-
-    @POST("auth/change-password")
-    suspend fun changePassword(@Body request: ChangePasswordRequest)
-
-    @DELETE("auth/account")
-    suspend fun deleteAccount(@Body request: DeleteAccountRequest)
 
     // ── Documents ──────────────────────────────────────────────────────────
 
@@ -242,12 +209,4 @@ interface PatientApiService {
     suspend fun extractPersonalNoteOcrDraft(
         @Part file: MultipartBody.Part
     ): PersonalNoteOcrDraftResponseDto
-
-    // ── Shared Links ───────────────────────────────────────────────────────
-
-    @GET("shared/{token}")
-    suspend fun consumeSharedLink(
-        @Path("token") token: String,
-        @Query("passphrase") passphrase: String? = null
-    ): SharedLinkDto
 }

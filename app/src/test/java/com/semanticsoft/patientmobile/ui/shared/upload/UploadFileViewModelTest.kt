@@ -3,10 +3,10 @@ package com.semanticsoft.patientmobile.ui.shared.upload
 import com.semanticsoft.patientmobile.domain.model.DocumentDuplicateInfo
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.domain.model.ProcessingStatus
-import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
+import com.semanticsoft.patientmobile.domain.repository.patient.DocumentRepository
 import com.semanticsoft.patientmobile.domain.repository.ExtractionTarget
 import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
-import com.semanticsoft.patientmobile.domain.repository.OcrRepository
+import com.semanticsoft.patientmobile.domain.repository.patient.OcrRepository
 import com.semanticsoft.patientmobile.domain.repository.ProcessingCoordinator
 import com.semanticsoft.patientmobile.util.ApiResult
 import java.io.File

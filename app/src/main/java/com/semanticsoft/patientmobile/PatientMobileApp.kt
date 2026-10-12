@@ -13,25 +13,27 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.semanticsoft.patientmobile.ui.navigation.AppDestination
-import com.semanticsoft.patientmobile.ui.screens.analysisExplanation.AnalysisExplanationScreen
-import com.semanticsoft.patientmobile.ui.screens.analysisExplanation.AnalysisExplanationViewModel
+import com.semanticsoft.patientmobile.domain.model.UserRole
+import com.semanticsoft.patientmobile.ui.navigation.laborator.LaboratorNavScreen
+import com.semanticsoft.patientmobile.ui.screens.patient.analysisExplanation.AnalysisExplanationScreen
+import com.semanticsoft.patientmobile.ui.screens.patient.analysisExplanation.AnalysisExplanationViewModel
 import com.semanticsoft.patientmobile.ui.screens.auth.AuthEvent
 import com.semanticsoft.patientmobile.ui.screens.auth.AuthState
 import com.semanticsoft.patientmobile.ui.screens.auth.AuthViewModel
-import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardEvent
-import com.semanticsoft.patientmobile.ui.screens.dashboard.DashboardViewModel
+import com.semanticsoft.patientmobile.ui.screens.patient.dashboard.DashboardEvent
+import com.semanticsoft.patientmobile.ui.screens.patient.dashboard.DashboardViewModel
 import com.semanticsoft.patientmobile.ui.screens.login.LoginEvent
 import com.semanticsoft.patientmobile.ui.screens.login.LoginScreen
 import com.semanticsoft.patientmobile.ui.screens.login.LoginViewModel
-import com.semanticsoft.patientmobile.ui.screens.navigation.NavScreen
-import com.semanticsoft.patientmobile.ui.screens.registration.RegistrationEvent
-import com.semanticsoft.patientmobile.ui.screens.registration.RegistrationScreen
-import com.semanticsoft.patientmobile.ui.screens.registration.RegistrationViewModel
-import com.semanticsoft.patientmobile.ui.screens.registrationLab.RegistrationLabEvent
-import com.semanticsoft.patientmobile.ui.screens.registrationLab.RegistrationLabScreen
-import com.semanticsoft.patientmobile.ui.screens.registrationLab.RegistrationLabViewModel
-import com.semanticsoft.patientmobile.ui.screens.reportResults.ReportResultsScreen
-import com.semanticsoft.patientmobile.ui.screens.reportResults.ReportResultsViewModel
+import com.semanticsoft.patientmobile.ui.navigation.patient.PatientNavScreen
+import com.semanticsoft.patientmobile.ui.screens.patient.registration.RegistrationEvent
+import com.semanticsoft.patientmobile.ui.screens.patient.registration.RegistrationScreen
+import com.semanticsoft.patientmobile.ui.screens.patient.registration.RegistrationViewModel
+import com.semanticsoft.patientmobile.ui.screens.laborator.registration.RegistrationLabEvent
+import com.semanticsoft.patientmobile.ui.screens.laborator.registration.RegistrationLabScreen
+import com.semanticsoft.patientmobile.ui.screens.laborator.registration.RegistrationLabViewModel
+import com.semanticsoft.patientmobile.ui.screens.patient.reportResults.ReportResultsScreen
+import com.semanticsoft.patientmobile.ui.screens.patient.reportResults.ReportResultsViewModel
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -71,7 +73,11 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
                 vm.events.collectLatest { event ->
                     when (event) {
                         is LoginEvent.LoginSuccess -> {
-                            navController.navigate(AppDestination.Dashboard.route) {
+                            val destination = when (event.role) {
+                                UserRole.LABORATOR -> AppDestination.Laborator
+                                else -> AppDestination.Patient
+                            }
+                            navController.navigate(destination.route) {
                                 popUpTo(AppDestination.Login.route) { inclusive = true }
                             }
                         }
@@ -84,14 +90,13 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
                 state = state,
                 onEmailChange = vm::onEmailChange,
                 onPasswordChange = vm::onPasswordChange,
-                onRoleSelected = vm::onRoleSelected,
                 onLoginClick = vm::login,
-                onGoToRegister = { navController.navigate(AppDestination.Registration.route) },
-                onGoToLabRegister = { navController.navigate(AppDestination.LabRegistration.route) }
+                onGoToRegister = { navController.navigate(AppDestination.PatientRegistration.route) },
+                onGoToLabRegister = { navController.navigate(AppDestination.LaboratorRegistration.route) }
             )
         }
 
-        composable(AppDestination.Registration.route) {
+        composable(AppDestination.PatientRegistration.route) {
             val vm: RegistrationViewModel = hiltViewModel()
             val state by vm.state.collectAsStateWithLifecycle()
 
@@ -99,7 +104,7 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
                 vm.events.collectLatest { event ->
                     when (event) {
                         is RegistrationEvent.RegistrationSuccess -> {
-                            navController.navigate(AppDestination.Dashboard.route) {
+                            navController.navigate(AppDestination.Patient.route) {
                                 popUpTo(AppDestination.Login.route)
                             }
                         }
@@ -119,7 +124,7 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
             )
         }
 
-        composable(AppDestination.LabRegistration.route) {
+        composable(AppDestination.LaboratorRegistration.route) {
             val vm: RegistrationLabViewModel = hiltViewModel()
             val state by vm.state.collectAsStateWithLifecycle()
 
@@ -127,7 +132,7 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
                 vm.events.collectLatest { event ->
                     when (event) {
                         is RegistrationLabEvent.RegistrationSuccess -> {
-                            navController.navigate(AppDestination.Dashboard.route) {
+                            navController.navigate(AppDestination.Laborator.route) {
                                 popUpTo(AppDestination.Login.route)
                             }
                         }
@@ -151,7 +156,7 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
             )
         }
 
-        composable(AppDestination.Dashboard.route) {
+        composable(AppDestination.Patient.route) {
             val vm: DashboardViewModel = hiltViewModel()
 
             LifecycleResumeEffect(Unit) {
@@ -164,7 +169,7 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
                     when (event) {
                         DashboardEvent.LogoutSuccess -> {
                             navController.navigate(AppDestination.Login.route) {
-                                popUpTo(AppDestination.Dashboard.route) { inclusive = true }
+                                popUpTo(AppDestination.Patient.route) { inclusive = true }
                             }
                         }
                         is DashboardEvent.LogoutFailure -> Unit
@@ -174,7 +179,7 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
                 }
             }
 
-            NavScreen(
+            PatientNavScreen(
                 dashboardState = vm.state,
                 onLogout = authViewModel::logout,
                 navigateToExplanation = { documentId ->
@@ -184,6 +189,10 @@ fun PatientMobileApp(navController: NavHostController = rememberNavController())
                     navController.navigate("report_results/$reportId")
                 }
             )
+        }
+
+        composable(AppDestination.Laborator.route) {
+            LaboratorNavScreen(onLogout = authViewModel::logout)
         }
 
         composable(

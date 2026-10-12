@@ -1,8 +1,10 @@
 package com.semanticsoft.patientmobile.data.remote
 
 import com.semanticsoft.patientmobile.util.ApiResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import org.json.JSONObject
 import retrofit2.HttpException
 import java.io.IOException
@@ -16,6 +18,8 @@ object SafeApiCall {
     ): ApiResult<T> = withContext(Dispatchers.IO) {
         try {
             ApiResult.Success(call())
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: HttpException) {
             if (e.code() == 401) {
                 ApiResult.AuthError
@@ -38,8 +42,8 @@ object SafeApiCall {
             } else {
                 ApiResult.HttpError(code = -1, message = e.message ?: "Network error")
             }
-        } catch (e: Exception) {
-            ApiResult.HttpError(code = -1, message = e.message ?: "Unexpected error")
+        } catch (e: SerializationException) {
+            ApiResult.HttpError(code = -1, message = e.message ?: "Malformed server response")
         }
     }
 

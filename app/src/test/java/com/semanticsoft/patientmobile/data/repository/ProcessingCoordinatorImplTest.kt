@@ -1,5 +1,6 @@
 package com.semanticsoft.patientmobile.data.repository
 
+import com.semanticsoft.patientmobile.data.repository.shared.ProcessingCoordinatorImpl
 import com.semanticsoft.patientmobile.domain.model.DocumentStats
 import com.semanticsoft.patientmobile.domain.model.MedicalReport
 import com.semanticsoft.patientmobile.domain.model.MedicalResult
@@ -9,13 +10,13 @@ import com.semanticsoft.patientmobile.domain.model.PaginatedMedicalResults
 import com.semanticsoft.patientmobile.domain.model.PatientDocument
 import com.semanticsoft.patientmobile.domain.model.ProcessingOutcome
 import com.semanticsoft.patientmobile.domain.model.ReportWithResults
-import com.semanticsoft.patientmobile.domain.repository.DashboardRepository
-import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
+import com.semanticsoft.patientmobile.domain.repository.patient.DashboardRepository
+import com.semanticsoft.patientmobile.domain.repository.patient.DocumentRepository
 import com.semanticsoft.patientmobile.domain.repository.ExtractionTarget
 import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
-import com.semanticsoft.patientmobile.domain.repository.OcrRepository
+import com.semanticsoft.patientmobile.domain.repository.patient.OcrRepository
 import com.semanticsoft.patientmobile.util.ApiResult
-import com.semanticsoft.patientmobile.data.remote.api.dto.AiSummaryResponse
+import com.semanticsoft.patientmobile.data.remote.api.dto.patient.AiSummaryResponse
 import java.io.File
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

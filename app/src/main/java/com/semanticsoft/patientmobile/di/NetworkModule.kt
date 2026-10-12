@@ -1,15 +1,16 @@
 package com.semanticsoft.patientmobile.di
 
-import android.content.Context
 import com.semanticsoft.patientmobile.BuildConfig
+import com.semanticsoft.patientmobile.data.local.session.TokenManager
+import com.semanticsoft.patientmobile.data.remote.api.AuthApiService
 import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
+import com.semanticsoft.patientmobile.data.remote.api.SharedApiService
 import com.semanticsoft.patientmobile.data.remote.interceptors.AuthInterceptor
 import com.semanticsoft.patientmobile.data.remote.interceptors.ErrorInterceptor
 import com.semanticsoft.patientmobile.data.remote.interceptors.TokenRefreshAuthenticator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
@@ -34,8 +35,8 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthInterceptor(@ApplicationContext context: Context): AuthInterceptor =
-        AuthInterceptor(context)
+    fun provideAuthInterceptor(tokenManager: TokenManager): AuthInterceptor =
+        AuthInterceptor(tokenManager)
 
     @Provides
     @Singleton
@@ -55,10 +56,10 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideTokenRefreshAuthenticator(
-        @ApplicationContext context: Context,
+        tokenManager: TokenManager,
         @Named("refresh") refreshOkHttpClient: OkHttpClient,
         json: Json
-    ): TokenRefreshAuthenticator = TokenRefreshAuthenticator(context, refreshOkHttpClient, json)
+    ): TokenRefreshAuthenticator = TokenRefreshAuthenticator(tokenManager, refreshOkHttpClient, json)
 
     @Provides
     @Singleton
@@ -98,7 +99,19 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideAuthApiService(retrofit: Retrofit): AuthApiService {
+        return retrofit.create(AuthApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun providePatientApiService(retrofit: Retrofit): PatientApiService {
         return retrofit.create(PatientApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSharedApiService(retrofit: Retrofit): SharedApiService {
+        return retrofit.create(SharedApiService::class.java)
     }
 }
