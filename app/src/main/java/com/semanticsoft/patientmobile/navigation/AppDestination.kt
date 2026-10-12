@@ -4,6 +4,7 @@ sealed class AppDestination(val route: String) {
     data object Login : AppDestination("login")
     data object PatientRegistration : AppDestination("patient-registration")
     data object LaboratorRegistration : AppDestination("laborator-registration")
+    data object ForgotPassword : AppDestination("forgot-password")
     data object Patient : AppDestination("patient")
     data object Laborator : AppDestination("laborator")
     data class AnalysisExplanation(val documentId: String) : AppDestination("analysis_explanation/$documentId") {

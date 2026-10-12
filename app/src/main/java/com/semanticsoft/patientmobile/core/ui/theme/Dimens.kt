@@ -9,6 +9,7 @@ object AppDimens {
     val paddingLarge = 20.dp
     val paddingXLarge = 24.dp
     val paddingXXLarge = 28.dp
+    val paddingCard = 40.dp
 
     val gapSmall = 6.dp
     val gapMedium = 8.dp
