@@ -2,6 +2,7 @@ package com.semanticsoft.patientmobile.feature.auth.login
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
@@ -49,13 +51,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.core.ui.common.SetStatusBar
-import com.semanticsoft.patientmobile.core.ui.components.auth.AuthInput
-import com.semanticsoft.patientmobile.core.ui.components.auth.AuthLabel
+import com.semanticsoft.patientmobile.core.ui.components.form.FormInput
+import com.semanticsoft.patientmobile.core.ui.components.form.FormLabel
 import com.semanticsoft.patientmobile.core.ui.components.auth.AuthTopHeader
-import com.semanticsoft.patientmobile.core.ui.theme.Gray400
+import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
+import com.semanticsoft.patientmobile.core.ui.theme.Gray300
+import com.semanticsoft.patientmobile.core.ui.theme.Gray500
+import com.semanticsoft.patientmobile.core.ui.theme.Gray900
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
-import com.semanticsoft.patientmobile.core.ui.theme.InputBackground
+import com.semanticsoft.patientmobile.core.ui.theme.InputHaloShadow
+import com.semanticsoft.patientmobile.core.ui.theme.InputShadow
+import com.semanticsoft.patientmobile.core.ui.theme.LightPurpleBg
 import com.semanticsoft.patientmobile.core.ui.theme.Purple500
+import com.semanticsoft.patientmobile.core.ui.theme.SurfaceWhite
 
 @Composable
 fun LoginScreen(
@@ -141,7 +149,7 @@ fun LoginScreen(
                     lineHeight = titleLineHeight
                 )
                 Spacer(modifier = Modifier.height(if (isVeryCompactHeight) 20.dp else 28.dp))
-                AuthLabel("Mă loghez ca")
+                FormLabel("Mă loghez ca")
                 Spacer(modifier = Modifier.height(tinySpacing))
                 RoleField(
                     text = selectedRole,
@@ -149,9 +157,9 @@ fun LoginScreen(
                     inputHeight = inputHeight
                 )
                 Spacer(modifier = Modifier.height(sectionSpacing))
-                AuthLabel("Adresa de email")
+                FormLabel("Adresa de email")
                 Spacer(modifier = Modifier.height(tinySpacing))
-                AuthInput(
+                FormInput(
                     value = state.email,
                     placeholder = "nume@exemplu.com",
                     onValueChange = onEmailChange,
@@ -165,7 +173,7 @@ fun LoginScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AuthLabel("Parol\u0103")
+                    FormLabel("Parol\u0103")
                     Text(
                         text = "Ai uitat parola?",
                         color = Color(0xFF4F46E5),
@@ -175,7 +183,7 @@ fun LoginScreen(
                     )
                 }
                 Spacer(modifier = Modifier.height(tinySpacing))
-                AuthInput(
+                FormInput(
                     value = state.password,
                     placeholder = "Introdu parola ta",
                     onValueChange = onPasswordChange,
@@ -306,13 +314,27 @@ private fun RoleField(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val options = listOf("Pacient", "Laborator")
+    val shape = RoundedCornerShape(8.dp)
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(inputHeight)
-            .background(InputBackground, RoundedCornerShape(8.dp))
-            .padding(horizontal = 12.dp)
+            .shadow(
+                elevation = 5.dp,
+                shape = shape,
+                ambientColor = InputHaloShadow,
+                spotColor = InputHaloShadow
+            )
+            .shadow(
+                elevation = 2.dp,
+                shape = shape,
+                ambientColor = InputShadow,
+                spotColor = InputShadow
+            )
+            .background(SurfaceWhite, shape)
+            .border(1.dp, Gray300, shape)
+            .padding(horizontal = 21.dp)
             .clickable { expanded = true }
     ) {
         Row(
@@ -322,20 +344,20 @@ private fun RoleField(
             Icon(
                 imageVector = Icons.Outlined.PersonOutline,
                 contentDescription = null,
-                tint = Gray400,
+                tint = Gray500,
                 modifier = Modifier.size(16.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = text,
-                color = Color(0xFF111827),
-                fontSize = 14.sp,
+                color = Gray900,
+                fontSize = 13.sp,
                 modifier = Modifier.weight(1f)
             )
             Icon(
                 imageVector = Icons.Outlined.KeyboardArrowDown,
                 contentDescription = null,
-                tint = Gray400,
+                tint = Gray500,
                 modifier = Modifier.size(16.dp)
             )
         }
@@ -348,10 +370,10 @@ private fun RoleField(
             tonalElevation = 0.dp
         ) {
             Card(
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(AppDimens.cornerRadiusSmall),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-                border = BorderStroke(1.dp, Color(0xFFE5E7EB))
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                border = BorderStroke(1.dp, Gray300)
             ) {
                 Column(modifier = Modifier.width(220.dp)) {
                     options.forEach { option ->
@@ -359,8 +381,8 @@ private fun RoleField(
                             text = {
                                 Text(
                                     text = option,
-                                    color = Color(0xFF111827),
-                                    fontSize = 14.sp,
+                                    color = Gray900,
+                                    fontSize = 13.sp,
                                     fontWeight = if (text == option) FontWeight.SemiBold else FontWeight.Medium
                                 )
                             },
@@ -368,7 +390,7 @@ private fun RoleField(
                                 Icon(
                                     imageVector = Icons.Outlined.PersonOutline,
                                     contentDescription = null,
-                                    tint = if (text == option) Indigo600 else Gray400,
+                                    tint = if (text == option) Indigo600 else Gray500,
                                     modifier = Modifier.size(16.dp)
                                 )
                             },
@@ -378,7 +400,7 @@ private fun RoleField(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(if (text == option) Color(0xFFF5F3FF) else Color.Transparent)
+                                .background(if (text == option) LightPurpleBg else Color.Transparent)
                         )
                     }
                 }

@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.core.ui.components.auth.AuthScreenTopBar
-import com.semanticsoft.patientmobile.core.ui.components.auth.GradientPillButton
+import com.semanticsoft.patientmobile.core.ui.components.GradientPillButton
 import com.semanticsoft.patientmobile.core.ui.theme.AppBackground
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.Gray600

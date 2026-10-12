@@ -1,8 +1,6 @@
 package com.semanticsoft.patientmobile.feature.patient.uploadedAnalyses.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -25,16 +22,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.semanticsoft.patientmobile.core.ui.components.form.FormInput
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
-import com.semanticsoft.patientmobile.core.ui.theme.ErrorLightBg
-import com.semanticsoft.patientmobile.core.ui.theme.ErrorText
-import com.semanticsoft.patientmobile.core.ui.theme.Gray400
-import com.semanticsoft.patientmobile.core.ui.theme.Gray900
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
-import com.semanticsoft.patientmobile.core.ui.theme.InputBackground
 
 @Composable
 fun RenameDocumentDialog(
@@ -67,37 +58,13 @@ fun RenameDocumentDialog(
 
             Spacer(modifier = Modifier.height(AppDimens.gapDefault))
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(AppDimens.inputHeightDefault)
-                    .background(
-                        color = if (isError) ErrorLightBg else InputBackground,
-                        shape = RoundedCornerShape(AppDimens.cornerRadiusSmall)
-                    )
-                    .padding(horizontal = AppDimens.paddingSmall),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    if (name.isEmpty()) {
-                        Text(
-                            text = "Nume fișier",
-                            color = if (isError) ErrorText else Gray400,
-                            fontSize = 14.sp
-                        )
-                    }
-                    BasicTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        textStyle = TextStyle(
-                            color = if (isError) ErrorText else Gray900,
-                            fontSize = 14.sp
-                        ),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
+            FormInput(
+                value = name,
+                placeholder = "Nume fișier",
+                onValueChange = { name = it },
+                isError = isError,
+                errorMessage = errorText
+            )
 
             if (errorText != null) {
                 Spacer(modifier = Modifier.height(AppDimens.gapSmall))

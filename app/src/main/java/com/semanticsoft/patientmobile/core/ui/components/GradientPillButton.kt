@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.core.ui.components.auth
+package com.semanticsoft.patientmobile.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

@@ -39,8 +39,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.components.PasswordCriteriaRow
-import com.semanticsoft.patientmobile.core.ui.components.auth.AuthInput
-import com.semanticsoft.patientmobile.core.ui.components.auth.GradientPillButton
+import com.semanticsoft.patientmobile.core.ui.components.form.FormInput
+import com.semanticsoft.patientmobile.core.ui.components.GradientPillButton
 import com.semanticsoft.patientmobile.core.ui.components.computePasswordCriteria
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.Blue900
@@ -198,7 +198,7 @@ private fun NewPasswordInput(
             lineHeight = 11.sp,
             letterSpacing = 0.55.sp
         )
-        AuthInput(
+        FormInput(
             value = password,
             placeholder = "Introdu o parolă puternică",
             onValueChange = onPasswordChange,
@@ -264,7 +264,7 @@ private fun ConfirmPasswordInput(
             lineHeight = 11.sp,
             letterSpacing = 0.55.sp
         )
-        AuthInput(
+        FormInput(
             value = confirmPassword,
             placeholder = "Confirmă parola",
             onValueChange = onConfirmPasswordChange,

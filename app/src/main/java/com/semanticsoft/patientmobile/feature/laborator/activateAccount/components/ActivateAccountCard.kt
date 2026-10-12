@@ -36,8 +36,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.components.PasswordCriteriaRow
-import com.semanticsoft.patientmobile.core.ui.components.auth.AuthInput
-import com.semanticsoft.patientmobile.core.ui.components.auth.GradientPillButton
+import com.semanticsoft.patientmobile.core.ui.components.form.FormInput
+import com.semanticsoft.patientmobile.core.ui.components.GradientPillButton
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.Emerald600
 import com.semanticsoft.patientmobile.core.ui.theme.Gray200
@@ -171,7 +171,7 @@ private fun PasswordInputGroup(
             lineHeight = 12.sp,
             letterSpacing = 0.55.sp
         )
-        AuthInput(
+        FormInput(
             value = value,
             placeholder = placeholder,
             onValueChange = onValueChange,

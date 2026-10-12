@@ -36,8 +36,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.core.ui.components.auth.AuthInput
-import com.semanticsoft.patientmobile.core.ui.components.auth.AuthLabel
+import com.semanticsoft.patientmobile.core.ui.components.form.FormInput
+import com.semanticsoft.patientmobile.core.ui.components.form.FormLabel
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.Gray100
 import com.semanticsoft.patientmobile.core.ui.theme.Gray200
@@ -91,9 +91,9 @@ internal fun ChangePasswordDialog(
             )
             Spacer(modifier = Modifier.height(AppDimens.gapDefault))
 
-            AuthLabel("Parola actual\u0103")
+            FormLabel("Parola actual\u0103")
             Spacer(modifier = Modifier.height(AppDimens.gapSmall))
-            AuthInput(
+            FormInput(
                 value = oldPassword,
                 placeholder = "Introdu parola actual\u0103",
                 onValueChange = { oldPassword = it },
@@ -115,9 +115,9 @@ internal fun ChangePasswordDialog(
 
             Spacer(modifier = Modifier.height(AppDimens.gapDefault))
 
-            AuthLabel("Parola nou\u0103")
+            FormLabel("Parola nou\u0103")
             Spacer(modifier = Modifier.height(AppDimens.gapSmall))
-            AuthInput(
+            FormInput(
                 value = newPassword,
                 placeholder = "Introdu parola nou\u0103",
                 onValueChange = { newPassword = it },
@@ -176,9 +176,9 @@ internal fun ChangePasswordDialog(
 
             Spacer(modifier = Modifier.height(AppDimens.gapDefault))
 
-            AuthLabel("Confirm\u0103 parola nou\u0103")
+            FormLabel("Confirm\u0103 parola nou\u0103")
             Spacer(modifier = Modifier.height(AppDimens.gapSmall))
-            AuthInput(
+            FormInput(
                 value = confirmPassword,
                 placeholder = "Reintrodu parola nou\u0103",
                 onValueChange = { confirmPassword = it },
