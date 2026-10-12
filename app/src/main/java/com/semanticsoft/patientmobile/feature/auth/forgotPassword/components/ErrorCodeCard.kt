@@ -25,7 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.core.ui.components.auth.GradientPillButton
+import com.semanticsoft.patientmobile.core.ui.components.GradientPillButton
 import com.semanticsoft.patientmobile.core.ui.theme.AmberLightBg
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.Blue900

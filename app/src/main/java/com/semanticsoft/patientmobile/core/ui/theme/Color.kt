@@ -40,6 +40,8 @@ val PurpleLabel = Color(0xFF280557)
 val InfoCardBackground = Color(0xFFFAFAFC)
 
 val InputBackground = Color(0xFFEFF4FA)
+val InputShadow = Color(0x334A40E0)
+val InputHaloShadow = Color(0x33D7D7DB)
 val ErrorLightBg = Color(0xFFFEE2E2)
 val ErrorText = Color(0xFFB91C1C)
 val LightPurpleBg = Color(0xFFF5F3FF)

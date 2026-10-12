@@ -42,8 +42,8 @@ import com.semanticsoft.patientmobile.core.ui.components.PasswordCriteriaRow
 import com.semanticsoft.patientmobile.core.ui.components.PasswordMatchIndicator
 import com.semanticsoft.patientmobile.core.ui.components.computePasswordCriteria
 import com.semanticsoft.patientmobile.core.ui.common.SetStatusBar
-import com.semanticsoft.patientmobile.core.ui.components.auth.AuthInput
-import com.semanticsoft.patientmobile.core.ui.components.auth.AuthLabel
+import com.semanticsoft.patientmobile.core.ui.components.form.FormInput
+import com.semanticsoft.patientmobile.core.ui.components.form.FormLabel
 import com.semanticsoft.patientmobile.core.ui.components.auth.AuthTopHeader
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.Gray50
@@ -130,9 +130,9 @@ fun RegistrationScreen(
                 )
 
                 Spacer(modifier = Modifier.height(if (isVeryCompactHeight) 20.dp else 28.dp))
-                AuthLabel("Scrie un nume sau un pseudonim")
+                FormLabel("Scrie un nume sau un pseudonim")
                 Spacer(modifier = Modifier.height(tinySpacing))
-                AuthInput(
+                FormInput(
                     value = state.name,
                     placeholder = "Introdu nume",
                     onValueChange = onNameChange,
@@ -142,9 +142,9 @@ fun RegistrationScreen(
                 )
 
                 Spacer(modifier = Modifier.height(sectionSpacing))
-                AuthLabel("Adresa de email")
+                FormLabel("Adresa de email")
                 Spacer(modifier = Modifier.height(tinySpacing))
-                AuthInput(
+                FormInput(
                     value = state.email,
                     placeholder = "nume@exemplu.com",
                     onValueChange = onEmailChange,
@@ -154,9 +154,9 @@ fun RegistrationScreen(
                 )
 
                 Spacer(modifier = Modifier.height(sectionSpacing))
-                AuthLabel("Parol\u0103")
+                FormLabel("Parol\u0103")
                 Spacer(modifier = Modifier.height(tinySpacing))
-                AuthInput(
+                FormInput(
                     value = state.password,
                     placeholder = "Min. 8 caractere",
                     onValueChange = onPasswordChange,
@@ -198,9 +198,9 @@ fun RegistrationScreen(
                 }
 
                 Spacer(modifier = Modifier.height(sectionSpacing))
-                AuthLabel("Confirm\u0103 parola")
+                FormLabel("Confirm\u0103 parola")
                 Spacer(modifier = Modifier.height(tinySpacing))
-                AuthInput(
+                FormInput(
                     value = state.confirmPassword,
                     placeholder = "Confirm\u0103 parola",
                     onValueChange = onConfirmPasswordChange,

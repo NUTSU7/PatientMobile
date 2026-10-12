@@ -32,8 +32,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.semanticsoft.patientmobile.core.ui.components.auth.AuthInput
-import com.semanticsoft.patientmobile.core.ui.components.auth.AuthLabel
+import com.semanticsoft.patientmobile.core.ui.components.form.FormInput
+import com.semanticsoft.patientmobile.core.ui.components.form.FormLabel
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.AttentionHigh
 import com.semanticsoft.patientmobile.core.ui.theme.Gray400
@@ -86,9 +86,9 @@ internal fun DeleteAccountDialog(
             )
             Spacer(modifier = Modifier.height(AppDimens.gapDefault))
 
-            AuthLabel("Parola actual\u0103")
+            FormLabel("Parola actual\u0103")
             Spacer(modifier = Modifier.height(AppDimens.gapSmall))
-            AuthInput(
+            FormInput(
                 value = password,
                 placeholder = "Introdu parola actual\u0103",
                 onValueChange = { password = it },
@@ -110,9 +110,9 @@ internal fun DeleteAccountDialog(
 
             Spacer(modifier = Modifier.height(AppDimens.gapDefault))
 
-            AuthLabel("Confirm\u0103 \u0219tergerea")
+            FormLabel("Confirm\u0103 \u0219tergerea")
             Spacer(modifier = Modifier.height(AppDimens.gapSmall))
-            AuthInput(
+            FormInput(
                 value = confirmation,
                 placeholder = "Scrie \u201E\u0218TERGE CONTUL\u201D",
                 onValueChange = { confirmation = it },
