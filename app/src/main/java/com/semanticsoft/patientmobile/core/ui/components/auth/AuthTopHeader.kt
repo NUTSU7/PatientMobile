@@ -68,8 +68,8 @@ fun AuthTopHeader(
                 imageVector = PatientMdLogoIcon,
                 contentDescription = "Patient.md",
                 modifier = Modifier
-                    .width(if (isCompact) 121.dp else 143.dp)
-                    .height(if (isCompact) 28.dp else 33.dp),
+                    .width(if (isCompact) 151.dp else 180.dp)
+                    .height(if (isCompact) 35.dp else 41.dp),
                 contentScale = ContentScale.Fit
             )
 
