@@ -3,6 +3,8 @@ package com.semanticsoft.patientmobile.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,6 +42,7 @@ import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun RootNavHost(navController: NavHostController = rememberNavController()) {
+    val context = LocalContext.current
     val authViewModel: AuthViewModel = hiltViewModel()
     val authState by authViewModel.state.collectAsStateWithLifecycle()
 
@@ -106,9 +109,12 @@ fun RootNavHost(navController: NavHostController = rememberNavController()) {
             LaunchedEffect(vm) {
                 vm.events.collectLatest { event ->
                     when (event) {
-                        is ForgotPasswordEvent.CodeSubmitted -> Unit
-                        ForgotPasswordEvent.ResendRequested -> Unit
-                        ForgotPasswordEvent.PasswordChanged -> Unit
+                        ForgotPasswordEvent.PasswordChanged -> {
+                            Toast.makeText(context, "Parola schimbată cu succes", Toast.LENGTH_SHORT).show()
+                            navController.navigate(AppDestination.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
                     }
                 }
             }

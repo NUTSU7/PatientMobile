@@ -50,6 +50,8 @@ internal fun RequestEmailCard(
     onEmailChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onBackToLogin: () -> Unit,
+    isLoading: Boolean = false,
+    errorMessage: String? = null,
     modifier: Modifier = Modifier
 ) {
     val cardShape = RoundedCornerShape(AppDimens.cornerRadiusLarge)
@@ -84,7 +86,20 @@ internal fun RequestEmailCard(
             onEmailChange = onEmailChange
         )
 
-        GradientPillButton(text = "Trimite link de resetare", onClick = onSubmit)
+        GradientPillButton(
+            text = "Trimite link de resetare",
+            onClick = onSubmit,
+            enabled = !isLoading
+        )
+
+        if (!errorMessage.isNullOrBlank()) {
+            Text(
+                text = errorMessage,
+                color = Color(0xFFB91C1C),
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 

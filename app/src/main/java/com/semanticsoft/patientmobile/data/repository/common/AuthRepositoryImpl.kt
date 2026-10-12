@@ -5,10 +5,12 @@ import com.semanticsoft.patientmobile.core.network.SafeApiCall.safeApiCall
 import com.semanticsoft.patientmobile.core.network.api.AuthApiService
 import com.semanticsoft.patientmobile.core.network.dto.auth.ChangePasswordRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.DeleteAccountRequest
+import com.semanticsoft.patientmobile.core.network.dto.auth.ForgotPasswordRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.LoginRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.LogoutRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.RefreshRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.RegisterRequest
+import com.semanticsoft.patientmobile.core.network.dto.auth.ResetPasswordRequest
 import com.semanticsoft.patientmobile.data.mapper.common.toDomain
 import com.semanticsoft.patientmobile.domain.model.common.AuthResponse as DomainAuthResponse
 import com.semanticsoft.patientmobile.domain.model.common.RegistrationRequest
@@ -143,6 +145,30 @@ class AuthRepositoryImpl(
                 tokenManager.clearTokens()
                 tokenManager.clearUser()
             }
+        }.map { }
+    }
+
+    override suspend fun requestPasswordReset(email: String): ApiResult<Unit> {
+        return safeApiCall {
+            apiService.forgotPassword(ForgotPasswordRequest(email = email))
+        }.map { }
+    }
+
+    override suspend fun resetPassword(
+        email: String,
+        code: String,
+        newPassword: String,
+        confirmNewPassword: String
+    ): ApiResult<Unit> {
+        return safeApiCall {
+            apiService.resetPassword(
+                ResetPasswordRequest(
+                    email = email,
+                    code = code,
+                    newPassword = newPassword,
+                    confirmNewPassword = confirmNewPassword
+                )
+            )
         }.map { }
     }
 }

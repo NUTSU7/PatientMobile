@@ -67,6 +67,8 @@ internal fun NewPasswordCard(
     onConfirmPasswordChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onBackToLogin: () -> Unit,
+    isLoading: Boolean = false,
+    errorMessage: String? = null,
     modifier: Modifier = Modifier
 ) {
     val cardShape = RoundedCornerShape(AppDimens.cornerRadiusLarge)
@@ -114,7 +116,20 @@ internal fun NewPasswordCard(
             onConfirmPasswordChange = onConfirmPasswordChange
         )
 
-        GradientPillButton(text = "Schimbă parola", onClick = onSubmit)
+        GradientPillButton(
+            text = "Schimbă parola",
+            onClick = onSubmit,
+            enabled = !isLoading
+        )
+
+        if (!errorMessage.isNullOrBlank()) {
+            Text(
+                text = errorMessage,
+                color = ErrorText,
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 

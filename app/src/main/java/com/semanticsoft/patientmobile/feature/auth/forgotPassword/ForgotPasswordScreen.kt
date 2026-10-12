@@ -111,14 +111,18 @@ fun ForgotPasswordScreen(
                         email = state.email,
                         onEmailChange = onEmailChange,
                         onSubmit = onRequestSubmit,
-                        onBackToLogin = onBackToLogin
+                        onBackToLogin = onBackToLogin,
+                        isLoading = state.isLoading,
+                        errorMessage = state.errorMessage
                     )
 
                     ForgotPasswordStep.CONFIRM -> ConfirmCodeCard(
                         code = state.code,
                         onCodeChange = onCodeChange,
                         onResendClick = onResendClick,
-                        onBackToLogin = onBackToLogin
+                        onBackToLogin = onBackToLogin,
+                        resendCooldownSeconds = state.resendCooldownSeconds,
+                        errorMessage = state.errorMessage
                     )
 
                     ForgotPasswordStep.SET_NEW -> NewPasswordCard(
@@ -128,12 +132,17 @@ fun ForgotPasswordScreen(
                         onNewPasswordChange = onNewPasswordChange,
                         onConfirmPasswordChange = onConfirmPasswordChange,
                         onSubmit = onSubmitNewPassword,
-                        onBackToLogin = onBackToLogin
+                        onBackToLogin = onBackToLogin,
+                        isLoading = state.isLoading,
+                        errorMessage = state.errorMessage
                     )
 
                     ForgotPasswordStep.ERROR -> ErrorCodeCard(
                         onRequestNewCode = onRequestNewCode,
-                        onBackToLogin = onBackToLogin
+                        onBackToLogin = onBackToLogin,
+                        isLoading = state.isLoading,
+                        resendCooldownSeconds = state.resendCooldownSeconds,
+                        errorMessage = state.errorMessage
                     )
                 }
             }

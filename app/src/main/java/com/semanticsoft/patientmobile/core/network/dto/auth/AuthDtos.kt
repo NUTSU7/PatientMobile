@@ -57,6 +57,19 @@ data class ChangePasswordRequest(
 )
 
 @Serializable
+data class ForgotPasswordRequest(
+    val email: String
+)
+
+@Serializable
+data class ResetPasswordRequest(
+    val email: String,
+    val code: String,
+    @SerialName("newPassword") val newPassword: String,
+    @SerialName("confirmNewPassword") val confirmNewPassword: String
+)
+
+@Serializable
 data class DeleteAccountRequest(
     val password: String,
     val confirmation: String

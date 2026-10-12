@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.Blue500
 import com.semanticsoft.patientmobile.core.ui.theme.Blue900
+import com.semanticsoft.patientmobile.core.ui.theme.Gray400
 import com.semanticsoft.patientmobile.core.ui.theme.Purple500
 
 @Composable
@@ -35,7 +36,8 @@ fun GradientPillButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    icon: ImageVector = Icons.AutoMirrored.Filled.ArrowForward
+    icon: ImageVector = Icons.AutoMirrored.Filled.ArrowForward,
+    enabled: Boolean = true
 ) {
     val buttonShape = RoundedCornerShape(AppDimens.cornerRadiusPill)
 
@@ -53,10 +55,10 @@ fun GradientPillButton(
                     0.0f to Blue900,
                     0.5f to Blue500,
                     1.0f to Purple500
-                ),
+                ).let { if (enabled) it else Brush.linearGradient(listOf(Gray400, Gray400)) },
                 buttonShape
             )
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 32.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
