@@ -1,10 +1,10 @@
 package com.semanticsoft.patientmobile.domain.repository.patient
 
-import com.semanticsoft.patientmobile.data.remote.api.dto.patient.MedicationOcrDraftResponseDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.patient.PersonalNoteOcrDraftResponseDto
-import com.semanticsoft.patientmobile.domain.model.Medication
-import com.semanticsoft.patientmobile.domain.model.PersonalNote
-import com.semanticsoft.patientmobile.util.ApiResult
+import com.semanticsoft.patientmobile.core.network.dto.patient.MedicationOcrDraftResponseDto
+import com.semanticsoft.patientmobile.core.network.dto.patient.PersonalNoteOcrDraftResponseDto
+import com.semanticsoft.patientmobile.domain.model.patient.Medication
+import com.semanticsoft.patientmobile.domain.model.patient.PersonalNote
+import com.semanticsoft.patientmobile.core.util.ApiResult
 
 interface MedicalHistoryRepository {
     suspend fun createMedication(medication: Medication): ApiResult<Medication>

@@ -2,7 +2,7 @@ package com.semanticsoft.patientmobile.domain.repository.laborator
 
 import com.semanticsoft.patientmobile.domain.model.laborator.LabResult
 import com.semanticsoft.patientmobile.domain.model.laborator.LabSubmission
-import com.semanticsoft.patientmobile.util.ApiResult
+import com.semanticsoft.patientmobile.core.util.ApiResult
 
 interface LaboratorRepository {
     suspend fun getSubmissions(): ApiResult<List<LabSubmission>>

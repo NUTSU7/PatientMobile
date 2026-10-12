@@ -1,7 +1,7 @@
 package com.semanticsoft.patientmobile.domain.repository.patient
 
-import com.semanticsoft.patientmobile.domain.model.OcrExtraction
-import com.semanticsoft.patientmobile.util.ApiResult
+import com.semanticsoft.patientmobile.domain.model.patient.OcrExtraction
+import com.semanticsoft.patientmobile.core.util.ApiResult
 import kotlinx.coroutines.flow.Flow
 
 interface OcrRepository {

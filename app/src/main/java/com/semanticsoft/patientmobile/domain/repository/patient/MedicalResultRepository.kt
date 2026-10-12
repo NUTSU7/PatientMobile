@@ -1,11 +1,11 @@
 package com.semanticsoft.patientmobile.domain.repository.patient
 
-import com.semanticsoft.patientmobile.data.remote.api.dto.patient.AiSummaryResponse
-import com.semanticsoft.patientmobile.domain.model.MedicalReport
-import com.semanticsoft.patientmobile.domain.model.MedicalResult
-import com.semanticsoft.patientmobile.domain.model.PaginatedMedicalResults
-import com.semanticsoft.patientmobile.domain.model.ReportWithResults
-import com.semanticsoft.patientmobile.util.ApiResult
+import com.semanticsoft.patientmobile.core.network.dto.patient.AiSummaryResponse
+import com.semanticsoft.patientmobile.domain.model.patient.MedicalReport
+import com.semanticsoft.patientmobile.domain.model.patient.MedicalResult
+import com.semanticsoft.patientmobile.domain.model.patient.PaginatedMedicalResults
+import com.semanticsoft.patientmobile.domain.model.patient.ReportWithResults
+import com.semanticsoft.patientmobile.core.util.ApiResult
 
 interface MedicalResultRepository {
     suspend fun getByDocumentId(documentId: String): ApiResult<List<MedicalResult>>

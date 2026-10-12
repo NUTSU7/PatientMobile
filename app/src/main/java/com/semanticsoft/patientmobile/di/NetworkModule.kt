@@ -1,13 +1,13 @@
 package com.semanticsoft.patientmobile.di
 
 import com.semanticsoft.patientmobile.BuildConfig
-import com.semanticsoft.patientmobile.data.local.session.TokenManager
-import com.semanticsoft.patientmobile.data.remote.api.AuthApiService
-import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
-import com.semanticsoft.patientmobile.data.remote.api.SharedApiService
-import com.semanticsoft.patientmobile.data.remote.interceptors.AuthInterceptor
-import com.semanticsoft.patientmobile.data.remote.interceptors.ErrorInterceptor
-import com.semanticsoft.patientmobile.data.remote.interceptors.TokenRefreshAuthenticator
+import com.semanticsoft.patientmobile.core.datastore.TokenManager
+import com.semanticsoft.patientmobile.core.network.api.AuthApiService
+import com.semanticsoft.patientmobile.core.network.api.PatientApiService
+import com.semanticsoft.patientmobile.core.network.api.SharedApiService
+import com.semanticsoft.patientmobile.core.network.interceptors.AuthInterceptor
+import com.semanticsoft.patientmobile.core.network.interceptors.ErrorInterceptor
+import com.semanticsoft.patientmobile.core.network.interceptors.TokenRefreshAuthenticator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,7 +19,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import com.semanticsoft.patientmobile.data.remote.KotlinxConverterBridge
+import com.semanticsoft.patientmobile.core.network.KotlinxConverterBridge
 
 @Module
 @InstallIn(SingletonComponent::class)

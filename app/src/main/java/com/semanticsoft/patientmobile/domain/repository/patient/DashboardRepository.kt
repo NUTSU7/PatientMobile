@@ -1,7 +1,7 @@
 package com.semanticsoft.patientmobile.domain.repository.patient
 
-import com.semanticsoft.patientmobile.data.remote.api.dto.patient.AiSummaryResponse
-import com.semanticsoft.patientmobile.util.ApiResult
+import com.semanticsoft.patientmobile.core.network.dto.patient.AiSummaryResponse
+import com.semanticsoft.patientmobile.core.util.ApiResult
 
 interface DashboardRepository {
     suspend fun getAiSummary(): ApiResult<AiSummaryResponse>

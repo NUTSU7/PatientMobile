@@ -1,17 +1,17 @@
 package com.semanticsoft.patientmobile.data.repository.patient
 
 import android.util.Log
-import com.semanticsoft.patientmobile.data.repository.AlwaysOnlineStateProvider
-import com.semanticsoft.patientmobile.data.repository.NetworkStateProvider
-import com.semanticsoft.patientmobile.data.remote.SafeApiCall.safeApiCall
-import com.semanticsoft.patientmobile.data.remote.api.ApiConstants
-import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
-import com.semanticsoft.patientmobile.data.remote.api.dto.mappers.toDomain
-import com.semanticsoft.patientmobile.domain.model.OcrExtraction
-import com.semanticsoft.patientmobile.domain.model.OcrStatus
+import com.semanticsoft.patientmobile.core.network.AlwaysOnlineStateProvider
+import com.semanticsoft.patientmobile.core.network.NetworkStateProvider
+import com.semanticsoft.patientmobile.core.network.SafeApiCall.safeApiCall
+import com.semanticsoft.patientmobile.core.network.api.ApiConstants
+import com.semanticsoft.patientmobile.core.network.api.PatientApiService
+import com.semanticsoft.patientmobile.data.mapper.patient.toDomain
+import com.semanticsoft.patientmobile.domain.model.patient.OcrExtraction
+import com.semanticsoft.patientmobile.domain.model.patient.OcrStatus
 import com.semanticsoft.patientmobile.domain.repository.patient.OcrRepository
-import com.semanticsoft.patientmobile.util.ApiResult
-import com.semanticsoft.patientmobile.util.map
+import com.semanticsoft.patientmobile.core.util.ApiResult
+import com.semanticsoft.patientmobile.core.util.map
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
