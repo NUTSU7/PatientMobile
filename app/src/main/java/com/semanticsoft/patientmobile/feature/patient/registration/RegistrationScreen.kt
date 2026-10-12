@@ -45,8 +45,9 @@ import com.semanticsoft.patientmobile.core.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.core.ui.components.auth.AuthInput
 import com.semanticsoft.patientmobile.core.ui.components.auth.AuthLabel
 import com.semanticsoft.patientmobile.core.ui.components.auth.AuthTopHeader
-import com.semanticsoft.patientmobile.core.ui.theme.Gray100
-import com.semanticsoft.patientmobile.core.ui.theme.Gray200
+import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
+import com.semanticsoft.patientmobile.core.ui.theme.Gray50
+import com.semanticsoft.patientmobile.core.ui.theme.Gray300
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.core.ui.theme.Purple500
 
@@ -182,10 +183,10 @@ fun RegistrationScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Gray100, RoundedCornerShape(8.dp))
-                            .border(1.dp, Gray200, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                            .background(Gray50, RoundedCornerShape(AppDimens.cornerRadiusMedium))
+                            .border(1.dp, Gray300, RoundedCornerShape(AppDimens.cornerRadiusMedium))
+                            .padding(AppDimens.paddingDefault),
+                        verticalArrangement = Arrangement.spacedBy(AppDimens.gapMedium)
                     ) {
                         PasswordCriteriaRow(met = criteria.hasLength, label = "Minim 8 caractere")
                         PasswordCriteriaRow(met = criteria.hasUppercase, label = "Minim o liter\u0103 majuscul\u0103")

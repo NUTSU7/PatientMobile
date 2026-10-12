@@ -19,6 +19,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.theme.ErrorLightBg
@@ -37,6 +38,7 @@ fun AuthInput(
     isError: Boolean = false,
     errorMessage: String? = null,
     inputHeight: Dp = 44.dp,
+    fontSize: TextUnit = 14.sp,
     leading: @Composable (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default
@@ -58,13 +60,13 @@ fun AuthInput(
                 Text(
                     text = if (isError && !errorMessage.isNullOrBlank()) errorMessage else placeholder,
                     color = if (isError) ErrorText else Gray400,
-                    fontSize = 14.sp
+                    fontSize = fontSize
                 )
             }
             BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
-                textStyle = TextStyle(color = if (isError) ErrorText else Gray900, fontSize = 14.sp),
+                textStyle = TextStyle(color = if (isError) ErrorText else Gray900, fontSize = fontSize),
                 singleLine = true,
                 keyboardOptions = keyboardOptions,
                 visualTransformation = if (isPassword && !passwordVisible) {

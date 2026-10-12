@@ -3,6 +3,7 @@ package com.semanticsoft.patientmobile.core.ui.components.auth
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,8 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,23 +22,40 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.Blue500
 import com.semanticsoft.patientmobile.core.ui.theme.Blue900
-import com.semanticsoft.patientmobile.core.ui.theme.Gray400
 import com.semanticsoft.patientmobile.core.ui.theme.Purple500
+import com.semanticsoft.patientmobile.core.ui.theme.icons.ArrowForwardIcon
 
 @Composable
 fun GradientPillButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    icon: ImageVector = Icons.AutoMirrored.Filled.ArrowForward,
-    enabled: Boolean = true
+    icon: ImageVector? = ArrowForwardIcon,
+    enabled: Boolean = true,
+    fontSize: TextUnit = 12.sp,
+    fontWeight: FontWeight = FontWeight.Bold,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 32.dp, vertical = 12.dp)
 ) {
     val buttonShape = RoundedCornerShape(AppDimens.cornerRadiusPill)
+    val buttonBrush = if (enabled) {
+        Brush.linearGradient(
+            0.0f to Blue900,
+            0.5f to Blue500,
+            1.0f to Purple500
+        )
+    } else {
+        Brush.linearGradient(
+            0.0f to Blue900.copy(alpha = 0.25f),
+            0.5f to Blue500.copy(alpha = 0.25f),
+            1.0f to Purple500.copy(alpha = 0.25f)
+        )
+    }
 
     Row(
         modifier = modifier
@@ -50,33 +66,28 @@ fun GradientPillButton(
                 ambientColor = Color.Black.copy(alpha = 0.05f),
                 spotColor = Color.Black.copy(alpha = 0.05f)
             )
-            .background(
-                Brush.linearGradient(
-                    0.0f to Blue900,
-                    0.5f to Blue500,
-                    1.0f to Purple500
-                ).let { if (enabled) it else Brush.linearGradient(listOf(Gray400, Gray400)) },
-                buttonShape
-            )
+            .background(buttonBrush, buttonShape)
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 32.dp, vertical = 12.dp),
+            .padding(contentPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
         Text(
             text = text,
             color = Color.White,
-            fontSize = 12.sp,
+            fontSize = fontSize,
             lineHeight = 18.sp,
-            fontWeight = FontWeight.Bold,
+            fontWeight = fontWeight,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.width(8.dp))
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(18.dp)
-        )
+        if (icon != null) {
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier.size(12.dp)
+            )
+        }
     }
 }

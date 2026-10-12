@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,10 +21,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.theme.Gray100
 import com.semanticsoft.patientmobile.core.ui.theme.Gray200
+import com.semanticsoft.patientmobile.core.ui.theme.Gray400
+import com.semanticsoft.patientmobile.core.ui.theme.TextTertiary
 
 private val ColorGreen = Color(0xFF22C55E)
 private val ColorRed = Color(0xFFEF4444)
@@ -59,21 +64,25 @@ internal fun computePasswordCriteria(password: String, email: String = ""): Pass
 }
 
 @Composable
-internal fun PasswordCriteriaRow(met: Boolean, label: String, metColor: Color = ColorGreen) {
-    val color = if (met) metColor else ColorRed
+internal fun PasswordCriteriaRow(
+    met: Boolean,
+    label: String,
+    metColor: Color = ColorGreen,
+    fontSize: TextUnit = 14.sp
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
-            imageVector = if (met) Icons.Outlined.Check else Icons.Outlined.Close,
+            imageVector = if (met) Icons.Outlined.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
             contentDescription = null,
-            tint = color,
-            modifier = Modifier.size(14.dp)
+            tint = if (met) metColor else Gray400,
+            modifier = Modifier.size(16.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = label,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = color
+            fontSize = fontSize,
+            fontWeight = FontWeight.Normal,
+            color = TextTertiary
         )
     }
 }

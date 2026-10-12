@@ -63,6 +63,7 @@ fun LoginScreen(
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onLoginClick: () -> Unit,
+    onLaboratorAccess: () -> Unit,
     onGoToRegister: () -> Unit,
     onGoToLabRegister: () -> Unit,
     onGoToForgotPassword: () -> Unit
@@ -204,8 +205,12 @@ fun LoginScreen(
                             RoundedCornerShape(999.dp)
                         )
                         .clickable {
-                            hasAttemptedLogin = true
-                            onLoginClick()
+                            if (selectedRole == "Laborator") {
+                                onLaboratorAccess()
+                            } else {
+                                hasAttemptedLogin = true
+                                onLoginClick()
+                            }
                         },
                     contentAlignment = Alignment.Center
                 ) {

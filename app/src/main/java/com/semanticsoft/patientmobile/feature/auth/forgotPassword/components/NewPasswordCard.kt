@@ -235,8 +235,8 @@ private fun PasswordChecklist(
             .fillMaxWidth()
             .background(Gray50, RoundedCornerShape(AppDimens.cornerRadiusMedium))
             .border(1.dp, Gray300, RoundedCornerShape(AppDimens.cornerRadiusMedium))
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+            .padding(AppDimens.paddingDefault),
+        verticalArrangement = Arrangement.spacedBy(AppDimens.gapMedium)
     ) {
         PasswordCriteriaRow(met = criteria.hasLength, label = "Minim 8 caractere", metColor = Emerald600)
         PasswordCriteriaRow(met = criteria.hasUppercase, label = "Minim o literă majusculă", metColor = Emerald600)
