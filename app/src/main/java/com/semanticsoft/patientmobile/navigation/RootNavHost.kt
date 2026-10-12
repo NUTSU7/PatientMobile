@@ -16,6 +16,9 @@ import com.semanticsoft.patientmobile.domain.model.common.UserRole
 import com.semanticsoft.patientmobile.feature.auth.AuthEvent
 import com.semanticsoft.patientmobile.feature.auth.AuthState
 import com.semanticsoft.patientmobile.feature.auth.AuthViewModel
+import com.semanticsoft.patientmobile.feature.auth.forgotPassword.ForgotPasswordEvent
+import com.semanticsoft.patientmobile.feature.auth.forgotPassword.ForgotPasswordScreen
+import com.semanticsoft.patientmobile.feature.auth.forgotPassword.ForgotPasswordViewModel
 import com.semanticsoft.patientmobile.feature.auth.login.LoginEvent
 import com.semanticsoft.patientmobile.feature.auth.login.LoginScreen
 import com.semanticsoft.patientmobile.feature.auth.login.LoginViewModel
@@ -91,7 +94,36 @@ fun RootNavHost(navController: NavHostController = rememberNavController()) {
                 onPasswordChange = vm::onPasswordChange,
                 onLoginClick = vm::login,
                 onGoToRegister = { navController.navigate(AppDestination.PatientRegistration.route) },
-                onGoToLabRegister = { navController.navigate(AppDestination.LaboratorRegistration.route) }
+                onGoToLabRegister = { navController.navigate(AppDestination.LaboratorRegistration.route) },
+                onGoToForgotPassword = { navController.navigate(AppDestination.ForgotPassword.route) }
+            )
+        }
+
+        composable(AppDestination.ForgotPassword.route) {
+            val vm: ForgotPasswordViewModel = hiltViewModel()
+            val state by vm.state.collectAsStateWithLifecycle()
+
+            LaunchedEffect(vm) {
+                vm.events.collectLatest { event ->
+                    when (event) {
+                        is ForgotPasswordEvent.CodeSubmitted -> Unit
+                        ForgotPasswordEvent.ResendRequested -> Unit
+                        ForgotPasswordEvent.PasswordChanged -> Unit
+                    }
+                }
+            }
+
+            ForgotPasswordScreen(
+                state = state,
+                onEmailChange = vm::onEmailChange,
+                onRequestSubmit = vm::onRequestSubmit,
+                onCodeChange = vm::onCodeChange,
+                onResendClick = vm::onResendClick,
+                onNewPasswordChange = vm::onNewPasswordChange,
+                onConfirmPasswordChange = vm::onConfirmPasswordChange,
+                onSubmitNewPassword = vm::onSubmitNewPassword,
+                onRequestNewCode = vm::onRequestNewCode,
+                onBackToLogin = { navController.popBackStack() }
             )
         }
 

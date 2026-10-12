@@ -59,8 +59,8 @@ internal fun computePasswordCriteria(password: String, email: String = ""): Pass
 }
 
 @Composable
-internal fun PasswordCriteriaRow(met: Boolean, label: String) {
-    val color = if (met) ColorGreen else ColorRed
+internal fun PasswordCriteriaRow(met: Boolean, label: String, metColor: Color = ColorGreen) {
+    val color = if (met) metColor else ColorRed
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = if (met) Icons.Outlined.Check else Icons.Outlined.Close,

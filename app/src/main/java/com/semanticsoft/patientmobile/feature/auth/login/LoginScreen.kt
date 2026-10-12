@@ -54,7 +54,8 @@ fun LoginScreen(
     onPasswordChange: (String) -> Unit,
     onLoginClick: () -> Unit,
     onGoToRegister: () -> Unit,
-    onGoToLabRegister: () -> Unit
+    onGoToLabRegister: () -> Unit,
+    onGoToForgotPassword: () -> Unit
 ) {
     SetStatusBar(color = Color(0xFF3B82F6), darkIcons = false)
     var passwordVisible by remember { mutableStateOf(false) }
@@ -149,7 +150,8 @@ fun LoginScreen(
                         text = "Ai uitat parola?",
                         color = Color(0xFF4F46E5),
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.clickable(onClick = onGoToForgotPassword)
                     )
                 }
                 Spacer(modifier = Modifier.height(tinySpacing))
