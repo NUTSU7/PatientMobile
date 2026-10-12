@@ -1,12 +1,5 @@
 package com.semanticsoft.patientmobile.domain.model.patient
 
-data class UiAttentionItem(
-    val marker: String,
-    val value: String,
-    val unit: String,
-    val severity: String
-)
-
 data class UiMarkerSummary(
     val normal: Int,
     val borderline: Int,
@@ -48,58 +41,4 @@ data class BasicIndicatorItem(
     val historyPoints: List<Float> = emptyList(),
     val referenceLow: Float? = null,
     val referenceHigh: Float? = null
-)
-
-data class MarkerCategoryItem(
-    val name: String,
-    val count: Int
-)
-
-data class GeneralMarkerCardItem(
-    val title: String,
-    val category: String,
-    val value: String,
-    val unit: String,
-    val status: IndicatorStatus,
-    val normalRange: String,
-    val borderlineRange: String,
-    val attentionRange: String
-)
-
-enum class WarningLevel {
-    HIGH,      // "Atenție!"
-    MODERATE   // "Atenție moderată"
-}
-
-data class WarningIndicatorItem(
-    val name: String,
-    val value: String,
-    val unit: String
-)
-
-data class WarningCardItem(
-    val level: WarningLevel,
-    val indicators: List<WarningIndicatorItem>
-)
-
-enum class ClinicalPillarType {
-    BLOOD_CELLS,
-    ORGANS_METABOLISM,
-    HEART_CV,
-    HORMONES,
-    ONCOLOGY_MARKERS,
-    NUTRITION_VITAMINS,
-    COAGULATION,
-    INFECTIONS_IMMUNOLOGY
-}
-
-enum class ClinicalPillarAlert {
-    NONE,
-    GOOD,
-    ATTENTION
-}
-
-data class ClinicalPillarCardItem(
-    val type: ClinicalPillarType,
-    val reportCount: Int
 )

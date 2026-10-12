@@ -80,18 +80,6 @@ data class MedicineScheduleUiItem(
     val mealRelation: MealRelation = MealRelation.NO_MEAL_RELATION
 )
 
-sealed interface MedicationsState {
-    data object Loading : MedicationsState
-    data class Success(val medications: List<MedicineItem>) : MedicationsState
-    data class Error(val message: String) : MedicationsState
-}
-
-sealed interface PersonalNotesState {
-    data object Loading : PersonalNotesState
-    data class Success(val notes: List<PersonalNoteItem>) : PersonalNotesState
-    data class Error(val message: String) : PersonalNotesState
-}
-
 enum class NoteSeverity {
     GOOD,
     OK,
@@ -171,11 +159,6 @@ data class MedicalHistoryUiState(
     val showRetryDialog: Boolean
         get() = retryDialogDocumentId != null
 
-    val readyDocuments: List<PatientDocument>
-        get() = allDocuments.filter { documentReadiness[it.id] == DocumentReadiness.Ready }
-    val hasPendingDocuments: Boolean
-        get() = allDocuments.any { documentReadiness[it.id] in listOf(DocumentReadiness.Checking, DocumentReadiness.Pending) }
-
     val analysisDocuments: List<PatientDocument>
         get() = allDocuments
 
@@ -239,12 +222,6 @@ class MedicalHistoryViewModel @Inject constructor(
 
     private val _events = MutableSharedFlow<MedicalHistoryEvent>()
     val events: SharedFlow<MedicalHistoryEvent> = _events.asSharedFlow()
-
-    private val _medicationsState = MutableStateFlow<MedicationsState>(MedicationsState.Loading)
-    val medicationsState: StateFlow<MedicationsState> = _medicationsState.asStateFlow()
-
-    private val _notesState = MutableStateFlow<PersonalNotesState>(PersonalNotesState.Loading)
-    val notesState: StateFlow<PersonalNotesState> = _notesState.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -322,12 +299,10 @@ class MedicalHistoryViewModel @Inject constructor(
                             med.effectiveDate ?: med.endDate ?: LocalDate.EPOCH
                         }
                         .map { it.toUiItem() }
-                    _medicationsState.update { MedicationsState.Success(items) }
                     items
                 }
                 else -> {
                     val msg = result.toUserMessage()
-                    _medicationsState.update { MedicationsState.Error(msg) }
                     _state.value.medicines
                 }
             }
@@ -337,12 +312,10 @@ class MedicalHistoryViewModel @Inject constructor(
                     val items = result.data
                         .sortedByDescending { it.noteDate }
                         .map { it.toUiItem() }
-                    _notesState.update { PersonalNotesState.Success(items) }
                     items
                 }
                 else -> {
                     val msg = result.toUserMessage()
-                    _notesState.update { PersonalNotesState.Error(msg) }
                     _state.value.notes
                 }
             }
@@ -432,33 +405,6 @@ class MedicalHistoryViewModel @Inject constructor(
             updated.copy(
                 selectedDate = if (year != null) updated.observedDatesForSelectedYear.firstOrNull() else null
             )
-        }
-    }
-
-    fun selectPreviousYear() {
-        val years = _state.value.availableYears
-        if (years.isEmpty()) return
-        val selectedYear = _state.value.selectedYear
-        if (selectedYear == null) {
-            onYearSelected(years.first())
-            return
-        }
-        val currentIndex = years.indexOf(selectedYear)
-        if (currentIndex >= 0 && currentIndex < years.lastIndex) {
-            onYearSelected(years[currentIndex + 1])
-        }
-    }
-
-    fun selectNextYear() {
-        val years = _state.value.availableYears
-        if (years.isEmpty()) return
-        val selectedYear = _state.value.selectedYear
-        if (selectedYear == null) return
-        val currentIndex = years.indexOf(selectedYear)
-        if (currentIndex > 0) {
-            onYearSelected(years[currentIndex - 1])
-        } else {
-            onYearSelected(null)
         }
     }
 
@@ -586,10 +532,6 @@ class MedicalHistoryViewModel @Inject constructor(
                 ocrNoteAttachmentIds = emptyList()
             )
         }
-    }
-
-    fun confirmMedicationOcrReview() {
-        // cleared by dialog dismiss
     }
 
     fun addMedicine(
@@ -863,33 +805,6 @@ class MedicalHistoryViewModel @Inject constructor(
                     _state.update { it.copy(reviewDialogError = result.toUserMessage()) }
                 }
             }
-        }
-    }
-
-    fun attachFile(document: PatientDocument) {
-        _state.update { current ->
-            val docs = listOf(document) + current.allDocuments
-            val years = docs
-                .mapNotNull { it.observedAt ?: it.uploadedAt }
-                .map { it.atZone(ZoneId.systemDefault()).year }
-                .distinct()
-                .sortedDescending()
-            val currentYear = LocalDate.now().year
-            val selectedYear = when {
-                current.selectedYear == null -> null
-                years.contains(current.selectedYear) -> current.selectedYear
-                years.contains(currentYear) -> currentYear
-                years.isNotEmpty() -> years.first()
-                else -> null
-            }
-            val updatedState = current.copy(
-                allDocuments = docs,
-                availableYears = years,
-                selectedYear = selectedYear
-            )
-            updatedState.copy(
-                selectedDate = if (selectedYear != null) updatedState.observedDatesForSelectedYear.firstOrNull() else null
-            )
         }
     }
 

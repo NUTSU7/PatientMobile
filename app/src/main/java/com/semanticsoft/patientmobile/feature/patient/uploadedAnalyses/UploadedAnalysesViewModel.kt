@@ -55,13 +55,6 @@ data class UploadedAnalysesUiState(
     val showBulkDeleteDialog: Boolean
         get() = dialogState is DialogState.BulkDelete
 
-    val latestUploadDate: String?
-        get() = allDocuments
-            .maxByOrNull { it.uploadedAt }
-            ?.uploadedAt
-            ?.toString()
-            ?.substringBefore("T")
-
     private val sortComparator: Comparator<PatientDocument>
         get() {
             val base = when (sortCriteria) {

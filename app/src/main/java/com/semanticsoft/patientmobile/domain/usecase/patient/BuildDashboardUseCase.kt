@@ -3,41 +3,23 @@ package com.semanticsoft.patientmobile.domain.usecase.patient
 import com.semanticsoft.patientmobile.core.util.ApiResult
 import com.semanticsoft.patientmobile.domain.model.patient.AiSummary
 import com.semanticsoft.patientmobile.domain.model.patient.BasicIndicatorItem
-import com.semanticsoft.patientmobile.domain.model.patient.ClinicalPillarCardItem
-import com.semanticsoft.patientmobile.domain.model.patient.ClinicalPillarType
 import com.semanticsoft.patientmobile.domain.model.patient.IndicatorSegments
 import com.semanticsoft.patientmobile.domain.model.patient.IndicatorStatus
 import com.semanticsoft.patientmobile.domain.model.patient.IndicatorTrendDirection
-import com.semanticsoft.patientmobile.domain.model.patient.MarkerCategoryItem
 import com.semanticsoft.patientmobile.domain.model.patient.MedicalResult
-import com.semanticsoft.patientmobile.domain.model.patient.UiAttentionItem
 import com.semanticsoft.patientmobile.domain.model.patient.UiMarkerSummary
-import com.semanticsoft.patientmobile.domain.model.patient.WarningLevel
-import com.semanticsoft.patientmobile.domain.model.patient.WarningCardItem
-import com.semanticsoft.patientmobile.domain.model.patient.WarningIndicatorItem
 import java.text.Normalizer
 import javax.inject.Inject
 
 data class DashboardCardData(
-    val attentionItems: List<UiAttentionItem>,
-    val markerCategories: List<MarkerCategoryItem>,
-    val markerSummary: UiMarkerSummary,
-    val warningCards: List<WarningCardItem>,
-    val clinicalPillarCards: List<ClinicalPillarCardItem>
+    val markerSummary: UiMarkerSummary
 )
 
 class BuildDashboardUseCase @Inject constructor() {
 
     operator fun invoke(results: List<MedicalResult>): DashboardCardData {
-        val abnormal = results.filter { !it.abnormalFlag.isNullOrBlank() }
-        val categories = results.groupBy { it.analysisGroup.ifBlank { "Altele" } }
-
         return DashboardCardData(
-            attentionItems = buildAttentionItems(abnormal),
-            markerCategories = buildMarkerCategories(categories),
-            markerSummary = buildSummary(results),
-            warningCards = buildWarningCards(abnormal),
-            clinicalPillarCards = buildClinicalPillars(categories)
+            markerSummary = buildSummary(results)
         )
     }
 
@@ -170,75 +152,6 @@ class BuildDashboardUseCase @Inject constructor() {
         return Pair(null, null)
     }
 
-    private fun buildMarkerCategories(categories: Map<String, List<MedicalResult>>): List<MarkerCategoryItem> {
-        return categories.map { (group, items) ->
-            MarkerCategoryItem(name = group, count = items.size)
-        }
-    }
-
-    private fun buildAttentionItems(abnormal: List<MedicalResult>): List<UiAttentionItem> {
-        return abnormal.map { r ->
-            UiAttentionItem(
-                marker = r.originalTestName.ifBlank { r.canonicalName },
-                value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
-                unit = r.unit,
-                severity = r.abnormalFlag ?: "Aten\u021Bie"
-            )
-        }
-    }
-
-    private fun buildWarningCards(abnormal: List<MedicalResult>): List<WarningCardItem> {
-        if (abnormal.isEmpty()) return emptyList()
-
-        val highFlags = listOf("HIGH", "ATTENTION", "ABNORMAL", "CRITICAL")
-        val highItems = abnormal.filter {
-            it.abnormalFlag?.uppercase() in highFlags
-        }
-        val moderateItems = abnormal.filter {
-            it.abnormalFlag?.uppercase() !in highFlags
-        }
-
-        val cards = mutableListOf<WarningCardItem>()
-        if (highItems.isNotEmpty()) {
-            cards.add(
-                WarningCardItem(
-                    level = WarningLevel.HIGH,
-                    indicators = highItems.map { r ->
-                        WarningIndicatorItem(
-                            name = r.originalTestName.ifBlank { r.canonicalName },
-                            value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
-                            unit = r.unit
-                        )
-                    }
-                )
-            )
-        }
-        if (moderateItems.isNotEmpty()) {
-            cards.add(
-                WarningCardItem(
-                    level = WarningLevel.MODERATE,
-                    indicators = moderateItems.map { r ->
-                        WarningIndicatorItem(
-                            name = r.originalTestName.ifBlank { r.canonicalName },
-                            value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
-                            unit = r.unit
-                        )
-                    }
-                )
-            )
-        }
-        return cards
-    }
-
-    private fun buildClinicalPillars(categories: Map<String, List<MedicalResult>>): List<ClinicalPillarCardItem> {
-        return categories.map { (group, items) ->
-            ClinicalPillarCardItem(
-                type = parsePillarType(group),
-                reportCount = items.size
-            )
-        }
-    }
-
     private fun parseStatus(result: MedicalResult): IndicatorStatus {
         val hasRef = hasValidReferenceRange(result)
         if (!hasRef) return IndicatorStatus.NO_REFERENCE
@@ -259,20 +172,6 @@ class BuildDashboardUseCase @Inject constructor() {
             return high > low
         }
         return low != null || high != null
-    }
-
-    private fun parsePillarType(analysisGroup: String): ClinicalPillarType {
-        return when (analysisGroup.uppercase()) {
-            "HEMATOLOGY", "HEMATOLOGIE" -> ClinicalPillarType.BLOOD_CELLS
-            "BIOCHEMISTRY", "BIOCHIMIE" -> ClinicalPillarType.ORGANS_METABOLISM
-            "CARDIOLOGY", "CARDIOLOGIE", "LIPIDS", "LIPIDE" -> ClinicalPillarType.HEART_CV
-            "HORMONES", "HORMONI", "THYROID", "TIROIDA" -> ClinicalPillarType.HORMONES
-            "ONCOLOGY", "ONCOLOGIE", "TUMOR_MARKERS" -> ClinicalPillarType.ONCOLOGY_MARKERS
-            "VITAMINS", "VITAMINE", "NUTRITION", "NUTRITIE" -> ClinicalPillarType.NUTRITION_VITAMINS
-            "COAGULATION", "COAGULARE" -> ClinicalPillarType.COAGULATION
-            "IMMUNOLOGY", "IMUNOLOGIE", "INFECTIONS" -> ClinicalPillarType.INFECTIONS_IMMUNOLOGY
-            else -> ClinicalPillarType.ORGANS_METABOLISM
-        }
     }
 
     private fun normalizeForGrouping(name: String): String {

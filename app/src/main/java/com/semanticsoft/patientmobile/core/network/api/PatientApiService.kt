@@ -8,7 +8,6 @@ import com.semanticsoft.patientmobile.core.network.dto.patient.CreateMedicationR
 import com.semanticsoft.patientmobile.core.network.dto.patient.CreateNoteRequest
 import com.semanticsoft.patientmobile.core.network.dto.patient.CreateShareLinkRequest
 import com.semanticsoft.patientmobile.core.network.dto.shared.CreateSharedLinkDto
-import com.semanticsoft.patientmobile.core.network.dto.patient.DashboardSummaryDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.DocumentDetailDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.DocumentDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.DuplicateCheckRequest
@@ -148,9 +147,6 @@ interface PatientApiService {
     ): MedicalReportWithResultsDto
 
     // ── Dashboard ──────────────────────────────────────────────────────────
-
-    @GET("patient/dashboard")
-    suspend fun getDashboardSummary(): DashboardSummaryDto
 
     @GET("patient/dashboard/ai-summary")
     suspend fun getAiSummary(): AiSummaryResponse
