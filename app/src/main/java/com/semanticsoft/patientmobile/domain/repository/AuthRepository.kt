@@ -1,6 +1,6 @@
 package com.semanticsoft.patientmobile.domain.repository
 
-import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.RegisterRequest
 import com.semanticsoft.patientmobile.domain.model.AuthResponse
 import com.semanticsoft.patientmobile.domain.model.User
 import com.semanticsoft.patientmobile.util.ApiResult

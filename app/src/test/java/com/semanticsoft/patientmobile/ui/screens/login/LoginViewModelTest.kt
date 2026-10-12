@@ -1,8 +1,9 @@
 package com.semanticsoft.patientmobile.ui.screens.login
 
-import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.RegisterRequest
 import com.semanticsoft.patientmobile.domain.model.AuthResponse
 import com.semanticsoft.patientmobile.domain.model.User
+import com.semanticsoft.patientmobile.domain.model.UserRole
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.testutil.MainDispatcherRule
 import com.semanticsoft.patientmobile.util.ApiResult
@@ -90,22 +91,6 @@ class LoginViewModelTest {
         assertFalse(vm.state.value.isLoading)
     }
 
-    @Test
-    fun onRoleSelected_defaultsToPatient() = runTest {
-        val vm = LoginViewModel(FakeAuthRepository())
-
-        assertEquals(LoginRole.PATIENT, vm.state.value.selectedRole)
-    }
-
-    @Test
-    fun onRoleSelected_updatesSelectedRole() = runTest {
-        val vm = LoginViewModel(FakeAuthRepository())
-
-        vm.onRoleSelected(LoginRole.LABORATOR)
-
-        assertEquals(LoginRole.LABORATOR, vm.state.value.selectedRole)
-    }
-
     private class FakeAuthRepository(
         private val loginResult: ApiResult<AuthResponse> = ApiResult.Success(
             AuthResponse(
@@ -114,7 +99,7 @@ class LoginViewModelTest {
                 tokenType = "BEARER",
                 expiresIn = 1,
                 refreshExpiresIn = 1,
-                user = User("u1", "john@example.com", "John", "Doe", LocalDate.parse("1990-01-01"), "PATIENT", Instant.EPOCH)
+                user = User("u1", "john@example.com", "John", "Doe", LocalDate.parse("1990-01-01"), UserRole.PATIENT, Instant.EPOCH)
             )
         )
     ) : AuthRepository {
@@ -126,7 +111,7 @@ class LoginViewModelTest {
         override suspend fun refresh(): ApiResult<AuthResponse> = loginResult
         override suspend fun logout() = Unit
         override suspend fun getCurrentUser(): ApiResult<User> =
-            ApiResult.Success(User("u1", "john@example.com", "John", "Doe", LocalDate.parse("1990-01-01"), "PATIENT", Instant.EPOCH))
+            ApiResult.Success(User("u1", "john@example.com", "John", "Doe", LocalDate.parse("1990-01-01"), UserRole.PATIENT, Instant.EPOCH))
         override suspend fun isLoggedIn(): Boolean = true
         override suspend fun changePassword(currentPassword: String, newPassword: String, confirmNewPassword: String): ApiResult<Unit> =
             throw UnsupportedOperationException()

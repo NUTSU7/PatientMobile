@@ -61,7 +61,7 @@ data class ClinicalPillarCard(
 data class DashboardSummary(
     val greetingName: String? = null,
     val fullName: String? = null,
-    val role: String? = null,
+    val role: UserRole? = null,
     val attentionItems: List<AttentionItem> = emptyList(),
     val basicIndicators: List<BasicIndicator> = emptyList(),
     val markerCategories: List<MarkerCategory> = emptyList(),

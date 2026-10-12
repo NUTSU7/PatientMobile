@@ -1,9 +1,8 @@
 package com.semanticsoft.patientmobile.data.remote.interceptors
 
-import android.content.Context
 import android.util.Log
 import com.semanticsoft.patientmobile.BuildConfig
-import com.semanticsoft.patientmobile.data.local.datastore.SecureTokenStore
+import com.semanticsoft.patientmobile.data.local.session.TokenManager
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -20,12 +19,11 @@ import okhttp3.Response
 import okhttp3.Route
 
 class TokenRefreshAuthenticator(
-    context: Context,
+    private val tokenManager: TokenManager,
     private val refreshClient: OkHttpClient,
     private val json: Json
 ) : Authenticator {
 
-    private val tokenStore = SecureTokenStore(context.applicationContext)
     private val mutex = Mutex()
 
     override fun authenticate(route: Route?, response: Response): Request? {
@@ -37,13 +35,13 @@ class TokenRefreshAuthenticator(
             if (BuildConfig.DEBUG) {
                 Log.d(TAG, "Already retried — propagating 401")
             }
-            tokenStore.clearTokens()
+            tokenManager.clearTokens()
             return null
         }
 
         return runBlocking {
             mutex.withLock {
-                val currentAccessToken = tokenStore.getAccessToken()
+                val currentAccessToken = tokenManager.getAccessToken()
                 val originalToken = response.request.header(AUTH_HEADER)?.removePrefix("$BEARER ")
 
                 if (!currentAccessToken.isNullOrBlank() && currentAccessToken != originalToken) {
@@ -55,18 +53,18 @@ class TokenRefreshAuthenticator(
                         .header(HEADER_RETRY, "1")
                         .build()
                 } else {
-                    val refreshToken = tokenStore.getRefreshToken()
+                    val refreshToken = tokenManager.getRefreshToken()
                     if (refreshToken.isNullOrBlank()) {
                         if (BuildConfig.DEBUG) {
                             Log.d(TAG, "No refresh token — propagating 401")
                         }
-                        tokenStore.clearTokens()
+                        tokenManager.clearTokens()
                         null
                     } else {
                         val newTokens = performRefresh(refreshToken)
                         if (newTokens != null) {
                             val (accessToken, newRefreshToken) = newTokens
-                            tokenStore.saveTokens(accessToken, newRefreshToken)
+                            tokenManager.saveTokens(accessToken, newRefreshToken)
                             response.request.newBuilder()
                                 .header(AUTH_HEADER, "$BEARER $accessToken")
                                 .header(HEADER_RETRY, "1")
@@ -75,7 +73,7 @@ class TokenRefreshAuthenticator(
                             if (BuildConfig.DEBUG) {
                                 Log.d(TAG, "Refresh failed — clearing tokens, propagating 401")
                             }
-                            tokenStore.clearTokens()
+                            tokenManager.clearTokens()
                             null
                         }
                     }

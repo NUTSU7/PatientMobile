@@ -44,7 +44,6 @@ import com.semanticsoft.patientmobile.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.ui.screens.auth.components.AuthInput
 import com.semanticsoft.patientmobile.ui.screens.auth.components.AuthLabel
 import com.semanticsoft.patientmobile.ui.screens.auth.components.AuthTopHeader
-import com.semanticsoft.patientmobile.ui.screens.login.components.LoginRoleSelector
 import com.semanticsoft.patientmobile.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.ui.theme.Purple500
 
@@ -53,7 +52,6 @@ fun LoginScreen(
     state: LoginUiState,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
-    onRoleSelected: (LoginRole) -> Unit,
     onLoginClick: () -> Unit,
     onGoToRegister: () -> Unit,
     onGoToLabRegister: () -> Unit
@@ -130,14 +128,6 @@ fun LoginScreen(
                     lineHeight = titleLineHeight
                 )
                 Spacer(modifier = Modifier.height(if (isVeryCompactHeight) 20.dp else 28.dp))
-                AuthLabel("M\u0103 loghez ca")
-                Spacer(modifier = Modifier.height(tinySpacing))
-                LoginRoleSelector(
-                    selectedRole = state.selectedRole,
-                    onRoleSelected = onRoleSelected,
-                    inputHeight = inputHeight
-                )
-                Spacer(modifier = Modifier.height(sectionSpacing))
                 AuthLabel("Adresa de email")
                 Spacer(modifier = Modifier.height(tinySpacing))
                 AuthInput(

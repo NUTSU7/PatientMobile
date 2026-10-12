@@ -18,7 +18,7 @@ data class User(
     val lastName: String? = null,
     @Serializable(with = LocalDateSerializer::class)
     val dateOfBirth: LocalDate? = null,
-    val role: String,
+    val role: UserRole,
     @Serializable(with = InstantSerializer::class)
     val createdAt: Instant
 )

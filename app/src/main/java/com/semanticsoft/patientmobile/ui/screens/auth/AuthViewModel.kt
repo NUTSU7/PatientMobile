@@ -3,6 +3,7 @@ package com.semanticsoft.patientmobile.ui.screens.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.domain.model.User
+import com.semanticsoft.patientmobile.domain.model.UserRole
 import com.semanticsoft.patientmobile.domain.repository.AuthRepository
 import com.semanticsoft.patientmobile.domain.repository.ProcessingCoordinator
 import com.semanticsoft.patientmobile.util.ApiResult
@@ -20,7 +21,11 @@ import kotlinx.coroutines.launch
 sealed interface AuthState {
     data object Loading : AuthState
     data object LoggedOut : AuthState
-    data class Authenticated(val displayName: String, val email: String) : AuthState
+    data class Authenticated(
+        val displayName: String,
+        val email: String,
+        val role: UserRole
+    ) : AuthState
     data object SessionExpired : AuthState
 }
 
@@ -51,7 +56,8 @@ class AuthViewModel @Inject constructor(
                 is ApiResult.Success -> {
                     _state.update { AuthState.Authenticated(
                         displayName = result.data.toDisplayName(),
-                        email = result.data.email
+                        email = result.data.email,
+                        role = result.data.role
                     )}
                 }
                 is ApiResult.AuthError -> {

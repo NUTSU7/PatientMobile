@@ -1,13 +1,13 @@
 package com.semanticsoft.patientmobile.data.repository
 
-import com.semanticsoft.patientmobile.data.local.datastore.TokenManager
-import com.semanticsoft.patientmobile.data.remote.api.PatientApiService
-import com.semanticsoft.patientmobile.data.remote.api.dto.AuthResponse as AuthResponseDto
-import com.semanticsoft.patientmobile.data.remote.api.dto.LoginRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.RefreshRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.RefreshResponse
-import com.semanticsoft.patientmobile.data.remote.api.dto.RegisterRequest
-import com.semanticsoft.patientmobile.data.remote.api.dto.UserDto
+import com.semanticsoft.patientmobile.data.local.session.TokenManager
+import com.semanticsoft.patientmobile.data.remote.api.AuthApiService
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.AuthResponse as AuthResponseDto
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.LoginRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.RefreshRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.RefreshResponse
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.RegisterRequest
+import com.semanticsoft.patientmobile.data.remote.api.dto.auth.UserDto
 import com.semanticsoft.patientmobile.util.ApiResult
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -28,7 +28,7 @@ class AuthRepositoryImplTest {
     @get:Rule
     val mainDispatcherRule = com.semanticsoft.patientmobile.testutil.MainDispatcherRule()
 
-    private val apiService: PatientApiService = mock()
+    private val apiService: AuthApiService = mock()
     private val tokenManager: TokenManager = mock()
 
     @Test

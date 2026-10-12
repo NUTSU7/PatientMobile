@@ -5,10 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.di.IoDispatcher
 import com.semanticsoft.patientmobile.domain.model.ProcessingStatus
-import com.semanticsoft.patientmobile.domain.repository.DocumentRepository
+import com.semanticsoft.patientmobile.domain.repository.patient.DocumentRepository
 import com.semanticsoft.patientmobile.domain.repository.ExtractionTarget
 import com.semanticsoft.patientmobile.domain.repository.GlobalSyncManager
-import com.semanticsoft.patientmobile.domain.repository.OcrRepository
+import com.semanticsoft.patientmobile.domain.repository.patient.OcrRepository
 import com.semanticsoft.patientmobile.domain.repository.ProcessingCoordinator
 import com.semanticsoft.patientmobile.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
