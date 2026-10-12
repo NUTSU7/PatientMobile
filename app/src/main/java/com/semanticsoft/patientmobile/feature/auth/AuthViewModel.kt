@@ -4,8 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.domain.model.common.User
 import com.semanticsoft.patientmobile.domain.model.common.UserRole
-import com.semanticsoft.patientmobile.domain.repository.common.AuthRepository
 import com.semanticsoft.patientmobile.domain.repository.patient.ProcessingCoordinator
+import com.semanticsoft.patientmobile.domain.usecase.common.CheckSessionUseCase
+import com.semanticsoft.patientmobile.domain.usecase.common.LogoutUseCase
 import com.semanticsoft.patientmobile.core.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -35,7 +36,8 @@ sealed interface AuthEvent {
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
+    private val checkSessionUseCase: CheckSessionUseCase,
+    private val logoutUseCase: LogoutUseCase,
     private val processingCoordinator: ProcessingCoordinator
 ) : ViewModel() {
 
@@ -52,7 +54,7 @@ class AuthViewModel @Inject constructor(
     fun checkSession() {
         viewModelScope.launch {
             _state.update { AuthState.Loading }
-            when (val result = authRepository.getCurrentUser()) {
+            when (val result = checkSessionUseCase()) {
                 is ApiResult.Success -> {
                     _state.update { AuthState.Authenticated(
                         displayName = result.data.toDisplayName(),
@@ -74,7 +76,7 @@ class AuthViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             try {
-                authRepository.logout()
+                logoutUseCase()
             } catch (_: Exception) {}
             processingCoordinator.reset()
             _state.update { AuthState.LoggedOut }

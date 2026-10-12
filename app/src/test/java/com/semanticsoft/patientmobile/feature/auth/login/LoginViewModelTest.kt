@@ -1,5 +1,6 @@
 package com.semanticsoft.patientmobile.feature.auth.login
 
+import com.semanticsoft.patientmobile.domain.usecase.common.LoginUseCase
 import com.semanticsoft.patientmobile.domain.model.common.RegistrationRequest
 import com.semanticsoft.patientmobile.domain.model.common.AuthResponse
 import com.semanticsoft.patientmobile.domain.model.common.User
@@ -26,7 +27,7 @@ class LoginViewModelTest {
 
     @Test
     fun login_setsError_forEmptyCredentials() = runTest {
-        val vm = LoginViewModel(FakeAuthRepository())
+        val vm = LoginViewModel(LoginUseCase(FakeAuthRepository()))
 
         vm.login()
         advanceUntilIdle()
@@ -37,7 +38,7 @@ class LoginViewModelTest {
 
     @Test
     fun login_emitsError_forInvalidCredentials() = runTest {
-        val vm = LoginViewModel(FakeAuthRepository(loginResult = ApiResult.AuthError))
+        val vm = LoginViewModel(LoginUseCase(FakeAuthRepository(loginResult = ApiResult.AuthError)))
         vm.onEmailChange("john@example.com")
         vm.onPasswordChange("wrong")
 
@@ -51,7 +52,7 @@ class LoginViewModelTest {
     @Test
     fun login_emitsError_forHttp401() = runTest {
         val vm = LoginViewModel(
-            FakeAuthRepository(loginResult = ApiResult.HttpError(401, "Unauthorized"))
+            LoginUseCase(FakeAuthRepository(loginResult = ApiResult.HttpError(401, "Unauthorized")))
         )
         vm.onEmailChange("john@example.com")
         vm.onPasswordChange("pass")
@@ -66,7 +67,7 @@ class LoginViewModelTest {
     @Test
     fun login_emitsError_forNetworkError() = runTest {
         val vm = LoginViewModel(
-            FakeAuthRepository(loginResult = ApiResult.NetworkError)
+            LoginUseCase(FakeAuthRepository(loginResult = ApiResult.NetworkError))
         )
         vm.onEmailChange("john@example.com")
         vm.onPasswordChange("pass")
@@ -80,7 +81,7 @@ class LoginViewModelTest {
 
     @Test
     fun login_success_clearsError() = runTest {
-        val vm = LoginViewModel(FakeAuthRepository())
+        val vm = LoginViewModel(LoginUseCase(FakeAuthRepository()))
         vm.onEmailChange("john@example.com")
         vm.onPasswordChange("Sup3rStrongPassword!")
 

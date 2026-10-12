@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.domain.repository.common.AuthRepository
 import com.semanticsoft.patientmobile.domain.repository.patient.DocumentRepository
 import com.semanticsoft.patientmobile.domain.repository.common.GlobalSyncManager
+import com.semanticsoft.patientmobile.domain.usecase.common.ChangePasswordUseCase
+import com.semanticsoft.patientmobile.domain.usecase.common.DeleteAccountUseCase
+import com.semanticsoft.patientmobile.domain.usecase.common.LogoutUseCase
 import com.semanticsoft.patientmobile.core.util.ApiResult
 import com.semanticsoft.patientmobile.core.util.PasswordValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -61,7 +64,10 @@ sealed class ProfileEffect {
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val documentRepository: DocumentRepository,
-    private val globalSyncManager: GlobalSyncManager
+    private val globalSyncManager: GlobalSyncManager,
+    private val changePasswordUseCase: ChangePasswordUseCase,
+    private val deleteAccountUseCase: DeleteAccountUseCase,
+    private val logoutUseCase: LogoutUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileUiState(isLoading = true))
@@ -189,7 +195,7 @@ class ProfileViewModel @Inject constructor(
             }
 
             _state.update { it.copy(isLoading = true, changePasswordError = null) }
-            when (val result = authRepository.changePassword(currentPassword, newPassword, confirmPassword)) {
+            when (val result = changePasswordUseCase(currentPassword, newPassword, confirmPassword)) {
                 is ApiResult.Success -> {
                     _state.update { it.copy(isLoading = false, showChangePasswordDialog = false) }
                     _effects.emit(
@@ -234,7 +240,7 @@ class ProfileViewModel @Inject constructor(
                 return@launch
             }
             _state.update { it.copy(isLoading = true, deleteAccountError = null) }
-            when (val result = authRepository.deleteAccount(password, confirmation)) {
+            when (val result = deleteAccountUseCase(password, confirmation)) {
                 is ApiResult.Success -> {
                     _state.update { it.copy(isLoading = false, showDeleteAccountDialog = false) }
                     _effects.emit(ProfileEffect.NavigateToLogin)
@@ -262,7 +268,7 @@ class ProfileViewModel @Inject constructor(
 
     private fun onLogout() {
         viewModelScope.launch {
-            authRepository.logout()
+            logoutUseCase()
             _effects.emit(ProfileEffect.NavigateToLogin)
         }
     }

@@ -1,5 +1,6 @@
 package com.semanticsoft.patientmobile.feature.patient.registration
 
+import com.semanticsoft.patientmobile.domain.usecase.common.RegisterPatientUseCase
 import com.semanticsoft.patientmobile.domain.model.common.RegistrationRequest
 import com.semanticsoft.patientmobile.domain.model.common.AuthResponse
 import com.semanticsoft.patientmobile.domain.model.common.User
@@ -26,7 +27,7 @@ class RegistrationViewModelTest {
 
     @Test
     fun register_setsFieldErrors_forInvalidLocalInput() = runTest {
-        val vm = RegistrationViewModel(FakeAuthRepository())
+        val vm = RegistrationViewModel(RegisterPatientUseCase(FakeAuthRepository()))
 
         vm.register()
         advanceUntilIdle()
@@ -38,7 +39,7 @@ class RegistrationViewModelTest {
     @Test
     fun register_surfacesApiHttpError() = runTest {
         val vm = RegistrationViewModel(
-            FakeAuthRepository(registerResult = ApiResult.HttpError(422, "Already used"))
+            RegisterPatientUseCase(FakeAuthRepository(registerResult = ApiResult.HttpError(422, "Already used")))
         )
         vm.onNameChange("John Doe")
         vm.onEmailChange("john@example.com")
@@ -55,7 +56,7 @@ class RegistrationViewModelTest {
     @Test
     fun register_emitsError_forNetworkError() = runTest {
         val vm = RegistrationViewModel(
-            FakeAuthRepository(registerResult = ApiResult.NetworkError)
+            RegisterPatientUseCase(FakeAuthRepository(registerResult = ApiResult.NetworkError))
         )
         vm.onNameChange("John Doe")
         vm.onEmailChange("john@example.com")
@@ -70,7 +71,7 @@ class RegistrationViewModelTest {
 
     @Test
     fun register_success_clearsErrors() = runTest {
-        val vm = RegistrationViewModel(FakeAuthRepository())
+        val vm = RegistrationViewModel(RegisterPatientUseCase(FakeAuthRepository()))
         vm.onNameChange("John Doe")
         vm.onEmailChange("john@example.com")
         vm.onPasswordChange("Sup3rStrongPassword!")

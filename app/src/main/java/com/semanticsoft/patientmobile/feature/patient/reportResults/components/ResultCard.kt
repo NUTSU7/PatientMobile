@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.feature.patient.reportResults.ResultItem
+import com.semanticsoft.patientmobile.domain.model.patient.ResultItem
 import com.semanticsoft.patientmobile.core.ui.theme.ErrorLightBg
 import com.semanticsoft.patientmobile.core.ui.theme.PastelGreenBg
 import com.semanticsoft.patientmobile.core.ui.theme.PastelOrangeBg

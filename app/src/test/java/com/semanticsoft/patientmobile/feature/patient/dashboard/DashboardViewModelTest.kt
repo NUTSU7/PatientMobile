@@ -21,6 +21,9 @@ import com.semanticsoft.patientmobile.domain.repository.patient.ExtractionTarget
 import com.semanticsoft.patientmobile.domain.repository.common.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.patient.MedicalResultRepository
 import com.semanticsoft.patientmobile.domain.repository.patient.ProcessingCoordinator
+import com.semanticsoft.patientmobile.domain.usecase.common.LogoutUseCase
+import com.semanticsoft.patientmobile.domain.usecase.patient.BuildDashboardUseCase
+import com.semanticsoft.patientmobile.domain.usecase.patient.LoadIndicatorHistoryUseCase
 import com.semanticsoft.patientmobile.testutil.MainDispatcherRule
 import com.semanticsoft.patientmobile.core.util.ApiResult
 import java.io.File
@@ -48,10 +51,12 @@ class DashboardViewModelTest {
 
     @Test
     fun refresh_noError_whenResultsAvailable() = runTest {
+        val authRepository = FakeAuthRepository()
+        val medicalResultRepository = FakeMedicalResultRepository()
         val vm = DashboardViewModel(
-            authRepository = FakeAuthRepository(),
+            authRepository = authRepository,
             dashboardRepository = FakeDashboardRepository(),
-            medicalResultRepository = FakeMedicalResultRepository(),
+            medicalResultRepository = medicalResultRepository,
             documentRepository = FakeDocumentRepository(
                 documentsResult = ApiResult.Success(
                     listOf(
@@ -67,7 +72,10 @@ class DashboardViewModelTest {
                 statsResult = ApiResult.Success(DocumentStats(totalCount = 1, lastUploadedAt = Instant.now()))
             ),
             globalSyncManager = FakeGlobalSyncManager(),
-            processingCoordinator = FakeProcessingCoordinator()
+            processingCoordinator = FakeProcessingCoordinator(),
+            buildDashboardUseCase = BuildDashboardUseCase(),
+            loadIndicatorHistoryUseCase = LoadIndicatorHistoryUseCase(medicalResultRepository),
+            logoutUseCase = LogoutUseCase(authRepository)
         )
 
         val collectJob = launch { vm.state.collect {} }
@@ -82,16 +90,21 @@ class DashboardViewModelTest {
 
     @Test
     fun refresh_setsError_whenAllSourcesFail() = runTest {
+        val authRepository = FakeAuthRepository()
+        val medicalResultRepository = FakeMedicalResultRepository(emptyResults = true)
         val vm = DashboardViewModel(
-            authRepository = FakeAuthRepository(),
+            authRepository = authRepository,
             dashboardRepository = FakeDashboardRepository(),
-            medicalResultRepository = FakeMedicalResultRepository(emptyResults = true),
+            medicalResultRepository = medicalResultRepository,
             documentRepository = FakeDocumentRepository(
                 documentsResult = ApiResult.NetworkError,
                 statsResult = ApiResult.NetworkError
             ),
             globalSyncManager = FakeGlobalSyncManager(),
-            processingCoordinator = FakeProcessingCoordinator()
+            processingCoordinator = FakeProcessingCoordinator(),
+            buildDashboardUseCase = BuildDashboardUseCase(),
+            loadIndicatorHistoryUseCase = LoadIndicatorHistoryUseCase(medicalResultRepository),
+            logoutUseCase = LogoutUseCase(authRepository)
         )
 
         val collectJob = launch { vm.state.collect {} }
@@ -106,10 +119,12 @@ class DashboardViewModelTest {
 
     @Test
     fun refresh_updatesSummary_whenDataAvailable() = runTest {
+        val authRepository = FakeAuthRepository()
+        val medicalResultRepository = FakeMedicalResultRepository()
         val vm = DashboardViewModel(
-            authRepository = FakeAuthRepository(),
+            authRepository = authRepository,
             dashboardRepository = FakeDashboardRepository(),
-            medicalResultRepository = FakeMedicalResultRepository(),
+            medicalResultRepository = medicalResultRepository,
             documentRepository = FakeDocumentRepository(
                 documentsResult = ApiResult.Success(
                     listOf(
@@ -125,7 +140,10 @@ class DashboardViewModelTest {
                 statsResult = ApiResult.Success(DocumentStats(totalCount = 1, lastUploadedAt = Instant.now()))
             ),
             globalSyncManager = FakeGlobalSyncManager(),
-            processingCoordinator = FakeProcessingCoordinator()
+            processingCoordinator = FakeProcessingCoordinator(),
+            buildDashboardUseCase = BuildDashboardUseCase(),
+            loadIndicatorHistoryUseCase = LoadIndicatorHistoryUseCase(medicalResultRepository),
+            logoutUseCase = LogoutUseCase(authRepository)
         )
 
         val collectJob = launch { vm.state.collect {} }

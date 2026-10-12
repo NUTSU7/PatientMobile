@@ -4,8 +4,9 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.semanticsoft.patientmobile.domain.model.patient.MedicalResult
+import com.semanticsoft.patientmobile.domain.model.patient.ResultGroup
 import com.semanticsoft.patientmobile.domain.repository.patient.MedicalResultRepository
+import com.semanticsoft.patientmobile.domain.usecase.patient.GroupReportResultsUseCase
 import com.semanticsoft.patientmobile.core.util.ApiResult
 import com.semanticsoft.patientmobile.core.util.toUserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,22 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-@Immutable
-data class ResultItem(
-    val id: String,
-    val testName: String,
-    val value: String,
-    val unit: String,
-    val reference: String,
-    val abnormalFlag: String?
-)
-
-@Immutable
-data class ResultGroup(
-    val groupName: String,
-    val results: List<ResultItem>
-)
 
 @Immutable
 data class ReportResultsUiState(
@@ -52,7 +37,8 @@ data class ReportResultsUiState(
 @HiltViewModel
 class ReportResultsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val medicalResultRepository: MedicalResultRepository
+    private val medicalResultRepository: MedicalResultRepository,
+    private val groupReportResultsUseCase: GroupReportResultsUseCase
 ) : ViewModel() {
 
     private val reportId: String = savedStateHandle["reportId"] ?: ""
@@ -82,7 +68,7 @@ class ReportResultsViewModel @Inject constructor(
                         data.clinicalType != "LAB_RESULT"
 
                     val grouped = if (!isNonLab) {
-                        groupAndSortResults(data.results)
+                        groupReportResultsUseCase(data.results)
                     } else {
                         emptyList()
                     }
@@ -117,50 +103,6 @@ class ReportResultsViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    private fun groupAndSortResults(results: List<MedicalResult>): List<ResultGroup> {
-        return results
-            .groupBy { it.analysisGroup.ifEmpty { "Altele" } }
-            .map { (groupName, items) ->
-                ResultGroup(
-                    groupName = groupName,
-                    results = items
-                        .sortedBy { it.originalTestName }
-                        .map { it.toResultItem() }
-                )
-            }
-    }
-
-    private fun MedicalResult.toResultItem(): ResultItem {
-        val valueStr = when {
-            valueNumeric != null -> valueNumeric.toString()
-            !valueText.isNullOrBlank() -> valueText
-            else -> "-"
-        }
-        val referenceStr = buildString {
-            when {
-                referenceLow != null && referenceHigh != null -> {
-                    append(referenceLow.toString())
-                    append(" – ")
-                    append(referenceHigh.toString())
-                    if (unit.isNotBlank()) {
-                        append(" ")
-                        append(unit)
-                    }
-                }
-                !referenceText.isNullOrBlank() -> append(referenceText)
-                else -> append("-")
-            }
-        }
-        return ResultItem(
-            id = id,
-            testName = originalTestName,
-            value = valueStr,
-            unit = unit,
-            reference = referenceStr,
-            abnormalFlag = abnormalFlag
-        )
     }
 
     private fun formatObservedAt(date: LocalDate): String {
