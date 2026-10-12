@@ -75,16 +75,21 @@ The app follows **Clean Architecture** with three main layers:
 - **Dependency Injection**: All modules wired via Hilt (`di/`).
 - **Unidirectional Data Flow**: UI emits actions → ViewModel processes → State updates → UI recomposes.
 
-### UI Organization — Feature-by-Package, scoped by Role
+### UI Organization — Clean Architecture, Feature-by-Role
 
-The `ui/` layer is organized **feature-by-package inside a role namespace**:
+The app follows **Clean Architecture + feature-by-role** in a single module:
 
-- `ui/screens/{role}/{feature}/` contains the feature's `Screen`, `ViewModel`, and a nested
-  `components/` folder for feature-specific widgets.
-- Each role has its own post-login shell under `ui/navigation/{role}/`.
-- **Role-agnostic** code lives in `ui/components/` (design system), `ui/common/`, `ui/shared/`
-  (reusable features), `ui/screens/auth/`, `ui/screens/login/`, and `ui/theme/`.
-- **Icons**: All custom icons are Kotlin `ImageVector` files in `ui/theme/icons/`. No XML drawables for custom icons.
+- `core/` — shared infrastructure: `network/` (api, dto, interceptors, SafeApiCall),
+  `datastore/` (token + preferences managers), `ui/` (theme, common, components, shared
+  role-agnostic features), `util/`.
+- `data/` — `repository/{common,patient}` implementations and `mapper/{common,patient}`
+  DTO → domain mappers.
+- `domain/` — pure Kotlin: `model/{common,patient,laborator}`, `repository/{common,patient,laborator}`
+  contracts, and `usecase/{common,patient}` business logic (`operator fun invoke`).
+- `feature/` — presentation by role: `auth/` (login + `AuthViewModel`), `patient/{feature}/`,
+  `laborator/{feature}/`, each with its own `navigation/` shell.
+- `navigation/` — root dispatcher: `AppDestination.kt` (routes) and `RootNavHost.kt` (role routing).
+- **Icons**: All custom icons are Kotlin `ImageVector` files in `core/ui/theme/icons/`. No XML drawables for custom icons.
 - **Theme tokens**: `Color.kt` (palette), `Dimens.kt` (padding/gaps/heights), `Shapes.kt` (corner radii), `Type.kt` (text styles).
 
 Full guidelines in `RULES.md`.
@@ -103,17 +108,17 @@ enum class UserRole { PATIENT, LABORATOR, UNKNOWN }
   and cached with the user in `EncryptedSharedPreferences`.
 - A custom serializer maps raw backend strings to the enum and coerces unknown values to
   `UserRole.UNKNOWN` (forward-compatible).
-- There is **no client-side role selector**: after login, `PatientMobileApp.kt` routes to
+- There is **no client-side role selector**: after login, `navigation/RootNavHost.kt` routes to
   `AppDestination.Patient` or `AppDestination.Laborator` based on the returned role.
 - **Patient** is fully implemented. **Laborator** is currently **scaffolded** (navigation
   shell, screens + ViewModels, and a stub `LaboratorRepository`) pending backend endpoints.
 
 | Role | Shell | Features |
 |------|-------|----------|
-| `PATIENT` | `ui/navigation/patient/` | dashboard, medicalHystory, uploadedAnalyses, medicalResults, profile, analysisExplanation, reportResults, registration |
-| `LABORATOR` | `ui/navigation/laborator/` | dashboard, submissions, results, profile, registration |
+| `PATIENT` | `feature/patient/navigation/` | dashboard, medicalHistory, uploadedAnalyses, medicalResults, profile, analysisExplanation, reportResults, registration |
+| `LABORATOR` | `feature/laborator/navigation/` | dashboard, submissions, results, profile, registration |
 
-Shared, role-agnostic registration primitives live in `ui/screens/auth/components/`
+Shared, role-agnostic registration primitives live in `core/ui/components/auth/`
 (`AuthInput`, `AuthLabel`).
 
 ---
@@ -126,65 +131,73 @@ PatientMobile/
 │   ├── src/
 │   │   ├── main/
 │   │   │   ├── java/com/semanticsoft/patientmobile/
-│   │   │   │   ├── data/                     # Data Layer
-│   │   │   │   │   ├── local/
-│   │   │   │   │   │   ├── preferences/      # UserPreferencesManager (DataStore)
-│   │   │   │   │   │   └── session/          # TokenManager, EncryptedTokenManager,
-│   │   │   │   │   │                         # internal SecureTokenStore
-│   │   │   │   │   ├── model/                # Data-layer UI models (DashboardModels)
-│   │   │   │   │   ├── remote/
+│   │   │   │   ├── core/                     # Shared infrastructure
+│   │   │   │   │   ├── network/
 │   │   │   │   │   │   ├── api/              # AuthApiService, PatientApiService, SharedApiService,
-│   │   │   │   │   │   │   │                 # ApiConstants, ResponseEntity
-│   │   │   │   │   │   │   └── dto/          # DTOs by area: auth/, patient/, shared/
-│   │   │   │   │   │   │       └── mappers/  # DTO → domain mappers by area
+│   │   │   │   │   │   │                     # ApiConstants, ResponseEntity
+│   │   │   │   │   │   ├── dto/              # DTOs by area: auth/, patient/, shared/
 │   │   │   │   │   │   ├── interceptors/     # Auth, Error, TokenRefresh
+│   │   │   │   │   │   ├── NetworkStateProvider.kt
 │   │   │   │   │   │   └── SafeApiCall.kt
-│   │   │   │   │   └── repository/           # AuthRepositoryImpl, NetworkStateProvider
-│   │   │   │   │       ├── patient/          # Document/MedicalResult/MedicalHistory/Ocr/Dashboard impls
-│   │   │   │   │       └── shared/           # SharedLink, GlobalSyncManager, ProcessingCoordinator impls
-│   │   │   │   ├── domain/                   # Domain Layer
-│   │   │   │   │   ├── model/                # Pure domain entities
+│   │   │   │   │   ├── datastore/            # TokenManager, EncryptedTokenManager,
+│   │   │   │   │   │                         # internal SecureTokenStore, UserPreferencesManager
+│   │   │   │   │   ├── ui/                   # Shared design system
+│   │   │   │   │   │   ├── common/           # spacing, system bars, shimmer
+│   │   │   │   │   │   ├── components/       # role-agnostic widgets + auth/ primitives
+│   │   │   │   │   │   ├── shared/           # upload/, documentViewer/
+│   │   │   │   │   │   └── theme/            # Colors, Dimens, Shapes, Type, icons/
+│   │   │   │   │   └── util/                 # ApiResult, exceptions, validators
+│   │   │   │   ├── data/                     # Data Layer
+│   │   │   │   │   ├── mapper/               # DTO → domain mappers: common/, patient/
+│   │   │   │   │   └── repository/
+│   │   │   │   │       ├── common/           # AuthRepositoryImpl, GlobalSyncManagerImpl
+│   │   │   │   │       └── patient/          # Document/MedicalResult/MedicalHistory/Ocr/Dashboard/
+│   │   │   │   │                             # ProcessingCoordinator/SharedLink impls
+│   │   │   │   ├── domain/                   # Domain Layer (pure Kotlin)
+│   │   │   │   │   ├── model/
+│   │   │   │   │   │   ├── common/           # User, UserRole, AuthResponse, RegistrationRequest
+│   │   │   │   │   │   ├── patient/          # medical records, documents, analyses, dashboard models
 │   │   │   │   │   │   └── laborator/        # Contract-only lab models (LabSubmission, LabResult)
-│   │   │   │   │   └── repository/           # Contracts: Auth/GlobalSync/SharedLink/ProcessingCoordinator
-│   │   │   │   │       ├── patient/          # Document/MedicalResult/MedicalHistory/Ocr/Dashboard
-│   │   │   │   │       └── laborator/        # LaboratorRepository (contract only)
-│   │   │   │   ├── di/                       # NetworkModule, DataStoreModule,
-│   │   │   │   │                             # RepositoryModule, PatientModule
-│   │   │   │   ├── ui/                       # Presentation Layer
-│   │   │   │   │   ├── common/               # spacing, system bars, shimmer
-│   │   │   │   │   ├── components/           # Global Design System (role-agnostic)
-│   │   │   │   │   ├── navigation/
-│   │   │   │   │   │   ├── AppDestination.kt # Root routes (login, role graphs)
-│   │   │   │   │   │   ├── patient/          # PatientNavScreen, PatientTab,
+│   │   │   │   │   ├── repository/
+│   │   │   │   │   │   ├── common/           # AuthRepository, GlobalSyncManager
+│   │   │   │   │   │   ├── patient/          # Document/MedicalResult/MedicalHistory/Ocr/Dashboard,
+│   │   │   │   │   │   │                     # ProcessingCoordinator, SharedLinkRepository
+│   │   │   │   │   │   └── laborator/        # LaboratorRepository (contract only)
+│   │   │   │   │   └── usecase/
+│   │   │   │   │       ├── common/           # Login, Logout, CheckSession, RegisterPatient,
+│   │   │   │   │       │                     # ChangePassword, DeleteAccount
+│   │   │   │   │       └── patient/          # BuildDashboard, LoadIndicatorHistory, GroupReportResults
+│   │   │   │   ├── feature/                  # Presentation Layer (by role)
+│   │   │   │   │   ├── auth/
+│   │   │   │   │   │   ├── AuthViewModel.kt
+│   │   │   │   │   │   └── login/            # LoginScreen, LoginViewModel
+│   │   │   │   │   ├── patient/
+│   │   │   │   │   │   ├── navigation/       # PatientNavScreen, PatientTab,
 │   │   │   │   │   │   │                     # PatientPostLoginNavHost, components/
-│   │   │   │   │   │   └── laborator/        # LaboratorNavScreen, LaboratorTab,
-│   │   │   │   │   │                         # LaboratorPostLoginNavHost
-│   │   │   │   │   ├── screens/
-│   │   │   │   │   │   ├── auth/             # role-agnostic auth primitives + AuthViewModel
-│   │   │   │   │   │   ├── login/            # role-agnostic login
-│   │   │   │   │   │   ├── patient/          # patient-only features
-│   │   │   │   │   │   │   ├── dashboard/
-│   │   │   │   │   │   │   ├── documents/
-│   │   │   │   │   │   │   ├── medicalHystory/
-│   │   │   │   │   │   │   ├── medicalResults/
-│   │   │   │   │   │   │   ├── uploadedAnalyses/
-│   │   │   │   │   │   │   ├── analysisExplanation/
-│   │   │   │   │   │   │   ├── reportResults/
-│   │   │   │   │   │   │   ├── profile/
-│   │   │   │   │   │   │   └── registration/
-│   │   │   │   │   │   └── laborator/        # laborator-only features
-│   │   │   │   │   │       ├── dashboard/
-│   │   │   │   │   │       ├── submissions/
-│   │   │   │   │   │       ├── results/
-│   │   │   │   │   │       ├── profile/
-│   │   │   │   │   │       └── registration/
-│   │   │   │   │   ├── shared/               # role-agnostic reusable features
-│   │   │   │   │   │   ├── upload/
-│   │   │   │   │   │   └── documentViewer/
-│   │   │   │   │   └── theme/                # Colors, Dimens, Shapes, Type, icons/
-│   │   │   │   ├── util/                     # ApiResult, exceptions, validators
+│   │   │   │   │   │   ├── dashboard/
+│   │   │   │   │   │   ├── documents/
+│   │   │   │   │   │   ├── medicalHistory/
+│   │   │   │   │   │   ├── medicalResults/
+│   │   │   │   │   │   ├── uploadedAnalyses/
+│   │   │   │   │   │   ├── analysisExplanation/
+│   │   │   │   │   │   ├── reportResults/
+│   │   │   │   │   │   ├── profile/
+│   │   │   │   │   │   └── registration/
+│   │   │   │   │   └── laborator/
+│   │   │   │   │       ├── navigation/       # LaboratorNavScreen, LaboratorTab,
+│   │   │   │   │       │                     # LaboratorPostLoginNavHost
+│   │   │   │   │       ├── dashboard/
+│   │   │   │   │       ├── submissions/
+│   │   │   │   │       ├── results/
+│   │   │   │   │       ├── profile/
+│   │   │   │   │       └── registration/
+│   │   │   │   ├── navigation/               # Root dispatcher
+│   │   │   │   │   ├── AppDestination.kt     # Root routes (login, role graphs)
+│   │   │   │   │   └── RootNavHost.kt        # Role-based route resolver
+│   │   │   │   ├── di/                       # NetworkModule, DataStoreModule,
+│   │   │   │   │                             # DispatcherModule, DataModule
 │   │   │   │   ├── MainActivity.kt
-│   │   │   │   ├── PatientMobileApp.kt       # Root NavHost + role router
+│   │   │   │   ├── PatientMobileApp.kt       # App root composable
 │   │   │   │   └── PatientApplication.kt     # @HiltAndroidApp
 │   │   │   └── res/                          # mipmap, values, xml
 │   │   ├── test/                             # Unit tests
@@ -204,23 +217,24 @@ PatientMobile/
 | Component | Location |
 |-----------|----------|
 | **Application Entry** | `MainActivity.kt` |
-| **Root Navigation / Role Router** | `PatientMobileApp.kt` |
-| **Root Routes** | `ui/navigation/AppDestination.kt` |
-| **Role Model** | `domain/model/UserRole.kt` |
-| **API Services** | `data/remote/api/` (`AuthApiService`, `PatientApiService`, `SharedApiService`) |
-| **DTOs & Mappers** | `data/remote/api/dto/{auth,patient,shared}/` + `dto/mappers/` |
-| **Token Store** | `data/local/session/` (`TokenManager`, `EncryptedTokenManager`, `SecureTokenStore`) |
-| **Domain Models** | `domain/model/` (+ `domain/model/laborator/`) |
-| **Repository Interfaces** | `domain/repository/` (+ `patient/`, `laborator/`) |
-| **Repository Implementations** | `data/repository/` (+ `patient/`, `shared/`) |
-| **DI Modules** | `di/` (`NetworkModule`, `DataStoreModule`, `RepositoryModule`, `PatientModule`) |
-| **Role Screens** | `ui/screens/{role}/{feature}/` |
-| **Role Navigation Shells** | `ui/navigation/{role}/` |
-| **Global Design System** | `ui/components/` |
-| **Icons** | `ui/theme/icons/` |
-| **Theme** | `ui/theme/` |
+| **Root Navigation / Role Router** | `navigation/RootNavHost.kt` |
+| **Root Routes** | `navigation/AppDestination.kt` |
+| **Role Model** | `domain/model/common/UserRole.kt` |
+| **Use Cases** | `domain/usecase/{common,patient}/` |
+| **API Services** | `core/network/api/` (`AuthApiService`, `PatientApiService`, `SharedApiService`) |
+| **DTOs & Mappers** | `core/network/dto/{auth,patient,shared}/` + `data/mapper/{common,patient}/` |
+| **Token Store** | `core/datastore/` (`TokenManager`, `EncryptedTokenManager`, `SecureTokenStore`) |
+| **Domain Models** | `domain/model/{common,patient,laborator}/` |
+| **Repository Interfaces** | `domain/repository/{common,patient,laborator}/` |
+| **Repository Implementations** | `data/repository/{common,patient}/` |
+| **DI Modules** | `di/` (`NetworkModule`, `DataStoreModule`, `DispatcherModule`, `DataModule`) |
+| **Role Screens** | `feature/{role}/{feature}/` |
+| **Role Navigation Shells** | `feature/{role}/navigation/` |
+| **Global Design System** | `core/ui/components/` |
+| **Icons** | `core/ui/theme/icons/` |
+| **Theme** | `core/ui/theme/` |
 
-### Global Design System (`ui/components/`)
+### Global Design System (`core/ui/components/`)
 
 Shared, role-agnostic primitives and dialogs, e.g. `ErrorDialog`, `LoadingIndicator`,
 `ScreenTopBar`, `FilePickerButton`, `DeleteConfirmationDialog`.
@@ -232,63 +246,65 @@ Shared, role-agnostic primitives and dialogs, e.g. `ErrorDialog`, `LoadingIndica
 ### App Launch
 
 1. `MainActivity.kt` sets up the window and calls `setContent { PatientMobileTheme { PatientMobileApp() } }`.
-2. `PatientMobileApp.kt` hosts the root `NavHost` with `AppDestination.Login` as the start destination.
+2. `PatientMobileApp.kt` is a thin root composable delegating to `navigation/RootNavHost.kt`,
+   which hosts the root `NavHost` with `AppDestination.Login` as the start destination.
 3. `PatientApplication.kt` is annotated with `@HiltAndroidApp` to initialize the DI graph.
 
 ### Authentication & Role Routing
 
-- **Login** (`ui/screens/login/`)
+- **Login** (`feature/auth/login/`)
   - `LoginScreen.kt` — Compose UI with email/password fields (role-agnostic).
-  - `LoginViewModel.kt` — calls `AuthRepository.login()`; on success emits
+  - `LoginViewModel.kt` — calls `LoginUseCase`; on success emits
     `LoginEvent.LoginSuccess(role)` carrying the role returned by the backend.
-  - `PatientMobileApp.kt` routes to `AppDestination.Patient` or `AppDestination.Laborator`
+  - `navigation/RootNavHost.kt` routes to `AppDestination.Patient` or `AppDestination.Laborator`
     based on that role and clears the back stack.
-- **Patient Registration** (`ui/screens/patient/registration/`) — calls `AuthRepository.register()`; on success → Patient graph.
-- **Laborator Registration** (`ui/screens/laborator/registration/`) — screen is built; backend
+- **Patient Registration** (`feature/patient/registration/`) — calls `RegisterPatientUseCase`; on success → Patient graph.
+- **Laborator Registration** (`feature/laborator/registration/`) — screen is built; backend
   wiring is a TODO (`RegistrationLabViewModel.onRegisterClick()`); on success → Laborator graph.
-- **Shared Auth Components** (`ui/screens/auth/components/`) — `AuthLabel`, `AuthInput`, `AuthTopHeader`.
+- **Shared Auth Components** (`core/ui/components/auth/`) — `AuthLabel`, `AuthInput`, `AuthTopHeader`.
 
 Role is read from the cached `User` (`User.role: UserRole`) and exposed via
-`AuthState.Authenticated(displayName, email, role)` in `AuthViewModel`.
+`AuthState.Authenticated(displayName, email, role)` in `AuthViewModel` (`CheckSessionUseCase`).
 
 ### Post-Login Shell (Bottom Navigation)
 
 Each role has a shell with a bottom tab bar (there is **no navigation drawer**):
 
-**Patient** — `ui/navigation/patient/`
+**Patient** — `feature/patient/navigation/`
 
 | Tab | Screen |
 |-----|--------|
-| Acasă | `patient/dashboard/DashboardScreen` |
-| Istoric | `patient/medicalHystory/MedicalHystoryScreen` |
-| Analize | `patient/uploadedAnalyses/UploadedAnalysesScreen` |
-| Profil | `patient/profile/ProfileScreen` |
+| Acasă | `feature/patient/dashboard/DashboardScreen` |
+| Istoric | `feature/patient/medicalHistory/MedicalHistoryScreen` |
+| Analize | `feature/patient/uploadedAnalyses/UploadedAnalysesScreen` |
+| Profil | `feature/patient/profile/ProfileScreen` |
 
-A center FAB opens the shared upload flow (`ui/shared/upload/`).
+A center FAB opens the shared upload flow (`core/ui/shared/upload/`).
 
-**Laborator** — `ui/navigation/laborator/` (scaffold)
+**Laborator** — `feature/laborator/navigation/` (scaffold)
 
 | Tab | Screen |
 |-----|--------|
-| Panou | `laborator/dashboard/LaboratorDashboardScreen` |
-| Lucrari | `laborator/submissions/LaboratorSubmissionsScreen` |
-| Rezultate | `laborator/results/LaboratorResultsScreen` |
-| Profil | `laborator/profile/LaboratorProfileScreen` |
+| Panou | `feature/laborator/dashboard/LaboratorDashboardScreen` |
+| Lucrari | `feature/laborator/submissions/LaboratorSubmissionsScreen` |
+| Rezultate | `feature/laborator/results/LaboratorResultsScreen` |
+| Profil | `feature/laborator/profile/LaboratorProfileScreen` |
 
-### Dashboard (`ui/screens/patient/dashboard/`)
+### Dashboard (`feature/patient/dashboard/`)
 
 - Displays greeting/user info, attention items, basic health indicators, marker categories,
   general marker cards, AI summary, warning cards, and clinical pillar cards.
 - Always fetches fresh data from the backend; no demo/fake data fallbacks.
-- `DashboardViewModel.kt` fetches documents and medical results, computes summaries, and builds
-  the AI summary string.
+- `DashboardViewModel.kt` fetches documents and medical results and owns screen state; pure
+  computation (marker summary, basic indicators, warning cards, clinical pillars, grouping)
+  lives in `BuildDashboardUseCase`.
 
-### File Upload (`ui/shared/upload/`)
+### File Upload (`core/ui/shared/upload/`)
 
 - Dialog-style overlay for uploading medical documents (PDF, JPG, PNG).
 - Shared across screens; `UploadFileViewModel.kt` handles selection and multipart upload.
 
-### Theme System (`ui/theme/`)
+### Theme System (`core/ui/theme/`)
 
 | File | Purpose |
 |------|---------|
@@ -306,7 +322,7 @@ A center FAB opens the shared upload flow (`ui/shared/upload/`).
 ```
 Login ──role=PATIENT───▶ Patient graph
   │                         ├── Acasă     → DashboardScreen
-  │                         ├── Istoric   → MedicalHystoryScreen
+  │                         ├── Istoric   → MedicalHistoryScreen
   │                         ├── Analize   → UploadedAnalysesScreen
   │                         └── Profil    → ProfileScreen
   │
@@ -320,7 +336,7 @@ Login ──role=PATIENT───▶ Patient graph
   └──▶ Laborator Registration ─success──▶ Laborator graph
 ```
 
-Root routes are declared in `ui/navigation/AppDestination.kt`
+Root routes are declared in `navigation/AppDestination.kt`
 (`Login`, `PatientRegistration`, `LaboratorRegistration`, `Patient`, `Laborator`, plus the
 patient-only deep links `AnalysisExplanation` and `ReportResults`).
 
@@ -335,9 +351,9 @@ The REST surface is split across three Retrofit interfaces, all created from the
 
 | Service | File | Scope |
 |---------|------|-------|
-| `AuthApiService` | `data/remote/api/AuthApiService.kt` | `/auth/*` |
-| `PatientApiService` | `data/remote/api/PatientApiService.kt` | `/patient/*` |
-| `SharedApiService` | `data/remote/api/SharedApiService.kt` | `/shared/{token}` |
+| `AuthApiService` | `core/network/api/AuthApiService.kt` | `/auth/*` |
+| `PatientApiService` | `core/network/api/PatientApiService.kt` | `/patient/*` |
+| `SharedApiService` | `core/network/api/SharedApiService.kt` | `/shared/{token}` |
 
 **Auth**
 
@@ -416,10 +432,10 @@ The REST surface is split across three Retrofit interfaces, all created from the
 ### Token & User Security
 
 - Tokens and the cached `User` (including `role`) are stored with AndroidX Security Crypto
-  (`data/local/session/EncryptedTokenManager.kt` → internal `SecureTokenStore.kt`) as
+  (`core/datastore/EncryptedTokenManager.kt` → internal `SecureTokenStore.kt`) as
   `EncryptedSharedPreferences`. Interceptors depend on the injected `TokenManager`
   abstraction, never the store directly.
-- `data/local/preferences/UserPreferencesManager.kt` stores non-sensitive preferences via
+- `core/datastore/UserPreferencesManager.kt` stores non-sensitive preferences via
   DataStore, exposing `Flow` reads and `suspend` writes.
 
 ### Repository Implementations
@@ -442,7 +458,7 @@ The REST surface is split across three Retrofit interfaces, all created from the
 `GlobalSyncManager` is a singleton `SharedFlow`-based broadcast that keeps data-fetching screens
 in sync. When a ViewModel mutates backend data (upload, medication add, note add), it calls
 `globalSyncManager.triggerSync()`. Consumer ViewModels (`DashboardViewModel`,
-`MedicalHystoryViewModel`, `ProfileViewModel`, `UploadedAnalysesViewModel`) collect
+`MedicalHistoryViewModel`, `ProfileViewModel`, `UploadedAnalysesViewModel`) collect
 `syncEvents` in `init` and re-fetch. Screens also use `LifecycleResumeEffect` to refresh on return.
 
 ### Result Type: `ApiResult<T>`
@@ -481,7 +497,7 @@ Configured in `app/build.gradle.kts`:
 
 | Test Category | Location |
 |---------------|----------|
-| ViewModel Tests | `ui/screens/{role}/{feature}/` |
+| ViewModel Tests | `feature/{role}/{feature}/` |
 | Repository Tests | `data/repository/` |
 | Utility Tests | `util/` |
 | Coroutine Rule | `testutil/MainDispatcherRule.kt` |
@@ -506,10 +522,10 @@ Configured in `app/build.gradle.kts`:
 
 ## Design System
 
-- **Global Design System** (`ui/components/`): universal primitives consumed by 2+ roles/screens.
-- **Role features** (`ui/screens/{role}/{feature}/components/`): feature-specific widgets (`internal`).
-- **Shared features** (`ui/shared/{feature}/`): self-contained reusable flows (their own ViewModel).
-- **Icons** (`ui/theme/icons/`): Kotlin `ImageVector` only.
+- **Global Design System** (`core/ui/components/`): universal primitives consumed by 2+ roles/screens.
+- **Role features** (`feature/{role}/{feature}/components/`): feature-specific widgets (`internal`).
+- **Shared features** (`core/ui/shared/{feature}/`): self-contained reusable flows (their own ViewModel).
+- **Icons** (`core/ui/theme/icons/`): Kotlin `ImageVector` only.
 - **Overlays**: bottom sheets for sorting/filtering, custom Surface dialogs for focused forms and
   destructive confirms, `AlertDialog` for system errors. See `RULES.md` for the exact patterns.
 
