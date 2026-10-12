@@ -2,24 +2,29 @@ package com.semanticsoft.patientmobile.feature.patient.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.semanticsoft.patientmobile.domain.model.patient.ClinicalPillarType
-import com.semanticsoft.patientmobile.domain.model.patient.IndicatorSegments
-import com.semanticsoft.patientmobile.domain.model.patient.IndicatorStatus
-import com.semanticsoft.patientmobile.domain.model.patient.IndicatorTrendDirection
-import com.semanticsoft.patientmobile.domain.model.patient.WarningLevel
 import com.semanticsoft.patientmobile.domain.model.patient.AiSummary
+import com.semanticsoft.patientmobile.domain.model.patient.BasicIndicatorItem as UiBasicIndicatorItem
+import com.semanticsoft.patientmobile.domain.model.patient.ClinicalPillarCardItem as UiClinicalPillarCardItem
+import com.semanticsoft.patientmobile.domain.model.patient.GeneralMarkerCardItem as UiGeneralMarkerCardItem
+import com.semanticsoft.patientmobile.domain.model.patient.MarkerCategoryItem as UiMarkerCategoryItem
 import com.semanticsoft.patientmobile.domain.model.patient.MedicalResult
 import com.semanticsoft.patientmobile.domain.model.patient.ProcessingOutcome
+import com.semanticsoft.patientmobile.domain.model.patient.UiAttentionItem
+import com.semanticsoft.patientmobile.domain.model.patient.UiMarkerSummary
+import com.semanticsoft.patientmobile.domain.model.patient.WarningCardItem as UiWarningCardItem
 import com.semanticsoft.patientmobile.domain.repository.common.AuthRepository
+import com.semanticsoft.patientmobile.domain.repository.common.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.patient.DashboardRepository
 import com.semanticsoft.patientmobile.domain.repository.patient.DocumentRepository
-import com.semanticsoft.patientmobile.domain.repository.common.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.patient.MedicalResultRepository
 import com.semanticsoft.patientmobile.domain.repository.patient.ProcessingCoordinator
+import com.semanticsoft.patientmobile.domain.usecase.common.LogoutUseCase
+import com.semanticsoft.patientmobile.domain.usecase.patient.BuildDashboardUseCase
+import com.semanticsoft.patientmobile.domain.usecase.patient.DashboardCardData
+import com.semanticsoft.patientmobile.domain.usecase.patient.LoadIndicatorHistoryUseCase
 import com.semanticsoft.patientmobile.core.util.ApiResult
 import com.semanticsoft.patientmobile.core.util.toUserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.text.Normalizer
 import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -34,14 +39,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import com.semanticsoft.patientmobile.domain.model.patient.UiAttentionItem
-import com.semanticsoft.patientmobile.domain.model.patient.BasicIndicatorItem as UiBasicIndicatorItem
-import com.semanticsoft.patientmobile.domain.model.patient.ClinicalPillarCardItem as UiClinicalPillarCardItem
-import com.semanticsoft.patientmobile.domain.model.patient.GeneralMarkerCardItem as UiGeneralMarkerCardItem
-import com.semanticsoft.patientmobile.domain.model.patient.MarkerCategoryItem as UiMarkerCategoryItem
-import com.semanticsoft.patientmobile.domain.model.patient.UiMarkerSummary
-import com.semanticsoft.patientmobile.domain.model.patient.WarningCardItem as UiWarningCardItem
-import com.semanticsoft.patientmobile.domain.model.patient.WarningIndicatorItem as UiWarningIndicatorItem
 
 data class DashboardUiState(
     val greetingName: String = "",
@@ -86,7 +83,10 @@ class DashboardViewModel @Inject constructor(
     private val medicalResultRepository: MedicalResultRepository,
     private val documentRepository: DocumentRepository,
     private val globalSyncManager: GlobalSyncManager,
-    private val processingCoordinator: ProcessingCoordinator
+    private val processingCoordinator: ProcessingCoordinator,
+    private val buildDashboardUseCase: BuildDashboardUseCase,
+    private val loadIndicatorHistoryUseCase: LoadIndicatorHistoryUseCase,
+    private val logoutUseCase: LogoutUseCase
 ) : ViewModel() {
 
     private val _events = MutableSharedFlow<DashboardEvent>()
@@ -134,7 +134,7 @@ class DashboardViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             try {
-                authRepository.logout()
+                logoutUseCase()
                 resetTransientState()
                 _events.emit(DashboardEvent.LogoutSuccess)
             } catch (e: Exception) {
@@ -241,7 +241,7 @@ class DashboardViewModel @Inject constructor(
             val results = if (resultsResult is ApiResult.Success) resultsResult.data else emptyList()
 
             val aiResult = dashboardRepository.getAiSummary()
-            val signature = buildResultsSignature(results, aiResult, docsTotal)
+            val signature = buildDashboardUseCase.buildResultsSignature(results, aiResult, docsTotal)
             if (signature == lastResultsSignature && _state.value.hasUploadedDocuments) {
                 _state.update {
                     it.copy(
@@ -258,42 +258,15 @@ class DashboardViewModel @Inject constructor(
             }
             lastResultsSignature = signature
 
-            val historyResults = loadFrequentIndicatorsHistory()
-            val indicators = if (historyResults.isNotEmpty()) {
-                buildBasicIndicators(historyResults)
-            } else {
-                buildBasicIndicators(results)
-            }
+            val historyResults = loadIndicatorHistoryUseCase()
+            val indicators = buildDashboardUseCase.buildBasicIndicators(
+                if (historyResults.isNotEmpty()) historyResults else results
+            )
 
-            buildCardsFromResults(greetingName, fullName, role, results, indicators, aiResult, docsTotal)
+            buildCardsFromResults(greetingName, fullName, role, indicators, buildDashboardUseCase(results), aiResult, docsTotal)
 
             _events.emit(DashboardEvent.RefreshCompleted)
         }
-    }
-
-    private fun buildResultsSignature(
-        results: List<MedicalResult>,
-        aiResult: ApiResult<AiSummary>,
-        documentCount: Int
-    ): String {
-        val resultsPart = results.joinToString("|") { r ->
-            listOf(
-                r.id,
-                r.valueNumeric?.toString().orEmpty(),
-                r.valueText.orEmpty(),
-                r.unit,
-                r.abnormalFlag.orEmpty(),
-                r.observedAt?.toString().orEmpty(),
-                r.reportId.orEmpty()
-            ).joinToString(",")
-        }
-        val aiPart = when (aiResult) {
-            is ApiResult.Success -> "${aiResult.data.status}:${aiResult.data.summaryText}"
-            is ApiResult.HttpError -> "http:${aiResult.code}"
-            is ApiResult.NetworkError -> "network"
-            is ApiResult.AuthError -> "auth"
-        }
-        return "$documentCount::$resultsPart::$aiPart"
     }
 
     fun regenerateAiSummary() {
@@ -333,20 +306,11 @@ class DashboardViewModel @Inject constructor(
         greetingName: String,
         fullName: String,
         role: String,
-        results: List<MedicalResult>,
         indicators: List<UiBasicIndicatorItem>,
+        cards: DashboardCardData,
         aiResult: ApiResult<AiSummary>,
         documentCount: Int
     ) {
-        val abnormal = results.filter { !it.abnormalFlag.isNullOrBlank() }
-        val categories = results.groupBy { it.analysisGroup.ifBlank { "Altele" } }
-
-        val summary = buildSummary(results)
-        val markersByCategory = buildMarkerCategories(categories)
-        val attention = buildAttentionItems(abnormal)
-        val warnings = buildWarningCards(abnormal)
-        val pillars = buildClinicalPillars(categories)
-
         var aiText = ""
         var aiLoading = false
 
@@ -375,271 +339,21 @@ class DashboardViewModel @Inject constructor(
                 fullName = fullName,
                 role = role,
                 hasUploadedDocuments = true,
-                attentionItems = attention,
+                attentionItems = cards.attentionItems,
                 basicIndicators = indicators,
-                markerCategories = markersByCategory,
+                markerCategories = cards.markerCategories,
                 generalMarkerCards = emptyList(),
-                markerSummary = summary,
+                markerSummary = cards.markerSummary,
                 documentCount = documentCount,
                 aiSummary = aiText,
                 isAiSummaryLoading = aiLoading,
-                warningCards = warnings,
-                clinicalPillarCards = pillars,
+                warningCards = cards.warningCards,
+                clinicalPillarCards = cards.clinicalPillarCards,
                 isLoading = false,
                 errorMessage = null,
                 emptyReason = null
             )
         }
-    }
-
-    private fun buildSummary(results: List<MedicalResult>): UiMarkerSummary {
-        if (results.isEmpty()) {
-            return UiMarkerSummary(normal = 0, borderline = 0, attention = 0, score = 0, noReference = 0)
-        }
-        var normal = 0
-        var borderline = 0
-        var attention = 0
-        var noReference = 0
-        for (r in results) {
-            when (parseStatus(r)) {
-                IndicatorStatus.NORMAL -> normal++
-                IndicatorStatus.BORDERLINE -> borderline++
-                IndicatorStatus.ATTENTION -> attention++
-                IndicatorStatus.NO_REFERENCE -> noReference++
-            }
-        }
-        val interpretable = normal + borderline + attention
-        val score = if (interpretable > 0) kotlin.math.round(normal.toDouble() / interpretable * 100).toInt() else 0
-        return UiMarkerSummary(normal = normal, borderline = borderline, attention = attention, score = score, noReference = noReference)
-    }
-
-    private fun buildBasicIndicators(
-        results: List<MedicalResult>
-    ): List<UiBasicIndicatorItem> {
-        if (results.isEmpty()) return emptyList()
-
-        val grouped = results.groupBy { getIndicatorKey(it) }
-
-        data class GroupData(
-            val displayLabel: String,
-            val frequency: Int,
-            val latestObservedAt: java.time.LocalDate?,
-            val items: List<MedicalResult>
-        )
-
-        val enriched = grouped.values.map { items ->
-            val sorted = items.sortedByDescending { it.observedAt }
-            val first = sorted.first()
-            GroupData(
-                displayLabel = first.canonicalName.ifBlank { first.originalTestName },
-                frequency = items.size,
-                latestObservedAt = sorted.mapNotNull { it.observedAt }.maxOrNull(),
-                items = sorted
-            )
-        }
-
-        val sortedGroups = enriched.sortedWith(
-            compareByDescending<GroupData> { it.frequency }
-                .thenByDescending { it.latestObservedAt }
-                .thenBy { it.displayLabel }
-        )
-
-        return sortedGroups.map { group ->
-            val r = group.items.first()
-            val numericValues = group.items
-                .sortedBy { it.observedAt }
-                .mapNotNull { it.valueNumeric?.toFloat() }
-            val sampled = sampleHistoryPoints(numericValues, 10)
-            val ref = resolveReferenceRange(group.items)
-            UiBasicIndicatorItem(
-                id = getIndicatorKey(r),
-                title = group.displayLabel,
-                value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
-                unit = r.unit,
-                status = parseStatus(r),
-                trendDirection = IndicatorTrendDirection.STABLE,
-                trendDelta = "",
-                trendDescription = r.referenceText ?: "",
-                markerPosition = 0.5f,
-                segments = IndicatorSegments(),
-                historyPoints = sampled,
-                referenceLow = ref.first,
-                referenceHigh = ref.second
-            )
-        }
-    }
-
-    private fun getIndicatorKey(result: MedicalResult): String {
-        return if (!result.testDefinitionId.isNullOrBlank()) {
-            "definition:${result.testDefinitionId}"
-        } else {
-            val displayName = result.canonicalName.ifBlank { result.originalTestName }
-            "name:${normalizeForGrouping(displayName)}"
-        }
-    }
-
-    private fun sampleHistoryPoints(values: List<Float>, limit: Int): List<Float> {
-        if (values.isEmpty()) return emptyList()
-        if (values.size <= limit) return values
-        val result = mutableListOf<Float>()
-        for (i in 0 until limit) {
-            val idx = kotlin.math.round(i * (values.size - 1).toFloat() / (limit - 1).toFloat()).toInt()
-            result.add(values[idx])
-        }
-        return result
-    }
-
-    private fun resolveReferenceRange(items: List<MedicalResult>): Pair<Float?, Float?> {
-        for (item in items) {
-            if (item.referenceLow != null && item.referenceHigh != null) {
-                return Pair(item.referenceLow.toFloat(), item.referenceHigh.toFloat())
-            }
-        }
-        return Pair(null, null)
-    }
-
-    private fun buildMarkerCategories(categories: Map<String, List<MedicalResult>>): List<UiMarkerCategoryItem> {
-        return categories.map { (group, items) ->
-            UiMarkerCategoryItem(name = group, count = items.size)
-        }
-    }
-
-    private fun buildAttentionItems(abnormal: List<MedicalResult>): List<UiAttentionItem> {
-        return abnormal.map { r ->
-            UiAttentionItem(
-                marker = r.originalTestName.ifBlank { r.canonicalName },
-                value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
-                unit = r.unit,
-                severity = r.abnormalFlag ?: "Aten\u021Bie"
-            )
-        }
-    }
-
-    private fun buildWarningCards(abnormal: List<MedicalResult>): List<UiWarningCardItem> {
-        if (abnormal.isEmpty()) return emptyList()
-
-        val highFlags = listOf("HIGH", "ATTENTION", "ABNORMAL", "CRITICAL")
-        val highItems = abnormal.filter {
-            it.abnormalFlag?.uppercase() in highFlags
-        }
-        val moderateItems = abnormal.filter {
-            it.abnormalFlag?.uppercase() !in highFlags
-        }
-
-        val cards = mutableListOf<UiWarningCardItem>()
-        if (highItems.isNotEmpty()) {
-            cards.add(
-                UiWarningCardItem(
-                    level = WarningLevel.HIGH,
-                    indicators = highItems.map { r ->
-                        UiWarningIndicatorItem(
-                            name = r.originalTestName.ifBlank { r.canonicalName },
-                            value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
-                            unit = r.unit
-                        )
-                    }
-                )
-            )
-        }
-        if (moderateItems.isNotEmpty()) {
-            cards.add(
-                UiWarningCardItem(
-                    level = WarningLevel.MODERATE,
-                    indicators = moderateItems.map { r ->
-                        UiWarningIndicatorItem(
-                            name = r.originalTestName.ifBlank { r.canonicalName },
-                            value = r.valueNumeric?.toString() ?: r.valueText ?: "-",
-                            unit = r.unit
-                        )
-                    }
-                )
-            )
-        }
-        return cards
-    }
-
-    private fun buildClinicalPillars(categories: Map<String, List<MedicalResult>>): List<UiClinicalPillarCardItem> {
-        return categories.map { (group, items) ->
-            UiClinicalPillarCardItem(
-                type = parsePillarType(group),
-                reportCount = items.size
-            )
-        }
-    }
-
-    private fun buildRangeLabel(low: Double?, high: Double?): String {
-        if (low == null && high == null) return "-"
-        val lowStr = low?.toString() ?: ""
-        val highStr = high?.toString() ?: ""
-        return "$lowStr - $highStr".trim()
-    }
-
-    private fun parseStatus(result: MedicalResult): IndicatorStatus {
-        val hasRef = hasValidReferenceRange(result)
-        if (!hasRef) return IndicatorStatus.NO_REFERENCE
-        val flag = result.abnormalFlag
-        if (flag.isNullOrBlank()) return IndicatorStatus.NORMAL
-        return when (flag.uppercase()) {
-            "NORMAL" -> IndicatorStatus.NORMAL
-            "LOW", "HIGH", "BORDERLINE", "WARNING" -> IndicatorStatus.BORDERLINE
-            "ABNORMAL", "ATTENTION", "CRITICAL" -> IndicatorStatus.ATTENTION
-            else -> IndicatorStatus.NORMAL
-        }
-    }
-
-    private fun hasValidReferenceRange(result: MedicalResult): Boolean {
-        val low = result.referenceLow
-        val high = result.referenceHigh
-        if (low != null && high != null) {
-            return high > low
-        }
-        return low != null || high != null
-    }
-
-    private fun parsePillarType(analysisGroup: String): ClinicalPillarType {
-        return when (analysisGroup.uppercase()) {
-            "HEMATOLOGY", "HEMATOLOGIE" -> ClinicalPillarType.BLOOD_CELLS
-            "BIOCHEMISTRY", "BIOCHIMIE" -> ClinicalPillarType.ORGANS_METABOLISM
-            "CARDIOLOGY", "CARDIOLOGIE", "LIPIDS", "LIPIDE" -> ClinicalPillarType.HEART_CV
-            "HORMONES", "HORMONI", "THYROID", "TIROIDA" -> ClinicalPillarType.HORMONES
-            "ONCOLOGY", "ONCOLOGIE", "TUMOR_MARKERS" -> ClinicalPillarType.ONCOLOGY_MARKERS
-            "VITAMINS", "VITAMINE", "NUTRITION", "NUTRITIE" -> ClinicalPillarType.NUTRITION_VITAMINS
-            "COAGULATION", "COAGULARE" -> ClinicalPillarType.COAGULATION
-            "IMMUNOLOGY", "IMUNOLOGIE", "INFECTIONS" -> ClinicalPillarType.INFECTIONS_IMMUNOLOGY
-            else -> ClinicalPillarType.ORGANS_METABOLISM
-        }
-    }
-
-    private suspend fun loadFrequentIndicatorsHistory(): List<MedicalResult> {
-        val all = mutableListOf<MedicalResult>()
-        var page = 0
-        val maxPages = 10
-        do {
-            val result = medicalResultRepository.getAllResultsPaginated(
-                page = page,
-                size = 100,
-                sortBy = "observedAt",
-                sortDir = "desc"
-            )
-            if (result !is ApiResult.Success) break
-            val pageData = result.data
-            all.addAll(pageData.items)
-            page++
-            if (!pageData.hasNext) break
-        } while (page < maxPages)
-        return all
-    }
-
-    private fun normalizeForGrouping(name: String): String {
-        val nfd = Normalizer.normalize(name, Normalizer.Form.NFD)
-        val stripped = nfd.replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
-        val roFallback = stripped
-            .replace('ș', 's').replace('Ş', 's')
-            .replace('ț', 't').replace('Ț', 't')
-            .replace('ă', 'a').replace('Ă', 'a')
-            .replace('â', 'a').replace('Â', 'a')
-            .replace('î', 'i').replace('Î', 'i')
-        return roFallback.lowercase().replace(Regex("\\s+"), " ").trim()
     }
 
     companion object {

@@ -3,7 +3,7 @@ package com.semanticsoft.patientmobile.feature.auth.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.domain.model.common.UserRole
-import com.semanticsoft.patientmobile.domain.repository.common.AuthRepository
+import com.semanticsoft.patientmobile.domain.usecase.common.LoginUseCase
 import com.semanticsoft.patientmobile.core.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -30,7 +30,7 @@ sealed class LoginEvent {
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val loginUseCase: LoginUseCase
 ) : ViewModel() {
 
     private val _events = MutableSharedFlow<LoginEvent>()
@@ -59,7 +59,7 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
-            when (val result = authRepository.login(currentEmail.trim(), currentPassword)) {
+            when (val result = loginUseCase(currentEmail.trim(), currentPassword)) {
                 is ApiResult.Success -> {
                     _state.update { it.copy(isLoading = false, errorMessage = null) }
                     _events.emit(LoginEvent.LoginSuccess(result.data.user.role))

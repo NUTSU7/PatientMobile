@@ -2,8 +2,7 @@ package com.semanticsoft.patientmobile.feature.patient.registration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.semanticsoft.patientmobile.domain.model.common.RegistrationRequest
-import com.semanticsoft.patientmobile.domain.repository.common.AuthRepository
+import com.semanticsoft.patientmobile.domain.usecase.common.RegisterPatientUseCase
 import com.semanticsoft.patientmobile.core.util.ApiResult
 import com.semanticsoft.patientmobile.core.util.PasswordValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,7 +33,7 @@ sealed class RegistrationEvent {
 
 @HiltViewModel
 class RegistrationViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val registerPatientUseCase: RegisterPatientUseCase
 ) : ViewModel() {
 
     private val _events = MutableSharedFlow<RegistrationEvent>()
@@ -68,23 +67,15 @@ class RegistrationViewModel @Inject constructor(
             return
         }
 
-        val nameParts = _state.value.name.trim().split(" ").filter { it.isNotBlank() }
-        val firstName = nameParts.firstOrNull().orEmpty()
-        val lastName = if (nameParts.size > 1) nameParts.drop(1).joinToString(" ") else firstName
-
-        val request = RegistrationRequest(
-            email = _state.value.email.trim(),
-            password = _state.value.password,
-            confirmPassword = _state.value.confirmPassword,
-            firstName = firstName,
-            lastName = lastName,
-            dateOfBirth = "1990-01-01"
-        )
-
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null, fieldErrors = emptyMap()) }
 
-            when (val result = authRepository.register(request)) {
+            when (val result = registerPatientUseCase(
+                name = _state.value.name,
+                email = _state.value.email,
+                password = _state.value.password,
+                confirmPassword = _state.value.confirmPassword
+            )) {
                 is ApiResult.Success -> {
                     _state.update { it.copy(isLoading = false, errorMessage = null) }
                     _events.emit(RegistrationEvent.RegistrationSuccess)
