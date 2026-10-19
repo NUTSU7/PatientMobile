@@ -30,6 +30,7 @@ import com.semanticsoft.patientmobile.feature.laborator.activateAccount.Activate
 import com.semanticsoft.patientmobile.feature.laborator.dpa.DpaEvent
 import com.semanticsoft.patientmobile.feature.laborator.dpa.DpaScreen
 import com.semanticsoft.patientmobile.feature.laborator.dpa.DpaViewModel
+import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorDashboardViewModel
 import com.semanticsoft.patientmobile.feature.laborator.navigation.LaboratorNavScreen
 import com.semanticsoft.patientmobile.feature.laborator.registration.RegistrationLabEvent
 import com.semanticsoft.patientmobile.feature.laborator.registration.RegistrationLabScreen
@@ -291,7 +292,19 @@ fun RootNavHost(navController: NavHostController = rememberNavController()) {
         }
 
         composable(AppDestination.Laborator.route) {
-            LaboratorNavScreen(onLogout = authViewModel::logout)
+            val vm: LaboratorDashboardViewModel = hiltViewModel()
+
+            LifecycleResumeEffect(Unit) {
+                vm.refresh()
+                onPauseOrDispose { }
+            }
+
+            LaboratorNavScreen(
+                dashboardState = vm.state,
+                onPeriodSelected = vm::onPeriodSelected,
+                onCompareToggle = vm::onCompareToggle,
+                onLogout = authViewModel::logout
+            )
         }
 
         composable(

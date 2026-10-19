@@ -31,6 +31,7 @@ fun ScreenTopBar(
     titlePrefix: String,
     titleHighlight: String,
     titleSuffix: String = "",
+    subtitle: String? = null,
     horizontalPadding: Dp = 16.dp,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {}
@@ -39,7 +40,8 @@ fun ScreenTopBar(
     val density = LocalDensity.current
     val maxTitleLineHeight = 31.sp
     val maxTitleRowHeight = with(density) { maxTitleLineHeight.toDp() }
-    val topBarHeight = topInset + 8.dp + maxTitleRowHeight + 8.dp
+    val subtitleHeight = if (!subtitle.isNullOrBlank()) 22.dp else 0.dp
+    val topBarHeight = topInset + 8.dp + maxTitleRowHeight + subtitleHeight + 8.dp
 
     Surface(
         modifier = modifier
@@ -98,6 +100,17 @@ fun ScreenTopBar(
                     }
                     Spacer(modifier = Modifier.weight(1f))
                     actions()
+                }
+                if (!subtitle.isNullOrBlank()) {
+                    Text(
+                        text = subtitle,
+                        color = Color(0xFF464554),
+                        fontSize = 12.sp,
+                        lineHeight = 15.6.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
                 }
             }
         }

@@ -6,6 +6,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorDashboardScreen
+import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorDashboardUiState
+import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorPeriod
 import com.semanticsoft.patientmobile.feature.laborator.profile.LaboratorProfileScreen
 import com.semanticsoft.patientmobile.feature.laborator.results.LaboratorResultsScreen
 import com.semanticsoft.patientmobile.feature.laborator.submissions.LaboratorSubmissionsScreen
@@ -13,6 +15,9 @@ import com.semanticsoft.patientmobile.feature.laborator.submissions.LaboratorSub
 @Composable
 fun LaboratorPostLoginNavHost(
     navController: NavHostController,
+    dashboardState: LaboratorDashboardUiState,
+    onPeriodSelected: (LaboratorPeriod) -> Unit,
+    onCompareToggle: (Boolean) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -22,7 +27,11 @@ fun LaboratorPostLoginNavHost(
         modifier = modifier
     ) {
         composable(LaboratorTab.Home.route) {
-            LaboratorDashboardScreen()
+            LaboratorDashboardScreen(
+                state = dashboardState,
+                onPeriodSelected = onPeriodSelected,
+                onCompareToggle = onCompareToggle
+            )
         }
 
         composable(LaboratorTab.Submissions.route) {
