@@ -61,6 +61,14 @@ val LaboratorBadgeBg = Color(0xFFE9EDFF)
 val LaboratorStepIconBg = Color(0xFFDCE2F7)
 val LaboratorDocHeaderBg = Color(0xFFE1E8FD)
 
+// Laborator dashboard palette (Figma: Mobile design conversion)
+val LaboratorDashboardBackground = Color(0xFFF4F6FA)
+val LaboratorPanelBg = Color(0xFFEEF1FF)
+val LaboratorMutedText = Color(0xFF767586)
+val LaboratorSubtleText = Color(0xFF464554)
+val LaboratorBorder = Color(0xFFC7C4D7)
+val LaboratorRowTint = Color(0xFFF1F3FF)
+
 // Medical result color-coded values
 val ResultHigh = Color(0xFFDC2626)
 val ResultLow = Color(0xFFEA580C)

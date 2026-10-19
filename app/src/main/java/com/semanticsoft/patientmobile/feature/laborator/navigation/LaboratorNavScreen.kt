@@ -14,15 +14,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.semanticsoft.patientmobile.core.ui.components.ScreenTopBar
+import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorDashboardUiState
+import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorPeriod
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun LaboratorNavScreen(
+    dashboardState: StateFlow<LaboratorDashboardUiState>,
+    onPeriodSelected: (LaboratorPeriod) -> Unit,
+    onCompareToggle: (Boolean) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val dashboard by dashboardState.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
@@ -37,7 +45,17 @@ fun LaboratorNavScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            ScreenTopBar(titlePrefix = "Laborator", titleHighlight = "")
+            when (currentRoute) {
+                LaboratorTab.Home.route -> ScreenTopBar(
+                    titlePrefix = "Salut, ${dashboard.labName}",
+                    titleHighlight = "",
+                    subtitle = dashboard.lastSyncLabel
+                )
+                else -> ScreenTopBar(
+                    titlePrefix = "Laborator",
+                    titleHighlight = ""
+                )
+            }
         },
         bottomBar = {
             NavigationBar(
@@ -78,6 +96,9 @@ fun LaboratorNavScreen(
         ) {
             LaboratorPostLoginNavHost(
                 navController = navController,
+                dashboardState = dashboard,
+                onPeriodSelected = onPeriodSelected,
+                onCompareToggle = onCompareToggle,
                 onLogout = onLogout
             )
         }
