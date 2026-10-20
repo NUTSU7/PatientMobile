@@ -21,11 +21,12 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.semanticsoft.patientmobile.core.ui.components.AppBottomNavBar
 import com.semanticsoft.patientmobile.core.ui.shared.upload.UploadFileScreen
 import com.semanticsoft.patientmobile.core.ui.shared.upload.UploadFileViewModel
 import com.semanticsoft.patientmobile.core.ui.shared.upload.UploadFileEvent
 import com.semanticsoft.patientmobile.core.ui.shared.upload.rememberUploadFileLaunchers
-import com.semanticsoft.patientmobile.feature.patient.navigation.components.BottomNavBar
+import com.semanticsoft.patientmobile.feature.patient.navigation.components.PatientUploadFab
 import com.semanticsoft.patientmobile.core.ui.components.ScreenTopBar
 import kotlinx.coroutines.flow.StateFlow
 import com.semanticsoft.patientmobile.feature.patient.dashboard.DashboardUiState
@@ -71,6 +72,10 @@ fun PatientNavScreen(
     val navController = rememberNavController()
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
+    val onUploadClick: () -> Unit = {
+        if (!showUploadModal) uploadFileViewModel.reset()
+        showUploadModal = !showUploadModal
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -96,7 +101,13 @@ fun PatientNavScreen(
             }
         },
         bottomBar = {
-            BottomNavBar(
+            AppBottomNavBar(
+                items = listOf(
+                    PatientTab.Home,
+                    PatientTab.History,
+                    PatientTab.Analyses,
+                    PatientTab.Profile
+                ),
                 currentRoute = currentRoute,
                 onNavigate = { route ->
                     navController.navigate(route) {
@@ -107,11 +118,11 @@ fun PatientNavScreen(
                         restoreState = true
                     }
                 },
-                onUploadClick = {
-                    if (!showUploadModal) uploadFileViewModel.reset()
-                    showUploadModal = !showUploadModal
-                }
-            )
+                onCenterClick = onUploadClick,
+                centerContentDescription = "Încarcă analize"
+            ) {
+                PatientUploadFab()
+            }
         }
     ) { innerPadding ->
         Box(
@@ -123,10 +134,7 @@ fun PatientNavScreen(
                 navController = navController,
                 dashboardState = dashboardState,
                 processingStatus = processingStatus,
-                onUploadClick = {
-                    if (!showUploadModal) uploadFileViewModel.reset()
-                    showUploadModal = !showUploadModal
-                },
+                onUploadClick = onUploadClick,
                 onLogout = onLogout,
                 navigateToExplanation = navigateToExplanation,
                 navigateToReportResults = navigateToReportResults

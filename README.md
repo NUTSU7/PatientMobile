@@ -114,7 +114,7 @@ enum class UserRole { PATIENT, LABORATOR, UNKNOWN }
 | Role | Shell | Features |
 |------|-------|----------|
 | `PATIENT` | `feature/patient/navigation/` | dashboard, medicalHistory, uploadedAnalyses, profile, analysisExplanation, reportResults, registration |
-| `LABORATOR` | `feature/laborator/navigation/` | dashboard, submissions, results, profile, registration |
+| `LABORATOR` | `feature/laborator/navigation/` | dashboard, analyses, statistics, profile, registration |
 
 Shared, role-agnostic registration primitives live in `core/ui/components/auth/`
 (`AuthInput`, `AuthLabel`).
@@ -181,10 +181,9 @@ PatientMobile/
 │   │   │   │   │   │   └── registration/
 │   │   │   │   │   └── laborator/
 │   │   │   │   │       ├── navigation/       # LaboratorNavScreen, LaboratorTab,
-│   │   │   │   │       │                     # LaboratorPostLoginNavHost
+│   │   │   │   │       │                     # LaboratorPostLoginNavHost, components/
+│   │   │   │   │       │                     # (FAB + temporary nav placeholders)
 │   │   │   │   │       ├── dashboard/
-│   │   │   │   │       ├── submissions/
-│   │   │   │   │       ├── results/
 │   │   │   │   │       ├── profile/
 │   │   │   │   │       └── registration/
 │   │   │   │   ├── navigation/               # Root dispatcher
@@ -232,7 +231,7 @@ PatientMobile/
 ### Global Design System (`core/ui/components/`)
 
 Shared, role-agnostic primitives and dialogs, e.g. `ErrorDialog`, `LoadingIndicator`,
-`ScreenTopBar`, `FilePickerButton`, `DeleteConfirmationDialog`.
+`ScreenTopBar`, `AppBottomNavBar`, `FilePickerButton`, `DeleteConfirmationDialog`.
 
 ---
 
@@ -280,10 +279,13 @@ A center FAB opens the shared upload flow (`core/ui/shared/upload/`).
 
 | Tab | Screen |
 |-----|--------|
-| Panou | `feature/laborator/dashboard/LaboratorDashboardScreen` |
-| Lucrari | `feature/laborator/submissions/LaboratorSubmissionsScreen` |
-| Rezultate | `feature/laborator/results/LaboratorResultsScreen` |
+| Acasă | `feature/laborator/dashboard/LaboratorDashboardScreen` |
+| Analize | `feature/laborator/navigation/components/LaboratorNavPlaceholderScreen` |
+| Statistica | `feature/laborator/navigation/components/LaboratorNavPlaceholderScreen` |
 | Profil | `feature/laborator/profile/LaboratorProfileScreen` |
+
+A center FAB uses the Figma upload-result icon and is UI-only for now (no action). The
+`Analize` and `Statistica` routes use temporary placeholders until their screens are built.
 
 ### Dashboard (`feature/patient/dashboard/`)
 
@@ -324,10 +326,10 @@ Login ──role=PATIENT───▶ Patient graph
   │                         └── Profil    → ProfileScreen
   │
   ├──role=LABORATOR────▶ Laborator graph
-  │                         ├── Panou     → LaboratorDashboardScreen
-  │                         ├── Lucrari   → LaboratorSubmissionsScreen
-  │                         ├── Rezultate → LaboratorResultsScreen
-  │                         └── Profil    → LaboratorProfileScreen
+  │                         ├── Acasă      → LaboratorDashboardScreen
+  │                         ├── Analize    → placeholder (nav shell)
+  │                         ├── Statistica → placeholder (nav shell)
+  │                         └── Profil     → LaboratorProfileScreen
   │
   ├──▶ Patient Registration ──success──▶ Patient graph
   └──▶ Laborator Registration ─success──▶ Laborator graph

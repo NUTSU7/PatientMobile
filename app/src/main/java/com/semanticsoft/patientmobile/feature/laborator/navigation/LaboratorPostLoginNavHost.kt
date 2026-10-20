@@ -8,9 +8,8 @@ import androidx.navigation.compose.composable
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorDashboardScreen
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorDashboardUiState
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorPeriod
+import com.semanticsoft.patientmobile.feature.laborator.navigation.components.LaboratorNavPlaceholderScreen
 import com.semanticsoft.patientmobile.feature.laborator.profile.LaboratorProfileScreen
-import com.semanticsoft.patientmobile.feature.laborator.results.LaboratorResultsScreen
-import com.semanticsoft.patientmobile.feature.laborator.submissions.LaboratorSubmissionsScreen
 
 @Composable
 fun LaboratorPostLoginNavHost(
@@ -34,12 +33,12 @@ fun LaboratorPostLoginNavHost(
             )
         }
 
-        composable(LaboratorTab.Submissions.route) {
-            LaboratorSubmissionsScreen()
+        composable(LaboratorTab.Analyses.route) {
+            LaboratorNavPlaceholderScreen()
         }
 
-        composable(LaboratorTab.Results.route) {
-            LaboratorResultsScreen()
+        composable(LaboratorTab.Statistics.route) {
+            LaboratorNavPlaceholderScreen()
         }
 
         composable(LaboratorTab.Profile.route) {
