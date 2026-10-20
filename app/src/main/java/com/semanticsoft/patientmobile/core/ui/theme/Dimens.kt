@@ -16,6 +16,9 @@ object AppDimens {
     val gapDefault = 12.dp
     val gapLarge = 16.dp
 
+    val bottomNavHeight = 56.dp
+    val bottomNavFabTouchTarget = 48.dp
+
     val buttonHeightSmall = 38.dp
     val buttonHeightDefault = 44.dp
     val buttonHeightLarge = 46.dp

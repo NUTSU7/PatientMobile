@@ -1,12 +1,12 @@
-package com.semanticsoft.patientmobile.feature.patient.navigation.components
+package com.semanticsoft.patientmobile.core.ui.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -14,7 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -23,16 +23,14 @@ import com.semanticsoft.patientmobile.core.ui.theme.Gray500
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 
 @Composable
-fun BottomNavItem(
-    icon: ImageVector,
-    label: String,
+fun AppBottomNavItem(
+    destination: AppBottomNavDestination,
     selected: Boolean,
-    tintable: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val tint = when {
-        tintable -> if (selected) Indigo600 else Gray500
+    val iconTint = when {
+        destination.tintable -> if (selected) Indigo600 else Gray500
         selected -> Color.Unspecified
         else -> Gray500
     }
@@ -41,29 +39,30 @@ fun BottomNavItem(
     Column(
         modifier = modifier
             .fillMaxHeight()
-            .clickable(onClick = onClick),
+            .selectable(
+                selected = selected,
+                onClick = onClick,
+                role = Role.Tab
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = tint,
+            imageVector = destination.icon,
+            contentDescription = null,
+            tint = iconTint,
             modifier = Modifier.size(24.dp)
         )
 
         Spacer(modifier = Modifier.height(2.dp))
 
         Text(
-            text = label,
+            text = destination.label,
             color = textColor,
-            fontSize = 11.sp,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 11.sp
-            )
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp)
         )
     }
 }
