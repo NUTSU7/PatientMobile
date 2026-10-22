@@ -1,6 +1,7 @@
 package com.semanticsoft.patientmobile.feature.laborator.dashboard
 
 import androidx.lifecycle.ViewModel
+import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -10,16 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-
-enum class LaboratorPeriod(
-    val label: String,
-    val activityLabel: String
-) {
-    SEVEN_DAYS("7 zile", "ULTIMELE 7 ZILE"),
-    THIRTY_DAYS("30 zile", "ULTIMELE 30 ZILE"),
-    THREE_MONTHS("3 luni", "ULTIMELE 3 LUNI"),
-    CUSTOM("Personalizat", "PERIOADĂ PERSONALIZATĂ")
-}
 
 data class LaboratorMetric(
     val id: String,

@@ -116,7 +116,7 @@ enum class UserRole { PATIENT, LABORATOR, UNKNOWN }
 | Role | Shell | Features |
 |------|-------|----------|
 | `PATIENT` | `feature/patient/navigation/` | dashboard, medicalHistory, uploadedAnalyses, profile, analysisExplanation, reportResults, registration |
-| `LABORATOR` | `feature/laborator/navigation/` | dashboard, analyses, statistics, profile, registration |
+| `LABORATOR` | `feature/laborator/navigation/` | dashboard, frequentAnalyses, statistics, profile, registration |
 
 Shared, role-agnostic registration primitives live in `core/ui/components/auth/`
 (`AuthInput`, `AuthLabel`).
@@ -185,7 +185,9 @@ PatientMobile/
 │   │   │   │   │       ├── navigation/       # LaboratorNavScreen, LaboratorTab,
 │   │   │   │   │       │                     # LaboratorPostLoginNavHost, components/
 │   │   │   │   │       │                     # (FAB + temporary nav placeholders)
+│   │   │   │   │       ├── common/           # role-scoped shared filter UI
 │   │   │   │   │       ├── dashboard/
+│   │   │   │   │       ├── frequentAnalyses/
 │   │   │   │   │       ├── profile/
 │   │   │   │   │       └── registration/
 │   │   │   │   ├── navigation/               # Root dispatcher
@@ -283,12 +285,12 @@ A center FAB opens the shared upload flow (`core/ui/shared/upload/`).
 | Tab | Screen |
 |-----|--------|
 | Acasă | `feature/laborator/dashboard/LaboratorDashboardScreen` |
-| Analize | `feature/laborator/navigation/components/LaboratorNavPlaceholderScreen` |
+| Analize | `feature/laborator/frequentAnalyses/FrequentAnalysesScreen` |
 | Statistica | `feature/laborator/navigation/components/LaboratorNavPlaceholderScreen` |
 | Profil | `feature/laborator/profile/LaboratorProfileScreen` |
 
 A center FAB uses the Figma upload-result icon and is UI-only for now (no action). The
-`Analize` and `Statistica` routes use temporary placeholders until their screens are built.
+`Statistica` route uses a temporary placeholder until its screen is built.
 
 ### Dashboard (`feature/patient/dashboard/`)
 

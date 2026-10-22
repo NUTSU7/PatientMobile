@@ -1,5 +1,6 @@
 package com.semanticsoft.patientmobile.feature.laborator.dashboard
 
+import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

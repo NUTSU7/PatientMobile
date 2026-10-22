@@ -7,7 +7,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +16,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
@@ -31,18 +29,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.theme.Gray300
 import com.semanticsoft.patientmobile.core.ui.theme.Gray900
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorBorder
-import com.semanticsoft.patientmobile.core.ui.theme.LaboratorDashboardBackground
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorMutedText
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorPanelBg
-import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorPeriod
+import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
+import com.semanticsoft.patientmobile.feature.laborator.common.components.LaboratorFilterCard
+import com.semanticsoft.patientmobile.feature.laborator.common.components.LaboratorPeriodChip
 
 @Composable
 internal fun PeriodFilterCard(
@@ -52,16 +49,7 @@ internal fun PeriodFilterCard(
     onCompareToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardShape = RoundedCornerShape(16.dp)
-
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(Color.White, cardShape)
-            .border(1.25.dp, LaboratorBorder.copy(alpha = 0.3f), cardShape)
-            .padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
+    LaboratorFilterCard(modifier = modifier) {
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             val compact = maxWidth < 330.dp
 
@@ -72,7 +60,7 @@ internal fun PeriodFilterCard(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 LaboratorPeriod.entries.forEach { period ->
-                    PeriodChip(
+                    LaboratorPeriodChip(
                         label = period.label,
                         selected = selectedPeriod == period,
                         compact = compact,
@@ -106,45 +94,6 @@ internal fun PeriodFilterCard(
                 onCheckedChange = onCompareToggle
             )
         }
-    }
-}
-
-@Composable
-private fun PeriodChip(
-    label: String,
-    selected: Boolean,
-    compact: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val shape = RoundedCornerShape(999.dp)
-    val background = if (selected) Indigo600 else LaboratorDashboardBackground
-    val contentColor = if (selected) Color.White else Indigo600
-    val borderColor = if (selected) Indigo600 else Color.Transparent
-
-    Box(
-        modifier = modifier
-            .heightIn(min = 42.dp)
-            .clip(shape)
-            .background(background, shape)
-            .border(1.25.dp, borderColor, shape)
-            .selectable(
-                selected = selected,
-                role = Role.RadioButton,
-                onClick = onClick
-            )
-            .padding(horizontal = if (compact) 2.dp else 4.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            color = contentColor,
-            fontSize = if (compact) 11.sp else 12.sp,
-            lineHeight = if (compact) 16.sp else 18.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            maxLines = 1
-        )
     }
 }
 
