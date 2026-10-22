@@ -12,8 +12,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.semanticsoft.patientmobile.core.ui.components.AppBottomNavBar
 import com.semanticsoft.patientmobile.core.ui.components.ScreenTopBar
+import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorDashboardUiState
-import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorPeriod
 import com.semanticsoft.patientmobile.feature.laborator.navigation.components.LaboratorUploadFab
 import kotlinx.coroutines.flow.StateFlow
 
@@ -43,8 +43,7 @@ fun LaboratorNavScreen(
             when (currentRoute) {
                 LaboratorTab.Home.route -> ScreenTopBar(
                     titlePrefix = "Salut, ${dashboard.labName}",
-                    titleHighlight = "",
-                    subtitle = dashboard.lastSyncLabel
+                    titleHighlight = ""
                 )
                 LaboratorTab.Analyses.route -> ScreenTopBar(
                     titlePrefix = "Analize ",

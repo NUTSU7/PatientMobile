@@ -68,6 +68,13 @@ val LaboratorMutedText = Color(0xFF767586)
 val LaboratorSubtleText = Color(0xFF464554)
 val LaboratorBorder = Color(0xFFC7C4D7)
 val LaboratorRowTint = Color(0xFFF1F3FF)
+val LaboratorSurfaceSubtle = Color(0xFFF8FAFC)
+val LaboratorDivider = Color(0xFFF1F5F9)
+val LaboratorInputBorder = Color(0xFFE2E8F0)
+val LaboratorPlaceholderText = Color(0xFF7E93AB)
+val LaboratorInsufficientText = Color(0xFF94A3B8)
+val LaboratorAnalysisTitle = Color(0xFF0F172A)
+val LaboratorAnalysisSubtitle = Color(0xFF64748B)
 
 // Medical result color-coded values
 val ResultHigh = Color(0xFFDC2626)

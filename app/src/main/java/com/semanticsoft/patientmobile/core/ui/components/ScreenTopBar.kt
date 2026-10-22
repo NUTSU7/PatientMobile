@@ -70,7 +70,9 @@ fun ScreenTopBar(
                     .padding(start = horizontalPadding, end = horizontalPadding, top = topInset + 8.dp, bottom = 8.dp)
             ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(maxTitleRowHeight),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(

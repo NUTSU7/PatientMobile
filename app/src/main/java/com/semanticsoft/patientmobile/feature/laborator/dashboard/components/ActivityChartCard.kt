@@ -39,8 +39,8 @@ import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorMutedText
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorPanelBg
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorSubtleText
+import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorActivitySeries
-import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorPeriod
 import kotlin.math.max
 
 @Composable

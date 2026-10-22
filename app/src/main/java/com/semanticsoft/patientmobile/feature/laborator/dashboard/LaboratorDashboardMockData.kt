@@ -1,5 +1,7 @@
 package com.semanticsoft.patientmobile.feature.laborator.dashboard
 
+import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
+
 /**
  * Temporary prototype data for the laborator dashboard.
  *

@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.semanticsoft.patientmobile.core.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorDashboardBackground
+import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.components.ActivityChartCard
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.components.OverviewMetricsRow
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.components.PeriodFilterCard
