@@ -15,6 +15,6 @@ sealed class LaboratorTab(
 ) : AppBottomNavDestination {
     data object Home : LaboratorTab("lab-home", "Acasă", DashboardIcon, tintable = false)
     data object Analyses : LaboratorTab("lab-analyses", "Analize", FrequentAnalysesIcon, tintable = false)
-    data object Statistics : LaboratorTab("lab-statistics", "Statistica", PatientsEngagementIcon, tintable = false)
+    data object Statistics : LaboratorTab("lab-statistics", "Implicare", PatientsEngagementIcon, tintable = false)
     data object Profile : LaboratorTab("lab-profile", "Profil", ProfileIcon, tintable = false)
 }

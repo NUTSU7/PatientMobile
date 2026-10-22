@@ -286,11 +286,11 @@ A center FAB opens the shared upload flow (`core/ui/shared/upload/`).
 |-----|--------|
 | Acasă | `feature/laborator/dashboard/LaboratorDashboardScreen` |
 | Analize | `feature/laborator/frequentAnalyses/FrequentAnalysesScreen` |
-| Statistica | `feature/laborator/navigation/components/LaboratorNavPlaceholderScreen` |
+| Implicare | `feature/laborator/navigation/components/LaboratorNavPlaceholderScreen` |
 | Profil | `feature/laborator/profile/LaboratorProfileScreen` |
 
 A center FAB uses the Figma upload-result icon and is UI-only for now (no action). The
-`Statistica` route uses a temporary placeholder until its screen is built.
+`Implicare` route uses a temporary placeholder until its screen is built.
 
 ### Dashboard (`feature/patient/dashboard/`)
 
@@ -333,7 +333,7 @@ Login ──role=PATIENT───▶ Patient graph
   ├──role=LABORATOR────▶ Laborator graph
   │                         ├── Acasă      → LaboratorDashboardScreen
   │                         ├── Analize    → placeholder (nav shell)
-  │                         ├── Statistica → placeholder (nav shell)
+  │                         ├── Implicare  → placeholder (nav shell)
   │                         └── Profil     → LaboratorProfileScreen
   │
   ├──▶ Patient Registration ──success──▶ Patient graph
