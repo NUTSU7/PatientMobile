@@ -265,7 +265,12 @@ private fun copyUriToCache(context: android.content.Context, uri: Uri): String? 
             mimeType.contains("png") -> ".png"
             else -> ".tmp"
         }
-        val fileName = getFileName(context, uri) ?: "ocr_${System.currentTimeMillis()}$ext"
+        val rawName = getFileName(context, uri)
+        val fileName = if (!rawName.isNullOrBlank()) {
+            File(rawName).name.replace(Regex("""[/\\?%*:|"<>]+"""), "_").trim().ifBlank { "ocr_${System.currentTimeMillis()}$ext" }
+        } else {
+            "ocr_${System.currentTimeMillis()}$ext"
+        }
         val outFile = File(context.cacheDir, "ocr_uploads/$fileName").apply {
             parentFile?.mkdirs()
         }

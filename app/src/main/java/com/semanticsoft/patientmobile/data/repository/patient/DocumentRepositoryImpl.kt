@@ -172,9 +172,11 @@ class DocumentRepositoryImpl(
     private suspend fun downloadTo(documentId: String, directory: File): ApiResult<File> =
         requireOnline {
             withContext(Dispatchers.IO) {
+                var partialFile: File? = null
                 try {
                     val response = apiService.downloadDocument(documentId)
                     if (!response.isSuccessful) {
+                        response.errorBody()?.close()
                         return@withContext ApiResult.HttpError(
                             code = response.code(),
                             message = response.message()
@@ -188,14 +190,21 @@ class DocumentRepositoryImpl(
 
                     val filename = extractFilename(response, documentId)
                     val outFile = File(directory, filename)
+                    partialFile = outFile
 
-                    outFile.outputStream().use { output ->
-                        body.byteStream().use { input -> input.copyTo(output) }
+                    body.use { respBody ->
+                        outFile.outputStream().use { output ->
+                            respBody.byteStream().use { input -> input.copyTo(output) }
+                        }
                     }
 
-                    body.close()
                     ApiResult.Success(outFile)
                 } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) {
+                        partialFile?.delete()
+                        throw e
+                    }
+                    partialFile?.delete()
                     ApiResult.HttpError(code = -1, message = e.message ?: "Download failed")
                 }
             }
@@ -226,7 +235,12 @@ class DocumentRepositoryImpl(
             val match = Regex("""filename\*=UTF-8''(.+?)(?:;|$)""").find(contentDisposition)
                 ?: Regex("""filename="(.+?)"""").find(contentDisposition)
                 ?: Regex("""filename=(.+?)(?:;|$)""").find(contentDisposition)
-            match?.groupValues?.get(1)?.trim()?.let { return it }
+            val extracted = match?.groupValues?.get(1)?.trim()
+            if (!extracted.isNullOrBlank()) {
+                val decoded = runCatching { java.net.URLDecoder.decode(extracted, "UTF-8") }.getOrDefault(extracted)
+                val sanitized = File(decoded).name.replace(Regex("""[/\\?%*:|"<>]+"""), "_").trim()
+                if (sanitized.isNotBlank() && sanitized != "." && sanitized != "..") return sanitized
+            }
         }
         val ext = response.headers()["Content-Type"]
             ?.substringAfter("/")
