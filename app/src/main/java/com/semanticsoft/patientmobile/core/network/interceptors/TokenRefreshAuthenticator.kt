@@ -36,6 +36,18 @@ class TokenRefreshAuthenticator(
                 Log.d(TAG, "Already retried — propagating 401")
             }
             tokenManager.clearTokens()
+            tokenManager.clearUser()
+            return null
+        }
+
+        val requestPath = response.request.url.encodedPath
+        if (requestPath.endsWith("/auth/login")
+            || requestPath.endsWith("/auth/register")
+            || requestPath.endsWith("/auth/refresh")
+            || requestPath.endsWith("/auth/forgot-password")
+            || requestPath.endsWith("/auth/reset-password")
+            || requestPath.contains("/shared/")
+        ) {
             return null
         }
 
@@ -59,6 +71,7 @@ class TokenRefreshAuthenticator(
                             Log.d(TAG, "No refresh token — propagating 401")
                         }
                         tokenManager.clearTokens()
+                        tokenManager.clearUser()
                         null
                     } else {
                         val newTokens = performRefresh(refreshToken)
@@ -74,6 +87,7 @@ class TokenRefreshAuthenticator(
                                 Log.d(TAG, "Refresh failed — clearing tokens, propagating 401")
                             }
                             tokenManager.clearTokens()
+                            tokenManager.clearUser()
                             null
                         }
                     }
@@ -87,7 +101,10 @@ class TokenRefreshAuthenticator(
             val baseUrl = com.semanticsoft.patientmobile.BuildConfig.BASE_URL
             val refreshUrl = "${baseUrl}auth/refresh"
 
-            val payload = "{\"refreshToken\":\"$refreshToken\"}"
+            val payload = json.encodeToString(
+                com.semanticsoft.patientmobile.core.network.dto.auth.RefreshRequest.serializer(),
+                com.semanticsoft.patientmobile.core.network.dto.auth.RefreshRequest(refreshToken)
+            )
             val requestBody = payload.toRequestBody("application/json; charset=utf-8".toMediaType())
 
             val refreshRequest = Request.Builder()

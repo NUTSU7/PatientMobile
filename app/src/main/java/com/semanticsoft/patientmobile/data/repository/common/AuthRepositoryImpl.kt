@@ -105,13 +105,18 @@ class AuthRepositoryImpl(
                 tokenManager.saveUser(result.data)
                 result
             }
-            is ApiResult.NetworkError, is ApiResult.AuthError -> {
+            is ApiResult.NetworkError -> {
                 val localUser = tokenManager.getUser()
                 if (localUser != null) {
                     ApiResult.Success(localUser)
                 } else {
                     result
                 }
+            }
+            is ApiResult.AuthError -> {
+                tokenManager.clearTokens()
+                tokenManager.clearUser()
+                result
             }
             else -> result
         }

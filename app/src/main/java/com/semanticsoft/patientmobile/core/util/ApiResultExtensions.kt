@@ -25,6 +25,7 @@ inline fun <T, R> ApiResult<T>.map(transform: (T) -> R): ApiResult<R> = when (th
     is ApiResult.Success -> try {
         ApiResult.Success(transform(data))
     } catch (e: Exception) {
+        if (e is kotlinx.coroutines.CancellationException) throw e
         ApiResult.HttpError(code = -1, message = e.message ?: "Mapping error")
     }
     is ApiResult.HttpError -> this

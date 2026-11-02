@@ -46,6 +46,9 @@ class AuthInterceptor(
         return path.endsWith("/auth/login")
                 || path.endsWith("/auth/register")
                 || path.endsWith("/auth/refresh")
+                || path.endsWith("/auth/forgot-password")
+                || path.endsWith("/auth/reset-password")
+                || path.contains("/shared/")
     }
 
     companion object {

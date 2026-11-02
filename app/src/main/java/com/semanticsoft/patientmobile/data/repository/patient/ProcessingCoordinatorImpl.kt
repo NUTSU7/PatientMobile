@@ -41,22 +41,27 @@ class ProcessingCoordinatorImpl @Inject constructor(
     private val pendingAdditions = ArrayDeque<ExtractionTarget>()
     private val activeKeys = HashSet<String>()
 
-    @Synchronized
     override fun start(targets: List<ExtractionTarget>) {
         if (targets.isEmpty()) return
-        if (activeJob?.isActive == true) {
-            merge(targets)
-            return
+        synchronized(lock) {
+            if (activeJob?.isActive == true) {
+                mergeLocked(targets)
+                return
+            }
+            beginBatchLocked(targets)
         }
-        beginBatch(targets)
     }
 
     override fun resumeIfPending() {
         scope.launch {
-            if (activeJob?.isActive == true) return@launch
+            synchronized(lock) {
+                if (activeJob?.isActive == true) return@launch
+            }
             val discovery = discoverPending()
             if (discovery.targets.isNotEmpty()) {
-                beginBatch(discovery.targets)
+                synchronized(lock) {
+                    beginBatchLocked(discovery.targets)
+                }
             } else if (discovery.nonLab) {
                 _status.update { it.copy(lastOutcome = ProcessingOutcome.NON_LAB) }
                 globalSyncManager.triggerSync()
@@ -64,30 +69,26 @@ class ProcessingCoordinatorImpl @Inject constructor(
         }
     }
 
-    @Synchronized
     override fun reset() {
-        activeJob?.cancel()
-        activeJob = null
-        auxJobs.forEach { it.cancel() }
-        auxJobs.clear()
         synchronized(lock) {
+            activeJob?.cancel()
+            activeJob = null
+            auxJobs.forEach { it.cancel() }
+            auxJobs.clear()
             pendingAdditions.clear()
             activeKeys.clear()
         }
         _status.value = ProcessingStatus()
     }
 
-    @Synchronized
-    private fun beginBatch(targets: List<ExtractionTarget>) {
+    private fun beginBatchLocked(targets: List<ExtractionTarget>) {
         if (activeJob?.isActive == true) {
-            merge(targets)
+            mergeLocked(targets)
             return
         }
-        synchronized(lock) {
-            pendingAdditions.clear()
-            activeKeys.clear()
-            targets.forEach { activeKeys.add(keyOf(it)) }
-        }
+        pendingAdditions.clear()
+        activeKeys.clear()
+        targets.forEach { activeKeys.add(keyOf(it)) }
         _status.value = ProcessingStatus(
             isProcessing = true,
             totalJobs = targets.size,
@@ -96,19 +97,15 @@ class ProcessingCoordinatorImpl @Inject constructor(
         activeJob = scope.launch { runProcessing(targets) }
     }
 
-    @Synchronized
-    private fun merge(targets: List<ExtractionTarget>) {
-        val newlyAdded = synchronized(lock) {
-            var added = 0
-            for (target in targets) {
-                if (activeKeys.add(keyOf(target))) {
-                    pendingAdditions.addLast(target)
-                    added++
-                }
+    private fun mergeLocked(targets: List<ExtractionTarget>) {
+        var added = 0
+        for (target in targets) {
+            if (activeKeys.add(keyOf(target))) {
+                pendingAdditions.addLast(target)
+                added++
             }
-            added
         }
-        if (newlyAdded > 0) {
+        if (added > 0) {
             val total = activeKeys.size
             _status.update {
                 it.copy(
@@ -253,7 +250,13 @@ class ProcessingCoordinatorImpl @Inject constructor(
             timedOut = _status.value.isTimedOut
         )
 
-        synchronized(lock) { activeKeys.clear() }
+        synchronized(lock) {
+            val remainingKeys = pendingAdditions.map { keyOf(it) }.toSet()
+            activeKeys.retainAll(remainingKeys)
+            if (activeJob?.isActive == false) {
+                activeJob = null
+            }
+        }
     }
 
     private suspend fun finalize(
@@ -273,26 +276,34 @@ class ProcessingCoordinatorImpl @Inject constructor(
         if (timedOut) {
             globalSyncManager.triggerSync()
             _status.update { it.copy(isProcessing = false, lastOutcome = outcome) }
-            synchronized(this) {
-                auxJobs += scope.launch {
-                    delay(TIMEOUT_REARM_DELAY_MS)
-                    resumeIfPending()
-                }
+            val timeoutJob = scope.launch {
+                delay(TIMEOUT_REARM_DELAY_MS)
+                resumeIfPending()
+            }
+            synchronized(lock) {
+                auxJobs.removeAll { !it.isActive }
+                auxJobs += timeoutJob
             }
             return
         }
 
         globalSyncManager.triggerSync()
-        synchronized(this) {
-            auxJobs += scope.launch {
-                delay(FINAL_REFRESH_DELAY_MS)
-                globalSyncManager.triggerSync()
-            }
+        val refreshJob = scope.launch {
+            delay(FINAL_REFRESH_DELAY_MS)
+            globalSyncManager.triggerSync()
+        }
+        synchronized(lock) {
+            auxJobs.removeAll { !it.isActive }
+            auxJobs += refreshJob
         }
 
         if (failed == 0 && completed == total) {
             _status.update { it.copy(aiRegenerationInFlight = true) }
-            runCatching { dashboardRepository.regenerateAiSummary() }
+            try {
+                dashboardRepository.regenerateAiSummary()
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+            }
             _status.update { it.copy(aiRegenerationInFlight = false) }
         }
 
