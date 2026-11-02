@@ -1,23 +1,38 @@
 package com.semanticsoft.patientmobile.core.datastore
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.semanticsoft.patientmobile.domain.model.common.User
 import kotlinx.serialization.json.Json
+import java.io.File
 
 internal class SecureTokenStore(context: Context) {
-    private val masterKey = MasterKey.Builder(context)
-        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-        .build()
+    private val prefs: SharedPreferences = runCatching {
+        createEncryptedPrefs(context)
+    }.getOrElse {
+        try {
+            context.deleteSharedPreferences(PREFS_NAME)
+            val prefsFile = File(context.filesDir.parent, "shared_prefs/$PREFS_NAME.xml")
+            if (prefsFile.exists()) prefsFile.delete()
+        } catch (_: Exception) { }
+        createEncryptedPrefs(context)
+    }
 
-    private val prefs = EncryptedSharedPreferences.create(
-        context,
-        PREFS_NAME,
-        masterKey,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    private fun createEncryptedPrefs(context: Context): SharedPreferences {
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+
+        return EncryptedSharedPreferences.create(
+            context,
+            PREFS_NAME,
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
