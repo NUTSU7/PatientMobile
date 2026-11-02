@@ -201,8 +201,9 @@ class UploadFileViewModelTest {
             vm.onFilesSelected(listOf(temp.absolutePath))
             vm.startUpload()
             advanceUntilIdle()
-            assertTrue(vm.state.value.uploadComplete)
-            assertTrue(vm.state.value.selectedFiles.isEmpty())
+            assertFalse(vm.state.value.uploadComplete)
+            assertEquals(1, vm.state.value.selectedFiles.size)
+            assertEquals(UploadStatus.ERROR, vm.state.value.selectedFiles[0].status)
             assertEquals(0, vm.state.value.extractionJobs.size)
             temp.delete()
         } finally {

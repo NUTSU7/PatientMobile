@@ -5,11 +5,13 @@ import com.semanticsoft.patientmobile.core.network.api.AuthApiService
 import com.semanticsoft.patientmobile.core.network.dto.auth.AuthResponse
 import com.semanticsoft.patientmobile.core.network.dto.auth.ChangePasswordRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.DeleteAccountRequest
+import com.semanticsoft.patientmobile.core.network.dto.auth.ForgotPasswordRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.LoginRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.LogoutRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.RefreshRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.RefreshResponse
 import com.semanticsoft.patientmobile.core.network.dto.auth.RegisterRequest
+import com.semanticsoft.patientmobile.core.network.dto.auth.ResetPasswordRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.UserDto
 import com.semanticsoft.patientmobile.domain.model.common.RegistrationRequest
 import com.semanticsoft.patientmobile.domain.model.common.User
@@ -121,6 +123,10 @@ class AuthFlowInstrumentedTest {
         override suspend fun getCurrentUser(): UserDto = userDto("john@example.com")
 
         override suspend fun changePassword(request: ChangePasswordRequest) = Unit
+
+        override suspend fun forgotPassword(request: ForgotPasswordRequest) = Unit
+
+        override suspend fun resetPassword(request: ResetPasswordRequest) = Unit
 
         override suspend fun deleteAccount(request: DeleteAccountRequest) = Unit
 
