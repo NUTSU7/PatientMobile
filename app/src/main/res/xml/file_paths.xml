@@ -2,4 +2,7 @@
 <paths>
     <cache-path name="camera_photos" path="camera/" />
     <cache-path name="uploads" path="uploads/" />
+    <cache-path name="cache_root" path="." />
+    <external-files-path name="download_files" path="Download/" />
+    <external-files-path name="external_files" path="." />
 </paths>

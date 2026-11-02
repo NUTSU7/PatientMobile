@@ -98,17 +98,21 @@ fun UploadedAnalysesScreen(
         viewModel.effects.collect { effect ->
             when (effect) {
                 is UploadedAnalysesEffect.OpenFile -> {
-                    val uri = FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.fileprovider",
-                        effect.file
-                    )
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        setDataAndType(uri, context.contentResolver.getType(uri) ?: "application/octet-stream")
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    try {
+                        val uri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            effect.file
+                        )
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(uri, context.contentResolver.getType(uri) ?: "application/octet-stream")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        context.startActivity(intent)
+                    } catch (_: Exception) {
+                        // Prevent crash if FileProvider root or viewer activity cannot resolve
                     }
-                    context.startActivity(intent)
                 }
             }
         }

@@ -12,8 +12,8 @@ import com.semanticsoft.patientmobile.core.network.dto.auth.RegisterRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.ResetPasswordRequest
 import com.semanticsoft.patientmobile.core.network.dto.auth.UserDto
 import retrofit2.http.Body
-import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.POST
 
 interface AuthApiService {
@@ -42,6 +42,6 @@ interface AuthApiService {
     @POST("auth/reset-password")
     suspend fun resetPassword(@Body request: ResetPasswordRequest)
 
-    @DELETE("auth/account")
+    @HTTP(method = "DELETE", path = "auth/account", hasBody = true)
     suspend fun deleteAccount(@Body request: DeleteAccountRequest)
 }
