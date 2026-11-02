@@ -31,18 +31,27 @@ object ImageNormalizer {
         }
         val loaded = BitmapFactory.decodeFile(source.absolutePath, options)
             ?: return null
-        val targetW = maxOf(1, (srcWidth * scale / options.inSampleSize).toInt())
-        val targetH = maxOf(1, (srcHeight * scale / options.inSampleSize).toInt())
-        val resized = Bitmap.createScaledBitmap(loaded, targetW, targetH, true)
-        loaded.recycle()
-
-        FileOutputStream(dest).use { out ->
-            if (!resized.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)) {
-                resized.recycle()
-                return null
-            }
+        val targetW = maxOf(1, (srcWidth * scale).toInt())
+        val targetH = maxOf(1, (srcHeight * scale).toInt())
+        val resized = if (loaded.width == targetW && loaded.height == targetH) {
+            loaded
+        } else {
+            Bitmap.createScaledBitmap(loaded, targetW, targetH, true)
         }
-        resized.recycle()
+        if (resized !== loaded) {
+            loaded.recycle()
+        }
+
+        try {
+            FileOutputStream(dest).use { out ->
+                if (!resized.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)) {
+                    resized.recycle()
+                    return null
+                }
+            }
+        } finally {
+            resized.recycle()
+        }
         return dest
     }
 
