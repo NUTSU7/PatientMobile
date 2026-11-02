@@ -1,6 +1,7 @@
 package com.semanticsoft.patientmobile.core.ui.shared.documentViewer.components
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import androidx.compose.foundation.Image
@@ -32,9 +33,10 @@ import com.semanticsoft.patientmobile.core.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.core.ui.theme.SurfaceWhite
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.IOException
 
 private const val MIN_SCALE = 1f
 private const val MAX_SCALE = 5f
@@ -47,8 +49,10 @@ fun DocumentViewer(
 ) {
     val scope = rememberCoroutineScope()
     val density = LocalDensity.current.density
+    val renderMutex = remember { Mutex() }
 
     var renderer by remember { mutableStateOf<PdfRenderer?>(null) }
+    var singleImageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var pageCount by remember { mutableIntStateOf(0) }
     var renderError by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(true) }
@@ -57,6 +61,21 @@ fun DocumentViewer(
         var descriptor: ParcelFileDescriptor? = null
         val job = scope.launch(Dispatchers.IO) {
             try {
+                val ext = file.extension.lowercase()
+                if (ext == "jpg" || ext == "jpeg" || ext == "png") {
+                    val bmp = BitmapFactory.decodeFile(file.absolutePath)
+                    withContext(Dispatchers.Main) {
+                        if (bmp != null) {
+                            singleImageBitmap = bmp
+                            isLoading = false
+                        } else {
+                            renderError = true
+                            isLoading = false
+                        }
+                    }
+                    return@launch
+                }
+
                 descriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
                 val pdfRenderer = PdfRenderer(descriptor!!)
                 withContext(Dispatchers.Main) {
@@ -64,12 +83,7 @@ fun DocumentViewer(
                     pageCount = pdfRenderer.pageCount
                     isLoading = false
                 }
-            } catch (_: IOException) {
-                withContext(Dispatchers.Main) {
-                    renderError = true
-                    isLoading = false
-                }
-            } catch (_: SecurityException) {
+            } catch (_: Exception) {
                 withContext(Dispatchers.Main) {
                     renderError = true
                     isLoading = false
@@ -79,8 +93,16 @@ fun DocumentViewer(
 
         onDispose {
             job.cancel()
-            renderer?.close()
-            descriptor?.close()
+            val r = renderer
+            val d = descriptor
+            scope.launch(Dispatchers.IO) {
+                renderMutex.withLock {
+                    try {
+                        r?.close()
+                        d?.close()
+                    } catch (_: Exception) { }
+                }
+            }
         }
     }
 
@@ -99,7 +121,7 @@ fun DocumentViewer(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    LoadingIndicator(message = "Se \u00EEncarc\u0103 documentul...")
+                    LoadingIndicator(message = "Se încarcă documentul...")
                 }
             }
 
@@ -113,6 +135,41 @@ fun DocumentViewer(
                         onDismiss = { },
                         onRetry = null,
                         title = "Eroare"
+                    )
+                }
+            }
+
+            singleImageBitmap != null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer(
+                            scaleX = scale,
+                            scaleY = scale,
+                            translationX = offsetX,
+                            translationY = offsetY
+                        )
+                        .pointerInput(Unit) {
+                            detectTransformGestures { _, pan, zoom, _ ->
+                                val newScale = (scale * zoom).coerceIn(MIN_SCALE, MAX_SCALE)
+                                if (newScale > MIN_SCALE) {
+                                    offsetX += pan.x
+                                    offsetY += pan.y
+                                }
+                                scale = newScale
+                                if (scale <= MIN_SCALE) {
+                                    offsetX = 0f
+                                    offsetY = 0f
+                                }
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        bitmap = singleImageBitmap!!.asImageBitmap(),
+                        contentDescription = "Document",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
                     )
                 }
             }
@@ -152,6 +209,7 @@ fun DocumentViewer(
                             PdfPage(
                                 pageIndex = index,
                                 pdfRenderer = renderer,
+                                renderMutex = renderMutex,
                                 density = density,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -167,6 +225,7 @@ fun DocumentViewer(
 private fun PdfPage(
     pageIndex: Int,
     pdfRenderer: PdfRenderer?,
+    renderMutex: Mutex,
     density: Float,
     modifier: Modifier = Modifier
 ) {
@@ -177,21 +236,24 @@ private fun PdfPage(
         val job = scope.launch(Dispatchers.IO) {
             pdfRenderer?.let { renderer ->
                 try {
-                    val page = renderer.openPage(pageIndex)
-                    val width = (page.width * density).toInt()
-                    val height = (page.height * density).toInt()
-                    val bmp = Bitmap.createBitmap(
-                        width,
-                        height,
-                        Bitmap.Config.ARGB_8888
-                    )
-                    page.render(
-                        bmp,
-                        null,
-                        null,
-                        PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY
-                    )
-                    page.close()
+                    val bmp = renderMutex.withLock {
+                        val page = renderer.openPage(pageIndex)
+                        val width = (page.width * density).toInt()
+                        val height = (page.height * density).toInt()
+                        val createdBmp = Bitmap.createBitmap(
+                            width,
+                            height,
+                            Bitmap.Config.ARGB_8888
+                        )
+                        page.render(
+                            createdBmp,
+                            null,
+                            null,
+                            PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY
+                        )
+                        page.close()
+                        createdBmp
+                    }
                     withContext(Dispatchers.Main) {
                         bitmap = bmp
                     }
@@ -203,7 +265,6 @@ private fun PdfPage(
 
         onDispose {
             job.cancel()
-            bitmap?.recycle()
             bitmap = null
         }
     }
