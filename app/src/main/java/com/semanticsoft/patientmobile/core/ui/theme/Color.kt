@@ -76,6 +76,13 @@ val LaboratorInsufficientText = Color(0xFF94A3B8)
 val LaboratorAnalysisTitle = Color(0xFF0F172A)
 val LaboratorAnalysisSubtitle = Color(0xFF64748B)
 
+// Laborator digital engagement palette (Figma: Pacienți și Implicare)
+val LaboratorEngagementBlue = Color(0xFF5480F9)
+val LaboratorEngagementPurple = Color(0xFF7E22CE)
+val LaboratorEngagementGreen = Color(0xFF34D399)
+val LaboratorEngagementRed = Color(0xFFCF113B)
+val LaboratorArticleTint = Color(0xFFFBFCFF)
+
 // Medical result color-coded values
 val ResultHigh = Color(0xFFDC2626)
 val ResultLow = Color(0xFFEA580C)
