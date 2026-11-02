@@ -108,6 +108,7 @@ class MedicalResultRepositoryImpl(
                     valueNumeric = entry.valueNumeric,
                     valueText = entry.valueText,
                     unit = entry.unit,
+                    abnormalFlag = entry.abnormalFlag,
                     observedAt = entry.observedAt?.let(::parseObservedAt)
                 )
             }
@@ -278,7 +279,11 @@ class MedicalResultRepositoryImpl(
         return try {
             Instant.parse(text).atZone(ZoneId.systemDefault()).toLocalDate()
         } catch (_: Exception) {
-            LocalDate.parse(text)
+            try {
+                LocalDate.parse(text.substringBefore('T').substringBefore(' '))
+            } catch (_: Exception) {
+                com.semanticsoft.patientmobile.data.mapper.common.parseDateSafe(text)
+            }
         }
     }
 }

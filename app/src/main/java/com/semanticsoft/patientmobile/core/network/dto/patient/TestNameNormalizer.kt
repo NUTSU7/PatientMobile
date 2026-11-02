@@ -47,7 +47,6 @@ private val roToEn = mapOf(
     "proteina c reactiva" to "CRP",
     "pcr" to "CRP",
     "acid uric" to "Uric Acid",
-    "uree" to "Urea",
     "albumina" to "Albumin",
     "proteine totale" to "Total Protein",
     "bilirubina totala" to "Bilirubin",
@@ -66,7 +65,6 @@ private val roToEn = mapOf(
     "ca" to "Calcium",
     "magneziu" to "Magnesium",
     "mg" to "Magnesium",
-    "fara" to "Phosphorus",
     "fosfor" to "Phosphorus",
     "t3" to "T3",
     "t4" to "T4",
@@ -85,7 +83,6 @@ private val roToEn = mapOf(
     "hba1c" to "HbA1c",
     "hemoglobina glicozilata" to "HbA1c",
     "trigliceride" to "Triglycerides",
-    "lipaza" to "Lipase",
     "apolipoproteina a1" to "ApoA1",
     "apoa1" to "ApoA1",
     "apolipoproteina b" to "ApoB",
@@ -93,7 +90,6 @@ private val roToEn = mapOf(
     "nt-probnp" to "NT-proBNP",
     "probnp" to "NT-proBNP",
     "troponina" to "Troponin",
-    "inalt" to "Troponin",
     "d-dimeri" to "D-Dimer",
     "d dimeri" to "D-Dimer",
     "fibrinogen" to "Fibrinogen",
@@ -112,6 +108,14 @@ private val roToEn = mapOf(
 )
 
 fun String.normalizeTestName(): String {
-    val lower = trim().lowercase()
-    return roToEn[lower] ?: this
+    val trimmed = trim()
+    val clean = trimmed.lowercase()
+        .replace('ă', 'a')
+        .replace('â', 'a')
+        .replace('î', 'i')
+        .replace('ș', 's')
+        .replace('ş', 's')
+        .replace('ț', 't')
+        .replace('ţ', 't')
+    return roToEn[clean] ?: roToEn[trimmed.lowercase()] ?: this
 }

@@ -27,17 +27,27 @@ fun parseDateSafe(raw: String?): LocalDate {
 @JvmSynthetic
 fun parseInstantSafe(raw: String?): Instant {
     if (raw.isNullOrBlank()) return Instant.EPOCH
+    val trimmed = raw.trim()
     return runCatching {
-        Instant.parse(raw.substringBefore(' '))
+        Instant.parse(trimmed)
     }.getOrElse {
         try {
-            Instant.parse(raw)
+            val isoCandidate = if (trimmed.contains(' ') && !trimmed.contains('T')) {
+                trimmed.replace(' ', 'T')
+            } else trimmed
+            Instant.parse(isoCandidate)
         } catch (_: Exception) {
             try {
-                val millis = raw.toLongOrNull()
-                if (millis != null) Instant.ofEpochMilli(millis) else Instant.EPOCH
+                java.time.LocalDate.parse(trimmed.substringBefore('T').substringBefore(' '))
+                    .atStartOfDay(java.time.ZoneOffset.UTC)
+                    .toInstant()
             } catch (_: Exception) {
-                Instant.EPOCH
+                try {
+                    val millis = trimmed.toLongOrNull()
+                    if (millis != null) Instant.ofEpochMilli(millis) else Instant.EPOCH
+                } catch (_: Exception) {
+                    Instant.EPOCH
+                }
             }
         }
     }

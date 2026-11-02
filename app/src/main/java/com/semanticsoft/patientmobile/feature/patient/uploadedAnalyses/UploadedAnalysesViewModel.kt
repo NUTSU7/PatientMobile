@@ -108,7 +108,10 @@ class UploadedAnalysesViewModel @Inject constructor(
 
     fun onRenameDocument(documentId: String, newName: String) {
         viewModelScope.launch {
-            val finalName = if (newName.endsWith(".pdf", ignoreCase = true)) newName else "$newName.pdf"
+            val doc = _state.value.documents.firstOrNull { it.id == documentId }
+            val existingExt = doc?.originalFileName?.substringAfterLast('.', "")?.takeIf { it.isNotBlank() } ?: "pdf"
+            val trimmed = newName.trim()
+            val finalName = if (trimmed.contains('.')) trimmed else "$trimmed.$existingExt"
             when (val result = documentRepository.renameDocument(documentId, finalName)) {
                 is ApiResult.Success -> {
                     _state.update { it.copy(dialogState = DialogState.None) }
