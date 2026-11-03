@@ -61,9 +61,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.semanticsoft.patientmobile.core.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.core.ui.common.dashboardSpacing
+import com.semanticsoft.patientmobile.core.ui.components.DeleteConfirmationDialog
 import com.semanticsoft.patientmobile.core.ui.components.ErrorDialog
 import com.semanticsoft.patientmobile.core.ui.components.LoadingIndicator
-import com.semanticsoft.patientmobile.feature.patient.uploadedAnalyses.components.DeleteDocumentDialog
 import com.semanticsoft.patientmobile.feature.patient.uploadedAnalyses.components.RenameDocumentDialog
 import com.semanticsoft.patientmobile.feature.patient.uploadedAnalyses.components.SortBottomSheet
 import com.semanticsoft.patientmobile.feature.patient.uploadedAnalyses.components.UploadedAnalysisItem
@@ -468,8 +468,8 @@ fun UploadedAnalysesScreen(
                         (state.dialogState as? DialogState.SingleDelete)?.let { deleteRef ->
                             val doc = state.allDocuments.find { it.id == deleteRef.documentId }
                             if (doc != null) {
-                                DeleteDocumentDialog(
-                                    documentName = doc.originalFileName,
+                                DeleteConfirmationDialog(
+                                    itemName = doc.originalFileName,
                                     isLoading = state.isDeleting,
                                     onDismiss = {
                                         focusManager.clearFocus()
@@ -527,8 +527,7 @@ fun UploadedAnalysesScreen(
                         )
                     ) {
                         (state.dialogState as? DialogState.BulkDelete)?.let { bulkRef ->
-                            DeleteDocumentDialog(
-                                documentName = "",
+                            DeleteConfirmationDialog(
                                 bulkCount = bulkRef.documentIds.size,
                                 isLoading = state.isDeleting,
                                 onDismiss = {
