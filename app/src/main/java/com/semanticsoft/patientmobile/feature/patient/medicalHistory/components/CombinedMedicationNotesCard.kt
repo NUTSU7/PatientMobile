@@ -34,7 +34,7 @@ import com.semanticsoft.patientmobile.core.ui.theme.GrayLightBg
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.core.ui.theme.Purple500
 import com.semanticsoft.patientmobile.core.ui.theme.icons.NoteIcon
-import com.semanticsoft.patientmobile.core.ui.theme.icons.NotiteIcon
+import com.semanticsoft.patientmobile.core.ui.theme.icons.MedicalNoteIcon
 import com.semanticsoft.patientmobile.core.ui.theme.icons.PillIcon
 
 @Composable
@@ -132,7 +132,7 @@ fun CombinedMedicationNotesCard(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Icon(
-                            imageVector = NotiteIcon,
+                            imageVector = MedicalNoteIcon,
                             contentDescription = "Notite",
                             modifier = Modifier.size(20.dp),
                             tint = Purple500

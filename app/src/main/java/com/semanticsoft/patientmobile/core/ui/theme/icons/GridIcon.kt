@@ -8,11 +8,11 @@ import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
 @Suppress("unused")
-val IconGrid: ImageVector
+val GridIcon: ImageVector
     get() {
-        if (_IconGrid != null) return _IconGrid!!
-        _IconGrid = ImageVector.Builder(
-            name = "IconGrid",
+        if (_GridIcon != null) return _GridIcon!!
+        _GridIcon = ImageVector.Builder(
+            name = "GridIcon",
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
             viewportWidth = 24f,
@@ -55,7 +55,7 @@ val IconGrid: ImageVector
                 addPathData("M13.5,13.5H20.5V20.5H13.5V13.5Z")
             }
         }.build()
-        return _IconGrid!!
+        return _GridIcon!!
     }
 
-private var _IconGrid: ImageVector? = null
+private var _GridIcon: ImageVector? = null

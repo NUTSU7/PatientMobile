@@ -73,7 +73,7 @@ import com.semanticsoft.patientmobile.core.ui.theme.AttentionHigh
 import com.semanticsoft.patientmobile.core.ui.theme.Gray500
 import com.semanticsoft.patientmobile.core.ui.theme.Gray900
 import com.semanticsoft.patientmobile.core.ui.theme.icons.CloseIcon
-import com.semanticsoft.patientmobile.core.ui.theme.icons.IconTrash
+import com.semanticsoft.patientmobile.core.ui.theme.icons.TrashIcon
 import com.semanticsoft.patientmobile.core.ui.theme.icons.SortIcon
 
 @Composable
@@ -226,7 +226,7 @@ fun UploadedAnalysesScreen(
                                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                                             ) {
                                                 Icon(
-                                                    imageVector = IconTrash,
+                                                    imageVector = TrashIcon,
                                                     contentDescription = null,
                                                     tint = AttentionHigh,
                                                     modifier = Modifier.size(20.dp)

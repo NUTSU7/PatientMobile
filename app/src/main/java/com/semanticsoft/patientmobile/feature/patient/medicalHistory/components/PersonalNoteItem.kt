@@ -31,7 +31,7 @@ import com.semanticsoft.patientmobile.core.ui.theme.Gray500
 import com.semanticsoft.patientmobile.core.ui.theme.Gray900
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.core.ui.theme.SuccessGreen
-import com.semanticsoft.patientmobile.core.ui.theme.icons.IconTrash
+import com.semanticsoft.patientmobile.core.ui.theme.icons.TrashIcon
 
 @Composable
 fun PersonalNoteCard(note: PersonalNoteItem, onDeleteClick: () -> Unit, onClick: () -> Unit = {}) {
@@ -103,7 +103,7 @@ fun PersonalNoteCard(note: PersonalNoteItem, onDeleteClick: () -> Unit, onClick:
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = IconTrash,
+                        imageVector = TrashIcon,
                         contentDescription = "\u0218terge",
                         tint = AttentionHigh,
                         modifier = Modifier.size(22.dp)

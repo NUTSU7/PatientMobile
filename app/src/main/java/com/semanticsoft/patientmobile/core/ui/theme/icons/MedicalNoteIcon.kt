@@ -10,11 +10,11 @@ import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
 @Suppress("unused")
-val NotiteIcon: ImageVector
+val MedicalNoteIcon: ImageVector
     get() {
-        if (_NotiteIcon != null) return _NotiteIcon!!
-        _NotiteIcon = ImageVector.Builder(
-            name = "NotiteIcon",
+        if (_MedicalNoteIcon != null) return _MedicalNoteIcon!!
+        _MedicalNoteIcon = ImageVector.Builder(
+            name = "MedicalNoteIcon",
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
             viewportWidth = 24f,
@@ -84,7 +84,7 @@ val NotiteIcon: ImageVector
                 lineTo(20f, 8f)
             }
         }.build()
-        return _NotiteIcon!!
+        return _MedicalNoteIcon!!
     }
 
-private var _NotiteIcon: ImageVector? = null
+private var _MedicalNoteIcon: ImageVector? = null

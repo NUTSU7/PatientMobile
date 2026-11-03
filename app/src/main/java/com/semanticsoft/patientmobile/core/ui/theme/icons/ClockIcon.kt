@@ -8,11 +8,11 @@ import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
 @Suppress("unused")
-val IconTrash: ImageVector
+val ClockIcon: ImageVector
     get() {
-        if (_IconTrash != null) return _IconTrash!!
-        _IconTrash = ImageVector.Builder(
-            name = "IconTrash",
+        if (_ClockIcon != null) return _ClockIcon!!
+        _ClockIcon = ImageVector.Builder(
+            name = "ClockIcon",
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
             viewportWidth = 24f,
@@ -25,7 +25,7 @@ val IconTrash: ImageVector
                 strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
                 pathFillType = PathFillType.NonZero
             ) {
-                addPathData("M3,6L21,6")
+                addPathData("M12,2A10,10 0 1,0 12,22A10,10 0 1,0 12,2")
             }
             path(
                 stroke = SolidColor(Color(0xFF9CA3AF)),
@@ -34,7 +34,8 @@ val IconTrash: ImageVector
                 strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
                 pathFillType = PathFillType.NonZero
             ) {
-                addPathData("M8,6L8,4A1,1 0 0,1 9,3H15A1,1 0 0,1 16,4L16,6")
+                moveTo(12f, 6f)
+                lineTo(12f, 12f)
             }
             path(
                 stroke = SolidColor(Color(0xFF9CA3AF)),
@@ -43,30 +44,11 @@ val IconTrash: ImageVector
                 strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
                 pathFillType = PathFillType.NonZero
             ) {
-                addPathData("M19,6L19,20A2,2 0 0,1 17,22H7A2,2 0 0,1 5,20L5,6")
-            }
-            path(
-                stroke = SolidColor(Color(0xFF9CA3AF)),
-                strokeLineWidth = 2f,
-                strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
-                strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
-                pathFillType = PathFillType.NonZero
-            ) {
-                moveTo(10f, 11f)
-                lineTo(10f, 17f)
-            }
-            path(
-                stroke = SolidColor(Color(0xFF9CA3AF)),
-                strokeLineWidth = 2f,
-                strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
-                strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
-                pathFillType = PathFillType.NonZero
-            ) {
-                moveTo(14f, 11f)
-                lineTo(14f, 17f)
+                moveTo(12f, 12f)
+                lineTo(16f, 12f)
             }
         }.build()
-        return _IconTrash!!
+        return _ClockIcon!!
     }
 
-private var _IconTrash: ImageVector? = null
+private var _ClockIcon: ImageVector? = null

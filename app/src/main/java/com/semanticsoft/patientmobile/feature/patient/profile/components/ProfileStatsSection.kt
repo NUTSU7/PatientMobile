@@ -23,8 +23,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.AppShapes
-import com.semanticsoft.patientmobile.core.ui.theme.icons.IconChart
-import com.semanticsoft.patientmobile.core.ui.theme.icons.IconClock
+import com.semanticsoft.patientmobile.core.ui.theme.icons.ChartIcon
+import com.semanticsoft.patientmobile.core.ui.theme.icons.ClockIcon
 
 private val IconBgShape = RoundedCornerShape(AppDimens.cornerRadiusSmall)
 private val IconBgSize = 44.dp
@@ -53,7 +53,7 @@ internal fun ProfileStatsSection(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = IconChart,
+                        imageVector = ChartIcon,
                         contentDescription = null,
                         tint = ChartIconTint,
                         modifier = Modifier.size(IconSize)
@@ -72,7 +72,7 @@ internal fun ProfileStatsSection(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = IconClock,
+                        imageVector = ClockIcon,
                         contentDescription = null,
                         tint = ClockIconTint,
                         modifier = Modifier.size(IconSize)

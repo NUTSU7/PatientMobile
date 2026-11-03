@@ -22,9 +22,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.AppShapes
-import com.semanticsoft.patientmobile.core.ui.theme.icons.IconExport
-import com.semanticsoft.patientmobile.core.ui.theme.icons.IconGrid
-import com.semanticsoft.patientmobile.core.ui.theme.icons.IconTrash
+import com.semanticsoft.patientmobile.core.ui.theme.icons.ExportIcon
+import com.semanticsoft.patientmobile.core.ui.theme.icons.GridIcon
+import com.semanticsoft.patientmobile.core.ui.theme.icons.TrashIcon
 
 @Composable
 internal fun AccountManagementCard(
@@ -46,7 +46,7 @@ internal fun AccountManagementCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = IconGrid,
+                    imageVector = GridIcon,
                     contentDescription = null,
                     tint = Color(0xFF6366F1),
                     modifier = Modifier.size(22.dp)
@@ -77,7 +77,7 @@ internal fun AccountManagementCard(
                 )
             ) {
                 Icon(
-                    imageVector = IconExport,
+                    imageVector = ExportIcon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     modifier = Modifier.size(20.dp)
@@ -98,7 +98,7 @@ internal fun AccountManagementCard(
                 )
             ) {
                 Icon(
-                    imageVector = IconTrash,
+                    imageVector = TrashIcon,
                     contentDescription = null,
                     tint = Color(0xFFF87171),
                     modifier = Modifier.size(20.dp)
