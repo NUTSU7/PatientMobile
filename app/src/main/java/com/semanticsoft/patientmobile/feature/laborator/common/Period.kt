@@ -1,6 +1,6 @@
 package com.semanticsoft.patientmobile.feature.laborator.common
 
-enum class LaboratorPeriod(
+enum class Period(
     val label: String,
     val filterLabel: String,
     val activityLabel: String

@@ -1,7 +1,7 @@
 package com.semanticsoft.patientmobile.feature.laborator.frequentAnalyses
 
 import androidx.lifecycle.ViewModel
-import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
+import com.semanticsoft.patientmobile.feature.laborator.common.Period
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +26,7 @@ data class FrequentAnalysis(
 )
 
 data class FrequentAnalysesUiState(
-    val selectedPeriod: LaboratorPeriod = LaboratorPeriod.THIRTY_DAYS,
+    val selectedPeriod: Period = Period.THIRTY_DAYS,
     val query: String = "",
     val sort: FrequentAnalysesSort = FrequentAnalysesSort.RESULTS,
     val currentPage: Int = 1,
@@ -39,7 +39,7 @@ class FrequentAnalysesViewModel @Inject constructor() : ViewModel() {
 
     private val _state = MutableStateFlow(
         buildState(
-            selectedPeriod = LaboratorPeriod.THIRTY_DAYS,
+            selectedPeriod = Period.THIRTY_DAYS,
             query = "",
             sort = FrequentAnalysesSort.RESULTS,
             currentPage = 1
@@ -62,7 +62,7 @@ class FrequentAnalysesViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun onPeriodSelected(period: LaboratorPeriod) {
+    fun onPeriodSelected(period: Period) {
         _state.update { current ->
             buildState(
                 selectedPeriod = period,
@@ -110,7 +110,7 @@ class FrequentAnalysesViewModel @Inject constructor() : ViewModel() {
     }
 
     private fun buildState(
-        selectedPeriod: LaboratorPeriod,
+        selectedPeriod: Period,
         query: String,
         sort: FrequentAnalysesSort,
         currentPage: Int

@@ -25,7 +25,7 @@ import com.semanticsoft.patientmobile.core.ui.theme.Gray900
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 
 @Composable
-internal fun LaboratorSwitch(
+internal fun Switch(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier

@@ -37,7 +37,7 @@ import com.semanticsoft.patientmobile.core.ui.theme.LaboratorDivider
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorEngagementRed
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorSubtleText
 import com.semanticsoft.patientmobile.core.ui.theme.icons.ChevronDownIcon
-import com.semanticsoft.patientmobile.feature.laborator.common.components.LaboratorSearchField
+import com.semanticsoft.patientmobile.feature.laborator.common.components.SearchField
 import com.semanticsoft.patientmobile.feature.laborator.digitalEngagement.DigitalEngagementUiState
 import com.semanticsoft.patientmobile.feature.laborator.digitalEngagement.EngagementRepeatedAnalysis
 
@@ -70,7 +70,7 @@ internal fun RepeatedAnalysesCard(
             modifier = Modifier.padding(top = 5.dp)
         )
 
-        LaboratorSearchField(
+        SearchField(
             value = state.repeatedSearchQuery,
             onValueChange = onQueryChange,
             modifier = Modifier

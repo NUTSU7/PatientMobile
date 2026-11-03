@@ -39,14 +39,14 @@ import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorMutedText
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorPanelBg
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorSubtleText
-import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
+import com.semanticsoft.patientmobile.feature.laborator.common.Period
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorActivitySeries
 import kotlin.math.max
 
 @Composable
 internal fun ActivityChartCard(
     activity: LaboratorActivitySeries,
-    period: LaboratorPeriod,
+    period: Period,
     modifier: Modifier = Modifier
 ) {
     Card(

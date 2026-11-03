@@ -22,20 +22,20 @@ import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorBorder
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorMutedText
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorPanelBg
-import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
-import com.semanticsoft.patientmobile.feature.laborator.common.components.LaboratorFilterCard
-import com.semanticsoft.patientmobile.feature.laborator.common.components.LaboratorPeriodChip
-import com.semanticsoft.patientmobile.feature.laborator.common.components.LaboratorSwitch
+import com.semanticsoft.patientmobile.feature.laborator.common.Period
+import com.semanticsoft.patientmobile.feature.laborator.common.components.FilterCard
+import com.semanticsoft.patientmobile.feature.laborator.common.components.PeriodChip
+import com.semanticsoft.patientmobile.feature.laborator.common.components.Switch
 
 @Composable
 internal fun PeriodFilterCard(
-    selectedPeriod: LaboratorPeriod,
+    selectedPeriod: Period,
     compareEnabled: Boolean,
-    onPeriodSelected: (LaboratorPeriod) -> Unit,
+    onPeriodSelected: (Period) -> Unit,
     onCompareToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LaboratorFilterCard(modifier = modifier) {
+    FilterCard(modifier = modifier) {
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             val compact = maxWidth < 330.dp
 
@@ -45,8 +45,8 @@ internal fun PeriodFilterCard(
                     .selectableGroup(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                LaboratorPeriod.entries.forEach { period ->
-                    LaboratorPeriodChip(
+                Period.entries.forEach { period ->
+                    PeriodChip(
                         label = period.label,
                         selected = selectedPeriod == period,
                         compact = compact,
@@ -75,7 +75,7 @@ internal fun PeriodFilterCard(
                 modifier = Modifier.weight(1f)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            LaboratorSwitch(
+            Switch(
                 checked = compareEnabled,
                 onCheckedChange = onCompareToggle
             )

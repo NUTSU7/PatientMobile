@@ -32,7 +32,7 @@ import com.semanticsoft.patientmobile.core.ui.theme.LaboratorPlaceholderText
 import com.semanticsoft.patientmobile.core.ui.theme.SurfaceWhite
 
 @Composable
-internal fun LaboratorSearchField(
+internal fun SearchField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,

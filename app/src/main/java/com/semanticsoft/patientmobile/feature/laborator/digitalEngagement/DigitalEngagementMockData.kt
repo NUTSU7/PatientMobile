@@ -1,6 +1,6 @@
 package com.semanticsoft.patientmobile.feature.laborator.digitalEngagement
 
-import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
+import com.semanticsoft.patientmobile.feature.laborator.common.Period
 
 /**
  * Temporary prototype data for the laborator digital engagement screen.
@@ -15,7 +15,7 @@ internal const val PRIVACY_FOOTNOTE =
         "Pragul minim de confidențialitate este aplicat automat."
 
 internal fun buildEngagementMockState(
-    period: LaboratorPeriod
+    period: Period
 ): DigitalEngagementUiState {
     return DigitalEngagementUiState(
         selectedPeriod = period,
@@ -31,18 +31,18 @@ internal fun buildEngagementMockState(
     )
 }
 
-private fun xLabelsFor(period: LaboratorPeriod): List<String> {
+private fun xLabelsFor(period: Period): List<String> {
     return when (period) {
-        LaboratorPeriod.SEVEN_DAYS -> listOf("24 oct", "25 oct", "26 oct", "27 oct", "28 oct")
-        LaboratorPeriod.THREE_MONTHS -> listOf("Iul", "Aug", "Sep", "Oct")
-        LaboratorPeriod.THIRTY_DAYS, LaboratorPeriod.CUSTOM ->
+        Period.SEVEN_DAYS -> listOf("24 oct", "25 oct", "26 oct", "27 oct", "28 oct")
+        Period.THREE_MONTHS -> listOf("Iul", "Aug", "Sep", "Oct")
+        Period.THIRTY_DAYS, Period.CUSTOM ->
             listOf("1 Sep", "8 Sep", "15 Sep", "22 Sep", "29 Sep")
     }
 }
 
-private fun cohortLinesFor(period: LaboratorPeriod): List<EngagementCohortLine> {
+private fun cohortLinesFor(period: Period): List<EngagementCohortLine> {
     return when (period) {
-        LaboratorPeriod.SEVEN_DAYS -> listOf(
+        Period.SEVEN_DAYS -> listOf(
             EngagementCohortLine(
                 values = listOf(0.08f, 0.14f, 0.12f, 0.22f, 0.24f),
                 observed = 4
@@ -57,7 +57,7 @@ private fun cohortLinesFor(period: LaboratorPeriod): List<EngagementCohortLine> 
             )
         )
 
-        LaboratorPeriod.THREE_MONTHS -> listOf(
+        Period.THREE_MONTHS -> listOf(
             EngagementCohortLine(
                 values = listOf(0.18f, 0.26f, 0.22f, 0.38f),
                 observed = 3
@@ -72,7 +72,7 @@ private fun cohortLinesFor(period: LaboratorPeriod): List<EngagementCohortLine> 
             )
         )
 
-        LaboratorPeriod.THIRTY_DAYS, LaboratorPeriod.CUSTOM -> listOf(
+        Period.THIRTY_DAYS, Period.CUSTOM -> listOf(
             EngagementCohortLine(
                 values = listOf(0.08f, 0.16f, 0.32f, 0.36f, 0.42f),
                 observed = 3
@@ -89,9 +89,9 @@ private fun cohortLinesFor(period: LaboratorPeriod): List<EngagementCohortLine> 
     }
 }
 
-private fun cohortSnapshotFor(period: LaboratorPeriod): EngagementCohortSnapshot? {
+private fun cohortSnapshotFor(period: Period): EngagementCohortSnapshot? {
     return when (period) {
-        LaboratorPeriod.SEVEN_DAYS -> EngagementCohortSnapshot(
+        Period.SEVEN_DAYS -> EngagementCohortSnapshot(
             cohortLabel = "Cohorta 22–28 octombrie",
             stats = listOf(
                 EngagementCohortStat(
@@ -104,7 +104,7 @@ private fun cohortSnapshotFor(period: LaboratorPeriod): EngagementCohortSnapshot
             )
         )
 
-        LaboratorPeriod.THREE_MONTHS -> EngagementCohortSnapshot(
+        Period.THREE_MONTHS -> EngagementCohortSnapshot(
             cohortLabel = "Cohorta august",
             stats = listOf(
                 EngagementCohortStat(
@@ -117,7 +117,7 @@ private fun cohortSnapshotFor(period: LaboratorPeriod): EngagementCohortSnapshot
             )
         )
 
-        LaboratorPeriod.THIRTY_DAYS, LaboratorPeriod.CUSTOM -> EngagementCohortSnapshot(
+        Period.THIRTY_DAYS, Period.CUSTOM -> EngagementCohortSnapshot(
             cohortLabel = "Cohorta 15–21 septembrie",
             stats = listOf(
                 EngagementCohortStat(
@@ -132,23 +132,23 @@ private fun cohortSnapshotFor(period: LaboratorPeriod): EngagementCohortSnapshot
     }
 }
 
-private fun locationsFor(period: LaboratorPeriod): List<EngagementLocation> {
+private fun locationsFor(period: Period): List<EngagementLocation> {
     return when (period) {
-        LaboratorPeriod.SEVEN_DAYS -> listOf(
+        Period.SEVEN_DAYS -> listOf(
             EngagementLocation(EngagementLocationFilter.BUIUCANI, 71, "2 zile", 1),
             EngagementLocation(EngagementLocationFilter.CENTRU, 67, "1 zi 4 ore", 2),
             EngagementLocation(EngagementLocationFilter.RISCANI, 62, "1 zi 12 ore", 0),
             EngagementLocation(EngagementLocationFilter.BOTANICA, 55, "2 zile 3 ore", -1)
         )
 
-        LaboratorPeriod.THREE_MONTHS -> listOf(
+        Period.THREE_MONTHS -> listOf(
             EngagementLocation(EngagementLocationFilter.BUIUCANI, 76, "2 zile", 4),
             EngagementLocation(EngagementLocationFilter.CENTRU, 71, "1 zi 4 ore", 3),
             EngagementLocation(EngagementLocationFilter.RISCANI, 65, "1 zi 12 ore", 0),
             EngagementLocation(EngagementLocationFilter.BOTANICA, 58, "2 zile 3 ore", -2)
         )
 
-        LaboratorPeriod.THIRTY_DAYS, LaboratorPeriod.CUSTOM -> listOf(
+        Period.THIRTY_DAYS, Period.CUSTOM -> listOf(
             EngagementLocation(EngagementLocationFilter.BUIUCANI, 73, "18 ore", 4),
             EngagementLocation(EngagementLocationFilter.CENTRU, 68, "1 zi 4 ore", 2),
             EngagementLocation(EngagementLocationFilter.RISCANI, 61, "1 zi 12 ore", 0),
@@ -157,9 +157,9 @@ private fun locationsFor(period: LaboratorPeriod): List<EngagementLocation> {
     }
 }
 
-private fun repeatedAnalysesFor(period: LaboratorPeriod): List<EngagementRepeatedAnalysis> {
+private fun repeatedAnalysesFor(period: Period): List<EngagementRepeatedAnalysis> {
     return when (period) {
-        LaboratorPeriod.SEVEN_DAYS -> listOf(
+        Period.SEVEN_DAYS -> listOf(
             EngagementRepeatedAnalysis(
                 id = "tsh",
                 name = "TSH (Hormon de stimulare tiroidiană)",
@@ -198,7 +198,7 @@ private fun repeatedAnalysesFor(period: LaboratorPeriod): List<EngagementRepeate
             )
         )
 
-        LaboratorPeriod.THREE_MONTHS -> listOf(
+        Period.THREE_MONTHS -> listOf(
             EngagementRepeatedAnalysis(
                 id = "tsh",
                 name = "TSH (Hormon de stimulare tiroidiană)",
@@ -246,7 +246,7 @@ private fun repeatedAnalysesFor(period: LaboratorPeriod): List<EngagementRepeate
             )
         )
 
-        LaboratorPeriod.THIRTY_DAYS, LaboratorPeriod.CUSTOM -> listOf(
+        Period.THIRTY_DAYS, Period.CUSTOM -> listOf(
             EngagementRepeatedAnalysis(
                 id = "tsh",
                 name = "TSH (Hormon de stimulare tiroidiană)",

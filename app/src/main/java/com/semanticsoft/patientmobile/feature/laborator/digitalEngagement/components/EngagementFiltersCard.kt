@@ -40,23 +40,23 @@ import com.semanticsoft.patientmobile.core.ui.theme.LaboratorDashboardBackground
 import com.semanticsoft.patientmobile.core.ui.theme.TextTertiary
 import com.semanticsoft.patientmobile.core.ui.theme.icons.CheckMarkIcon
 import com.semanticsoft.patientmobile.core.ui.theme.icons.ChevronDownIcon
-import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
-import com.semanticsoft.patientmobile.feature.laborator.common.components.LaboratorFilterCard
-import com.semanticsoft.patientmobile.feature.laborator.common.components.LaboratorPeriodChip
-import com.semanticsoft.patientmobile.feature.laborator.common.components.LaboratorSwitch
+import com.semanticsoft.patientmobile.feature.laborator.common.Period
+import com.semanticsoft.patientmobile.feature.laborator.common.components.FilterCard
+import com.semanticsoft.patientmobile.feature.laborator.common.components.PeriodChip
+import com.semanticsoft.patientmobile.feature.laborator.common.components.Switch
 import com.semanticsoft.patientmobile.feature.laborator.digitalEngagement.EngagementLocationFilter
 
 @Composable
 internal fun EngagementFiltersCard(
-    selectedPeriod: LaboratorPeriod,
+    selectedPeriod: Period,
     locationFilter: EngagementLocationFilter,
     compareEnabled: Boolean,
-    onPeriodSelected: (LaboratorPeriod) -> Unit,
+    onPeriodSelected: (Period) -> Unit,
     onLocationSelected: (EngagementLocationFilter) -> Unit,
     onCompareToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LaboratorFilterCard(modifier = modifier) {
+    FilterCard(modifier = modifier) {
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             val compact = maxWidth < 330.dp
 
@@ -66,8 +66,8 @@ internal fun EngagementFiltersCard(
                     .selectableGroup(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                LaboratorPeriod.entries.forEach { period ->
-                    LaboratorPeriodChip(
+                Period.entries.forEach { period ->
+                    PeriodChip(
                         label = period.label,
                         selected = selectedPeriod == period,
                         compact = compact,
@@ -100,7 +100,7 @@ internal fun EngagementFiltersCard(
                     fontSize = 11.sp,
                     lineHeight = 16.5.sp
                 )
-                LaboratorSwitch(
+                Switch(
                     checked = compareEnabled,
                     onCheckedChange = onCompareToggle
                 )

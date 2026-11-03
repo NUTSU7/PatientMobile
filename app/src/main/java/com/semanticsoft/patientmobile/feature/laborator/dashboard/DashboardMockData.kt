@@ -1,6 +1,6 @@
 package com.semanticsoft.patientmobile.feature.laborator.dashboard
 
-import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
+import com.semanticsoft.patientmobile.feature.laborator.common.Period
 
 /**
  * Temporary prototype data for the laborator dashboard.
@@ -8,11 +8,11 @@ import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
  * Replace with a repository-backed data source once laborator endpoints exist.
  */
 internal fun buildLaboratorDashboardMockState(
-    period: LaboratorPeriod,
+    period: Period,
     compareEnabled: Boolean,
     lastSyncLabel: String
-): LaboratorDashboardUiState {
-    return LaboratorDashboardUiState(
+): DashboardUiState {
+    return DashboardUiState(
         lastSyncLabel = lastSyncLabel,
         selectedPeriod = period,
         compareEnabled = compareEnabled,
@@ -23,9 +23,9 @@ internal fun buildLaboratorDashboardMockState(
     )
 }
 
-private fun metricsFor(period: LaboratorPeriod): List<LaboratorMetric> {
+private fun metricsFor(period: Period): List<LaboratorMetric> {
     return when (period) {
-        LaboratorPeriod.SEVEN_DAYS -> listOf(
+        Period.SEVEN_DAYS -> listOf(
             LaboratorMetric(
                 id = "processed",
                 label = "Rezultate procesate",
@@ -52,7 +52,7 @@ private fun metricsFor(period: LaboratorPeriod): List<LaboratorMetric> {
             )
         )
 
-        LaboratorPeriod.THREE_MONTHS -> listOf(
+        Period.THREE_MONTHS -> listOf(
             LaboratorMetric(
                 id = "processed",
                 label = "Rezultate procesate",
@@ -79,8 +79,8 @@ private fun metricsFor(period: LaboratorPeriod): List<LaboratorMetric> {
             )
         )
 
-        LaboratorPeriod.THIRTY_DAYS,
-        LaboratorPeriod.CUSTOM -> listOf(
+        Period.THIRTY_DAYS,
+        Period.CUSTOM -> listOf(
             LaboratorMetric(
                 id = "processed",
                 label = "Rezultate procesate",
@@ -109,22 +109,22 @@ private fun metricsFor(period: LaboratorPeriod): List<LaboratorMetric> {
     }
 }
 
-private fun activityFor(period: LaboratorPeriod): LaboratorActivitySeries {
+private fun activityFor(period: Period): LaboratorActivitySeries {
     return when (period) {
-        LaboratorPeriod.SEVEN_DAYS -> LaboratorActivitySeries(
+        Period.SEVEN_DAYS -> LaboratorActivitySeries(
             processed = listOf(0.20f, 0.25f, 0.23f, 0.30f, 0.28f, 0.36f, 0.34f),
             accessed = listOf(0.35f, 0.40f, 0.38f, 0.47f, 0.45f, 0.55f, 0.52f),
             uniquePatients = listOf(0.10f, 0.12f, 0.13f, 0.15f, 0.16f, 0.18f, 0.20f)
         )
 
-        LaboratorPeriod.THREE_MONTHS -> LaboratorActivitySeries(
+        Period.THREE_MONTHS -> LaboratorActivitySeries(
             processed = listOf(0.22f, 0.28f, 0.25f, 0.34f, 0.38f, 0.35f, 0.46f, 0.52f, 0.49f, 0.60f, 0.65f, 0.62f),
             accessed = listOf(0.36f, 0.42f, 0.39f, 0.51f, 0.56f, 0.53f, 0.65f, 0.71f, 0.68f, 0.80f, 0.86f, 0.82f),
             uniquePatients = listOf(0.12f, 0.15f, 0.17f, 0.20f, 0.22f, 0.24f, 0.28f, 0.31f, 0.34f, 0.38f, 0.42f, 0.45f)
         )
 
-        LaboratorPeriod.THIRTY_DAYS,
-        LaboratorPeriod.CUSTOM -> LaboratorActivitySeries(
+        Period.THIRTY_DAYS,
+        Period.CUSTOM -> LaboratorActivitySeries(
             processed = listOf(0.30f, 0.32f, 0.35f, 0.33f, 0.39f, 0.37f, 0.46f, 0.43f, 0.56f, 0.50f, 0.62f, 0.59f),
             accessed = listOf(0.48f, 0.52f, 0.56f, 0.53f, 0.64f, 0.60f, 0.72f, 0.74f, 0.90f, 0.74f, 0.82f, 0.88f),
             uniquePatients = listOf(0.16f, 0.18f, 0.20f, 0.22f, 0.23f, 0.25f, 0.28f, 0.30f, 0.33f, 0.36f, 0.40f, 0.42f)

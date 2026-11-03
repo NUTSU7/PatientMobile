@@ -41,8 +41,8 @@ private val FieldGroupGap = 10.dp
 private val LabelInputGap = 4.dp
 
 @Composable
-fun RegistrationLabScreen(
-    state: RegistrationLabUiState,
+fun RegistrationScreen(
+    state: RegistrationUiState,
     onLabNameChange: (String) -> Unit,
     onCountryChange: (String) -> Unit,
     onCuiChange: (String) -> Unit,

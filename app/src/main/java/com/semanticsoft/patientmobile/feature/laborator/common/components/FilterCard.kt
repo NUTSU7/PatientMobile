@@ -20,7 +20,7 @@ import com.semanticsoft.patientmobile.core.ui.theme.LaboratorBorder
 import com.semanticsoft.patientmobile.core.ui.theme.SurfaceWhite
 
 @Composable
-internal fun LaboratorFilterCard(
+internal fun FilterCard(
     modifier: Modifier = Modifier,
     contentPadding: Dp = 10.dp,
     verticalSpacing: Dp = 10.dp,

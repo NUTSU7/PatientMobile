@@ -8,14 +8,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-data class LaboratorResultsUiState(
+data class ResultsUiState(
     val isLoading: Boolean = false,
     val results: List<LabResult> = emptyList()
 )
 
 @HiltViewModel
-class LaboratorResultsViewModel @Inject constructor() : ViewModel() {
+class ResultsViewModel @Inject constructor() : ViewModel() {
 
-    private val _state = MutableStateFlow(LaboratorResultsUiState())
-    val state: StateFlow<LaboratorResultsUiState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(ResultsUiState())
+    val state: StateFlow<ResultsUiState> = _state.asStateFlow()
 }

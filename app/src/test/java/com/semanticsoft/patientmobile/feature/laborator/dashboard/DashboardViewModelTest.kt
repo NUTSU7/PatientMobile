@@ -1,19 +1,19 @@
 package com.semanticsoft.patientmobile.feature.laborator.dashboard
 
-import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
+import com.semanticsoft.patientmobile.feature.laborator.common.Period
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class LaboratorDashboardViewModelTest {
+class DashboardViewModelTest {
 
     @Test
     fun initialState_usesThirtyDayDesignData() {
-        val viewModel = LaboratorDashboardViewModel()
+        val viewModel = DashboardViewModel()
         val state = viewModel.state.value
 
-        assertEquals(LaboratorPeriod.THIRTY_DAYS, state.selectedPeriod)
+        assertEquals(Period.THIRTY_DAYS, state.selectedPeriod)
         assertEquals(4, state.metrics.size)
         assertEquals("1.240", state.metrics.first { it.id == "processed" }.value)
         assertEquals("8.302", state.metrics.first { it.id == "accessed" }.value)
@@ -23,12 +23,12 @@ class LaboratorDashboardViewModelTest {
 
     @Test
     fun selectingSevenDays_updatesMetricsAndPeriod() {
-        val viewModel = LaboratorDashboardViewModel()
+        val viewModel = DashboardViewModel()
 
-        viewModel.onPeriodSelected(LaboratorPeriod.SEVEN_DAYS)
+        viewModel.onPeriodSelected(Period.SEVEN_DAYS)
         val state = viewModel.state.value
 
-        assertEquals(LaboratorPeriod.SEVEN_DAYS, state.selectedPeriod)
+        assertEquals(Period.SEVEN_DAYS, state.selectedPeriod)
         assertEquals("312", state.metrics.first { it.id == "processed" }.value)
         assertEquals("2.104", state.metrics.first { it.id == "accessed" }.value)
         assertEquals(7, state.activity.processed.size)
@@ -36,7 +36,7 @@ class LaboratorDashboardViewModelTest {
 
     @Test
     fun compareToggle_updatesComparisonState() {
-        val viewModel = LaboratorDashboardViewModel()
+        val viewModel = DashboardViewModel()
 
         viewModel.onCompareToggle(false)
 
@@ -45,7 +45,7 @@ class LaboratorDashboardViewModelTest {
 
     @Test
     fun refresh_updatesLastSyncLabel() {
-        val viewModel = LaboratorDashboardViewModel()
+        val viewModel = DashboardViewModel()
 
         viewModel.refresh()
 

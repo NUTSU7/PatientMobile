@@ -5,18 +5,18 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
-import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorDashboardScreen
-import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorDashboardUiState
+import com.semanticsoft.patientmobile.feature.laborator.common.Period
+import com.semanticsoft.patientmobile.feature.laborator.dashboard.DashboardScreen
+import com.semanticsoft.patientmobile.feature.laborator.dashboard.DashboardUiState
 import com.semanticsoft.patientmobile.feature.laborator.digitalEngagement.DigitalEngagementScreen
 import com.semanticsoft.patientmobile.feature.laborator.frequentAnalyses.FrequentAnalysesScreen
-import com.semanticsoft.patientmobile.feature.laborator.profile.LaboratorProfileScreen
+import com.semanticsoft.patientmobile.feature.laborator.profile.ProfileScreen
 
 @Composable
 fun LaboratorPostLoginNavHost(
     navController: NavHostController,
-    dashboardState: LaboratorDashboardUiState,
-    onPeriodSelected: (LaboratorPeriod) -> Unit,
+    dashboardState: DashboardUiState,
+    onPeriodSelected: (Period) -> Unit,
     onCompareToggle: (Boolean) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier
@@ -27,7 +27,7 @@ fun LaboratorPostLoginNavHost(
         modifier = modifier
     ) {
         composable(LaboratorTab.Home.route) {
-            LaboratorDashboardScreen(
+            DashboardScreen(
                 state = dashboardState,
                 onPeriodSelected = onPeriodSelected,
                 onCompareToggle = onCompareToggle
@@ -43,7 +43,7 @@ fun LaboratorPostLoginNavHost(
         }
 
         composable(LaboratorTab.Profile.route) {
-            LaboratorProfileScreen(onLogout = onLogout)
+            ProfileScreen(onLogout = onLogout)
         }
     }
 }

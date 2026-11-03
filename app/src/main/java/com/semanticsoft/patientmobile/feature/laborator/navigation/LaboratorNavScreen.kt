@@ -12,8 +12,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.semanticsoft.patientmobile.core.ui.components.AppBottomNavBar
 import com.semanticsoft.patientmobile.core.ui.components.ScreenTopBar
-import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
-import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorDashboardUiState
+import com.semanticsoft.patientmobile.feature.laborator.common.Period
+import com.semanticsoft.patientmobile.feature.laborator.dashboard.DashboardUiState
 import com.semanticsoft.patientmobile.feature.laborator.navigation.components.LaboratorUploadFab
 import kotlinx.coroutines.flow.StateFlow
 
@@ -26,8 +26,8 @@ private val laboratorTabs = listOf(
 
 @Composable
 fun LaboratorNavScreen(
-    dashboardState: StateFlow<LaboratorDashboardUiState>,
-    onPeriodSelected: (LaboratorPeriod) -> Unit,
+    dashboardState: StateFlow<DashboardUiState>,
+    onPeriodSelected: (Period) -> Unit,
     onCompareToggle: (Boolean) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier

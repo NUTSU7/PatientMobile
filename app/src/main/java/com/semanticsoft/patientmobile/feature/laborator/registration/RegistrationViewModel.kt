@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-data class RegistrationLabUiState(
+data class RegistrationUiState(
     val labName: String = "",
     val country: String = "",
     val cui: String = "",
@@ -24,19 +24,19 @@ data class RegistrationLabUiState(
     val errorMessage: String? = null
 )
 
-sealed class RegistrationLabEvent {
-    data object RegistrationSuccess : RegistrationLabEvent()
-    data class RegistrationFailure(val message: String) : RegistrationLabEvent()
+sealed class RegistrationEvent {
+    data object RegistrationSuccess : RegistrationEvent()
+    data class RegistrationFailure(val message: String) : RegistrationEvent()
 }
 
 @HiltViewModel
-class RegistrationLabViewModel @Inject constructor() : ViewModel() {
+class RegistrationViewModel @Inject constructor() : ViewModel() {
 
-    private val _events = MutableSharedFlow<RegistrationLabEvent>()
-    val events: SharedFlow<RegistrationLabEvent> = _events.asSharedFlow()
+    private val _events = MutableSharedFlow<RegistrationEvent>()
+    val events: SharedFlow<RegistrationEvent> = _events.asSharedFlow()
 
-    private val _state = MutableStateFlow(RegistrationLabUiState())
-    val state: StateFlow<RegistrationLabUiState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(RegistrationUiState())
+    val state: StateFlow<RegistrationUiState> = _state.asStateFlow()
 
     fun onLabNameChange(value: String) {
         _state.update { it.copy(labName = value, errorMessage = null) }

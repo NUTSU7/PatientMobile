@@ -1,7 +1,7 @@
 package com.semanticsoft.patientmobile.feature.laborator.dashboard
 
 import androidx.lifecycle.ViewModel
-import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
+import com.semanticsoft.patientmobile.feature.laborator.common.Period
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -41,10 +41,10 @@ data class LaboratorTopAnalysis(
     val insufficientData: Boolean = false
 )
 
-data class LaboratorDashboardUiState(
+data class DashboardUiState(
     val labName: String = "Invitro Chișinău",
     val lastSyncLabel: String = "Ultima sincronizare: —",
-    val selectedPeriod: LaboratorPeriod = LaboratorPeriod.THIRTY_DAYS,
+    val selectedPeriod: Period = Period.THIRTY_DAYS,
     val compareEnabled: Boolean = true,
     val metrics: List<LaboratorMetric> = emptyList(),
     val activity: LaboratorActivitySeries = LaboratorActivitySeries(),
@@ -58,16 +58,16 @@ data class LaboratorDashboardUiState(
 )
 
 @HiltViewModel
-class LaboratorDashboardViewModel @Inject constructor() : ViewModel() {
+class DashboardViewModel @Inject constructor() : ViewModel() {
 
     private val _state = MutableStateFlow(
         buildLaboratorDashboardMockState(
-            period = LaboratorPeriod.THIRTY_DAYS,
+            period = Period.THIRTY_DAYS,
             compareEnabled = true,
             lastSyncLabel = formatLastSyncLabel()
         )
     )
-    val state: StateFlow<LaboratorDashboardUiState> = _state.asStateFlow()
+    val state: StateFlow<DashboardUiState> = _state.asStateFlow()
 
     init {
         refresh()
@@ -77,7 +77,7 @@ class LaboratorDashboardViewModel @Inject constructor() : ViewModel() {
         _state.update { it.copy(lastSyncLabel = formatLastSyncLabel()) }
     }
 
-    fun onPeriodSelected(period: LaboratorPeriod) {
+    fun onPeriodSelected(period: Period) {
         _state.update { current ->
             buildLaboratorDashboardMockState(
                 period = period,

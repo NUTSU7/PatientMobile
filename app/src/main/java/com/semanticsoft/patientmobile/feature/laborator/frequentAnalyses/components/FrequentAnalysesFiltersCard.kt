@@ -9,20 +9,20 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
-import com.semanticsoft.patientmobile.feature.laborator.common.components.LaboratorFilterCard
-import com.semanticsoft.patientmobile.feature.laborator.common.components.LaboratorPeriodChip
-import com.semanticsoft.patientmobile.feature.laborator.common.components.LaboratorSearchField
+import com.semanticsoft.patientmobile.feature.laborator.common.Period
+import com.semanticsoft.patientmobile.feature.laborator.common.components.FilterCard
+import com.semanticsoft.patientmobile.feature.laborator.common.components.PeriodChip
+import com.semanticsoft.patientmobile.feature.laborator.common.components.SearchField
 
 @Composable
 internal fun FrequentAnalysesFiltersCard(
-    selectedPeriod: LaboratorPeriod,
+    selectedPeriod: Period,
     query: String,
-    onPeriodSelected: (LaboratorPeriod) -> Unit,
+    onPeriodSelected: (Period) -> Unit,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LaboratorFilterCard(modifier = modifier) {
+    FilterCard(modifier = modifier) {
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
             val compact = maxWidth < 330.dp
 
@@ -32,8 +32,8 @@ internal fun FrequentAnalysesFiltersCard(
                     .selectableGroup(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                LaboratorPeriod.entries.forEach { period ->
-                    LaboratorPeriodChip(
+                Period.entries.forEach { period ->
+                    PeriodChip(
                         label = period.label,
                         selected = selectedPeriod == period,
                         compact = compact,
@@ -44,7 +44,7 @@ internal fun FrequentAnalysesFiltersCard(
             }
         }
 
-        LaboratorSearchField(
+        SearchField(
             value = query,
             onValueChange = onQueryChange,
             modifier = Modifier.fillMaxWidth()

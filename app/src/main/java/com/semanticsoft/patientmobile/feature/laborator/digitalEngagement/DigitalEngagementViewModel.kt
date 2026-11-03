@@ -1,7 +1,7 @@
 package com.semanticsoft.patientmobile.feature.laborator.digitalEngagement
 
 import androidx.lifecycle.ViewModel
-import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
+import com.semanticsoft.patientmobile.feature.laborator.common.Period
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +53,7 @@ data class EngagementRepeatedAnalysis(
 )
 
 data class DigitalEngagementUiState(
-    val selectedPeriod: LaboratorPeriod = LaboratorPeriod.THIRTY_DAYS,
+    val selectedPeriod: Period = Period.THIRTY_DAYS,
     val locationFilter: EngagementLocationFilter = EngagementLocationFilter.ALL,
     val compareEnabled: Boolean = true,
     val chartSubtitle: String = "",
@@ -87,7 +87,7 @@ data class DigitalEngagementUiState(
 @HiltViewModel
 class DigitalEngagementViewModel @Inject constructor() : ViewModel() {
 
-    private val _state = MutableStateFlow(buildEngagementMockState(period = LaboratorPeriod.THIRTY_DAYS))
+    private val _state = MutableStateFlow(buildEngagementMockState(period = Period.THIRTY_DAYS))
     val state: StateFlow<DigitalEngagementUiState> = _state.asStateFlow()
 
     init {
@@ -98,7 +98,7 @@ class DigitalEngagementViewModel @Inject constructor() : ViewModel() {
         // Prototype only: data is mock until laborator analytics endpoints are wired.
     }
 
-    fun onPeriodSelected(period: LaboratorPeriod) {
+    fun onPeriodSelected(period: Period) {
         _state.update { current ->
             val next = buildEngagementMockState(period = period)
             next.copy(

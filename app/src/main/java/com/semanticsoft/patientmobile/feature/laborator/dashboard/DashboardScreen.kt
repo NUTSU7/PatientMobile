@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.semanticsoft.patientmobile.core.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorDashboardBackground
-import com.semanticsoft.patientmobile.feature.laborator.common.LaboratorPeriod
+import com.semanticsoft.patientmobile.feature.laborator.common.Period
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.components.ActivityChartCard
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.components.OverviewMetricsRow
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.components.PeriodFilterCard
@@ -19,9 +19,9 @@ import com.semanticsoft.patientmobile.feature.laborator.dashboard.components.Top
 import com.semanticsoft.patientmobile.feature.laborator.dashboard.components.TrendCard
 
 @Composable
-fun LaboratorDashboardScreen(
-    state: LaboratorDashboardUiState,
-    onPeriodSelected: (LaboratorPeriod) -> Unit,
+fun DashboardScreen(
+    state: DashboardUiState,
+    onPeriodSelected: (Period) -> Unit,
     onCompareToggle: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {

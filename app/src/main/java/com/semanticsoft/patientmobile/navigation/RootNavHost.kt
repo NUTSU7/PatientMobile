@@ -30,11 +30,11 @@ import com.semanticsoft.patientmobile.feature.laborator.activateAccount.Activate
 import com.semanticsoft.patientmobile.feature.laborator.dpa.DpaEvent
 import com.semanticsoft.patientmobile.feature.laborator.dpa.DpaScreen
 import com.semanticsoft.patientmobile.feature.laborator.dpa.DpaViewModel
-import com.semanticsoft.patientmobile.feature.laborator.dashboard.LaboratorDashboardViewModel
+import com.semanticsoft.patientmobile.feature.laborator.dashboard.DashboardViewModel as LaboratorDashboardViewModel
 import com.semanticsoft.patientmobile.feature.laborator.navigation.LaboratorNavScreen
-import com.semanticsoft.patientmobile.feature.laborator.registration.RegistrationLabEvent
-import com.semanticsoft.patientmobile.feature.laborator.registration.RegistrationLabScreen
-import com.semanticsoft.patientmobile.feature.laborator.registration.RegistrationLabViewModel
+import com.semanticsoft.patientmobile.feature.laborator.registration.RegistrationEvent as RegistrationLabEvent
+import com.semanticsoft.patientmobile.feature.laborator.registration.RegistrationScreen as RegistrationLabScreen
+import com.semanticsoft.patientmobile.feature.laborator.registration.RegistrationViewModel as RegistrationLabViewModel
 import com.semanticsoft.patientmobile.feature.patient.analysisExplanation.AnalysisExplanationScreen
 import com.semanticsoft.patientmobile.feature.patient.analysisExplanation.AnalysisExplanationViewModel
 import com.semanticsoft.patientmobile.feature.patient.dashboard.DashboardEvent

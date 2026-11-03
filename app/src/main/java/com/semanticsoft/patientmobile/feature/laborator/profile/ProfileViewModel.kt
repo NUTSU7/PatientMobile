@@ -13,19 +13,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class LaboratorProfileUiState(
+data class ProfileUiState(
     val displayName: String = "",
     val email: String = "",
     val role: UserRole = UserRole.UNKNOWN
 )
 
 @HiltViewModel
-class LaboratorProfileViewModel @Inject constructor(
+class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(LaboratorProfileUiState())
-    val state: StateFlow<LaboratorProfileUiState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(ProfileUiState())
+    val state: StateFlow<ProfileUiState> = _state.asStateFlow()
 
     init {
         refresh()

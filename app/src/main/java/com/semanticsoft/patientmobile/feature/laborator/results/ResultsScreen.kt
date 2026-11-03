@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.feature.laborator.submissions
+package com.semanticsoft.patientmobile.feature.laborator.results
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,9 +15,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 
 @Composable
-fun LaboratorSubmissionsScreen(
+fun ResultsScreen(
     modifier: Modifier = Modifier,
-    viewModel: LaboratorSubmissionsViewModel = hiltViewModel()
+    viewModel: ResultsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -29,11 +29,11 @@ fun LaboratorSubmissionsScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Lucrari primite",
+            text = "Rezultate",
             style = MaterialTheme.typography.titleMedium
         )
         Text(
-            text = if (state.isLoading) "Se incarca..." else "Total: ${state.submissions.size}",
+            text = if (state.isLoading) "Se incarca..." else "Rezultate: ${state.results.size}",
             style = MaterialTheme.typography.bodyMedium
         )
     }

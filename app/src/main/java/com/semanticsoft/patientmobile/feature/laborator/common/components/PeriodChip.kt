@@ -23,7 +23,7 @@ import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.core.ui.theme.LaboratorDashboardBackground
 
 @Composable
-internal fun LaboratorPeriodChip(
+internal fun PeriodChip(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
