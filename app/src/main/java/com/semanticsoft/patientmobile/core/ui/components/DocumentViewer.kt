@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.core.ui.shared.documentViewer.components
+package com.semanticsoft.patientmobile.core.ui.components
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory

@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.core.ui.shared.upload.components
+package com.semanticsoft.patientmobile.feature.patient.upload.components
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -48,10 +48,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.semanticsoft.patientmobile.core.ui.shared.upload.ErrorType
-import com.semanticsoft.patientmobile.core.ui.shared.upload.UploadFileUiState
-import com.semanticsoft.patientmobile.core.ui.shared.upload.UploadFileViewModel
-import com.semanticsoft.patientmobile.core.ui.shared.upload.UploadStatus
+import com.semanticsoft.patientmobile.feature.patient.upload.ErrorType
+import com.semanticsoft.patientmobile.feature.patient.upload.UploadFileUiState
+import com.semanticsoft.patientmobile.feature.patient.upload.UploadFileViewModel
+import com.semanticsoft.patientmobile.feature.patient.upload.UploadStatus
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.AttentionHigh
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600

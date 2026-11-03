@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.core.ui.shared.upload
+package com.semanticsoft.patientmobile.feature.patient.upload
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -22,7 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.semanticsoft.patientmobile.core.ui.shared.upload.components.UploadFileDialogContent
+import com.semanticsoft.patientmobile.feature.patient.upload.components.UploadFileDialogContent
 
 @Composable
 fun UploadFileScreen(

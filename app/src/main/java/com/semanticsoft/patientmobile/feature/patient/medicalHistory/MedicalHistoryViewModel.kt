@@ -17,7 +17,7 @@ import com.semanticsoft.patientmobile.domain.repository.patient.OcrRepository
 import com.semanticsoft.patientmobile.domain.model.patient.OcrStatus
 import com.semanticsoft.patientmobile.domain.model.patient.MedicationOcrDraft
 import com.semanticsoft.patientmobile.domain.model.patient.PersonalNoteOcrDraft
-import com.semanticsoft.patientmobile.core.ui.shared.upload.ImageNormalizer
+import com.semanticsoft.patientmobile.feature.patient.upload.ImageNormalizer
 import com.semanticsoft.patientmobile.core.util.ApiResult
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.ScheduleEntryData
 import com.semanticsoft.patientmobile.core.util.toUserMessage

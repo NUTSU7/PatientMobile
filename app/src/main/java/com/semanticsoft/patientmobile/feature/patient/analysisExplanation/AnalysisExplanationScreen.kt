@@ -37,7 +37,7 @@ import com.semanticsoft.patientmobile.core.ui.components.ErrorDialog
 import com.semanticsoft.patientmobile.core.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.core.ui.components.ScreenTopBar
 import com.semanticsoft.patientmobile.feature.patient.analysisExplanation.components.ExplanationBottomSheetContent
-import com.semanticsoft.patientmobile.core.ui.shared.documentViewer.components.DocumentViewer
+import com.semanticsoft.patientmobile.core.ui.components.DocumentViewer
 import com.semanticsoft.patientmobile.core.ui.theme.icons.SparkleIcon
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.core.ui.theme.Purple500

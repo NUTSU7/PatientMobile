@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.core.ui.shared.upload
+package com.semanticsoft.patientmobile.feature.patient.upload
 
 enum class UploadStatus { PENDING, PENDING_FORCE, UPLOADING, SUCCESS, ERROR }
 

@@ -22,10 +22,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.semanticsoft.patientmobile.core.ui.components.AppBottomNavBar
-import com.semanticsoft.patientmobile.core.ui.shared.upload.UploadFileScreen
-import com.semanticsoft.patientmobile.core.ui.shared.upload.UploadFileViewModel
-import com.semanticsoft.patientmobile.core.ui.shared.upload.UploadFileEvent
-import com.semanticsoft.patientmobile.core.ui.shared.upload.rememberUploadFileLaunchers
+import com.semanticsoft.patientmobile.feature.patient.upload.UploadFileScreen
+import com.semanticsoft.patientmobile.feature.patient.upload.UploadFileViewModel
+import com.semanticsoft.patientmobile.feature.patient.upload.UploadFileEvent
+import com.semanticsoft.patientmobile.feature.patient.upload.rememberUploadFileLaunchers
 import com.semanticsoft.patientmobile.feature.patient.navigation.components.PatientUploadFab
 import com.semanticsoft.patientmobile.core.ui.components.ScreenTopBar
 import kotlinx.coroutines.flow.StateFlow

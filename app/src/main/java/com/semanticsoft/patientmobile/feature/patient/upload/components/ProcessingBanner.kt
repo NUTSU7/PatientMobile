@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.core.ui.shared.upload.components
+package com.semanticsoft.patientmobile.feature.patient.upload.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically

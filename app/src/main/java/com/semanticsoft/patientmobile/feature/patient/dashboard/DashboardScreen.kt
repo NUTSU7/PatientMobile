@@ -56,7 +56,7 @@ import com.semanticsoft.patientmobile.feature.patient.dashboard.components.Indic
 import com.semanticsoft.patientmobile.feature.patient.dashboard.components.IndicatorDetailSheet
 import com.semanticsoft.patientmobile.feature.patient.dashboard.components.ProcessingEmptyCard
 import com.semanticsoft.patientmobile.feature.patient.dashboard.components.ResumeAICard
-import com.semanticsoft.patientmobile.core.ui.shared.upload.components.ProcessingBanner
+import com.semanticsoft.patientmobile.feature.patient.upload.components.ProcessingBanner
 import com.semanticsoft.patientmobile.core.ui.theme.AppBackground
 import com.semanticsoft.patientmobile.core.ui.theme.statusFillColor
 import kotlinx.coroutines.launch

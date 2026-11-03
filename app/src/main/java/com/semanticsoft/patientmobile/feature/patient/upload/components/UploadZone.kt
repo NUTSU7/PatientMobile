@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.core.ui.shared.upload.components
+package com.semanticsoft.patientmobile.feature.patient.upload.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,10 +32,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.semanticsoft.patientmobile.core.ui.shared.upload.FileErrorIcon
-import com.semanticsoft.patientmobile.core.ui.shared.upload.SelectedFile
-import com.semanticsoft.patientmobile.core.ui.shared.upload.UploadFileUiState
-import com.semanticsoft.patientmobile.core.ui.shared.upload.UploadStatus
+import com.semanticsoft.patientmobile.feature.patient.upload.FileErrorIcon
+import com.semanticsoft.patientmobile.feature.patient.upload.SelectedFile
+import com.semanticsoft.patientmobile.feature.patient.upload.UploadFileUiState
+import com.semanticsoft.patientmobile.feature.patient.upload.UploadStatus
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.icons.CloseIcon
 import com.semanticsoft.patientmobile.core.ui.theme.icons.CloudDownloadIcon

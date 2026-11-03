@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.core.ui.shared.upload
+package com.semanticsoft.patientmobile.feature.patient.upload
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult

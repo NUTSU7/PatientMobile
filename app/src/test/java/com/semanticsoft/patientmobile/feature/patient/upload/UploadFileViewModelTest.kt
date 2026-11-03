@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.core.ui.shared.upload
+package com.semanticsoft.patientmobile.feature.patient.upload
 
 import com.semanticsoft.patientmobile.domain.model.patient.DocumentDuplicateInfo
 import com.semanticsoft.patientmobile.domain.model.patient.PatientDocument
