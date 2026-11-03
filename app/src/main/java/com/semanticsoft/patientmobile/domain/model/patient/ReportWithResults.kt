@@ -1,9 +1,7 @@
 package com.semanticsoft.patientmobile.domain.model.patient
 
-import androidx.compose.runtime.Immutable
 import java.time.LocalDate
 
-@Immutable
 data class ReportWithResults(
     val reportId: String,
     val documentId: String,

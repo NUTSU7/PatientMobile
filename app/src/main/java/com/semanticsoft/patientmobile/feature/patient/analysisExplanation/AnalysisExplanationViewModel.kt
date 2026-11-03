@@ -1,5 +1,7 @@
 package com.semanticsoft.patientmobile.feature.patient.analysisExplanation
 
+import java.io.File
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -75,3 +77,11 @@ class AnalysisExplanationViewModel @Inject constructor(
         }
     }
 }
+
+data class AnalysisExplanationUiState(
+    val isLoading: Boolean = true,
+    val pdfFile: File? = null,
+    val fileName: String = "",
+    val explanationText: String = "",
+    val errorMessage: String? = null
+)
