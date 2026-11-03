@@ -2,13 +2,6 @@ package com.semanticsoft.patientmobile.core.network.interceptors
 
 import android.util.Log
 import com.semanticsoft.patientmobile.BuildConfig
-import com.semanticsoft.patientmobile.core.util.exceptions.ApiException
-import com.semanticsoft.patientmobile.core.util.exceptions.DocumentScanningUnavailableException
-import com.semanticsoft.patientmobile.core.util.exceptions.FileTooLargeException
-import com.semanticsoft.patientmobile.core.util.exceptions.InvalidCredentialsException
-import com.semanticsoft.patientmobile.core.util.exceptions.MalwareDetectedException
-import com.semanticsoft.patientmobile.core.util.exceptions.RateLimitException
-import com.semanticsoft.patientmobile.core.util.exceptions.UnsupportedMediaTypeException
 import okhttp3.Interceptor
 import okhttp3.Response
 import org.json.JSONObject
