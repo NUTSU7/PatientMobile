@@ -6,7 +6,7 @@ import com.semanticsoft.patientmobile.core.network.SafeApiCall.safeApiCall
 import com.semanticsoft.patientmobile.core.network.api.PatientApiService
 import com.semanticsoft.patientmobile.domain.model.patient.AiSummary
 import com.semanticsoft.patientmobile.core.network.dto.patient.UpdateMedicalReportReviewRequest
-import com.semanticsoft.patientmobile.core.network.dto.patient.normalizeTestName
+import com.semanticsoft.patientmobile.data.mapper.patient.normalizeTestName
 import com.semanticsoft.patientmobile.data.mapper.common.parseInstantSafe
 import com.semanticsoft.patientmobile.data.mapper.patient.toDomain
 import com.semanticsoft.patientmobile.domain.model.patient.MedicalReport

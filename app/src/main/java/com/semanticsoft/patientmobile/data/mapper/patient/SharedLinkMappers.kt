@@ -1,7 +1,7 @@
 package com.semanticsoft.patientmobile.data.mapper.patient
 
-import com.semanticsoft.patientmobile.core.network.dto.shared.CreateSharedLinkDto
-import com.semanticsoft.patientmobile.core.network.dto.shared.SharedLinkDto
+import com.semanticsoft.patientmobile.core.network.dto.patient.CreateSharedLinkDto
+import com.semanticsoft.patientmobile.core.network.dto.patient.SharedLinkDto
 import com.semanticsoft.patientmobile.domain.model.patient.SharedLink
 import com.semanticsoft.patientmobile.data.mapper.common.parseInstantSafe
 

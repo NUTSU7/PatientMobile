@@ -54,3 +54,9 @@ data class CreateShareLinkRequest(
     @SerialName("maxDownloads") val maxDownloads: Int? = null,
     @SerialName("expiresInHours") val expiresInHours: Int? = null
 )
+
+
+@Serializable
+data class BulkDeleteRequest(
+    val documentIds: List<String>
+)

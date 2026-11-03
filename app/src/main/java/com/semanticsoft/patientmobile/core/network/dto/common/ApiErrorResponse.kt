@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.core.network.dto
+package com.semanticsoft.patientmobile.core.network.dto.common
 
 data class FieldError(
     val field: String,

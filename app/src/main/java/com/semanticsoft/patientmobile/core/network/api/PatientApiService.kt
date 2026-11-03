@@ -7,7 +7,7 @@ import com.semanticsoft.patientmobile.core.network.dto.patient.BulkDeleteRequest
 import com.semanticsoft.patientmobile.core.network.dto.patient.CreateMedicationRequest
 import com.semanticsoft.patientmobile.core.network.dto.patient.CreateNoteRequest
 import com.semanticsoft.patientmobile.core.network.dto.patient.CreateShareLinkRequest
-import com.semanticsoft.patientmobile.core.network.dto.shared.CreateSharedLinkDto
+import com.semanticsoft.patientmobile.core.network.dto.patient.CreateSharedLinkDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.DocumentDetailDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.DocumentDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.DuplicateCheckRequest
@@ -19,7 +19,7 @@ import com.semanticsoft.patientmobile.core.network.dto.patient.UpdateMedicalRepo
 import com.semanticsoft.patientmobile.core.network.dto.patient.MedicationDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.MedicationOcrDraftResponseDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.OcrExtractionDto
-import com.semanticsoft.patientmobile.core.network.dto.shared.PaginatedResponse
+import com.semanticsoft.patientmobile.core.network.dto.common.PaginatedResponse
 import com.semanticsoft.patientmobile.core.network.dto.patient.PersonalNoteDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.PersonalNoteOcrDraftResponseDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.RenameDocumentRequest

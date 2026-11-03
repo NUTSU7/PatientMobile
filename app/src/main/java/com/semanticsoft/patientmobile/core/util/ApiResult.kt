@@ -1,6 +1,6 @@
 package com.semanticsoft.patientmobile.core.util
 
-import com.semanticsoft.patientmobile.core.network.dto.ApiErrorResponse
+import com.semanticsoft.patientmobile.core.network.dto.common.ApiErrorResponse
 
 sealed class ApiResult<out T> {
     data class Success<T>(val data: T) : ApiResult<T>()

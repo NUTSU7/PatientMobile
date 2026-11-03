@@ -27,3 +27,10 @@ data class OcrReportDto(
     @SerialName("resultCount") val resultCount: Int? = null,
     @SerialName("createdAt") val createdAt: String? = null
 )
+
+
+@Serializable
+data class StartExtractionResponse(
+    @SerialName("id") val runId: String = "",
+    val status: String = ""
+)

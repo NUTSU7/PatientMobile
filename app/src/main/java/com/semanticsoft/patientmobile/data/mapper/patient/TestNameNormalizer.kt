@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.core.network.dto.patient
+package com.semanticsoft.patientmobile.data.mapper.patient
 
 private val roToEn = mapOf(
     "hemoglobina" to "Hemoglobin",

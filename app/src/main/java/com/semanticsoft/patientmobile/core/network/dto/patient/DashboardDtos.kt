@@ -12,3 +12,11 @@ data class AiExplainRequest(
 data class AiExplainResponse(
     val explanation: String
 )
+
+@Serializable
+data class AiSummaryResponse(
+    @SerialName("summaryText") val summaryText: String,
+    val status: String,
+    @SerialName("generatedAt") val generatedAt: String? = null,
+    @SerialName("latestReportId") val latestReportId: String? = null
+)

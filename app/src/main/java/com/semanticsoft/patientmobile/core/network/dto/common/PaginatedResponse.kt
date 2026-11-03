@@ -1,4 +1,4 @@
-package com.semanticsoft.patientmobile.core.network.dto.shared
+package com.semanticsoft.patientmobile.core.network.dto.common
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

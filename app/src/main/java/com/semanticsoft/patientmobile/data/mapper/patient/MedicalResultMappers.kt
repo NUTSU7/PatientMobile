@@ -1,7 +1,6 @@
 package com.semanticsoft.patientmobile.data.mapper.patient
 
 import com.semanticsoft.patientmobile.core.network.dto.patient.MedicalResultDto
-import com.semanticsoft.patientmobile.core.network.dto.patient.normalizeTestName
 import com.semanticsoft.patientmobile.domain.model.patient.MedicalResult
 import com.semanticsoft.patientmobile.data.mapper.common.parseDateSafe
 

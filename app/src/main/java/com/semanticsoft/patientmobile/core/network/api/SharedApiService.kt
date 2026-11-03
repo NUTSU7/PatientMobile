@@ -1,6 +1,6 @@
 package com.semanticsoft.patientmobile.core.network.api
 
-import com.semanticsoft.patientmobile.core.network.dto.shared.SharedLinkDto
+import com.semanticsoft.patientmobile.core.network.dto.patient.SharedLinkDto
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
