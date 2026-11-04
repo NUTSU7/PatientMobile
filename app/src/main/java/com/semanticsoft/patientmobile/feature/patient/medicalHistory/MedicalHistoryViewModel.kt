@@ -793,10 +793,14 @@ class MedicalHistoryViewModel @Inject constructor(
         content: String,
         analysisDocumentIds: List<String> = emptyList()
     ) {
-        if (title.isBlank()) {
-            _state.update { it.copy(noteDialogError = "Titlul noti\u021Bei este obligatoriu.") }
+        val cleanTitle = title.trim().replace(Regex("\\s+"), " ")
+        if (cleanTitle.isBlank()) {
+            _state.update { it.copy(noteDialogError = "Titlul notiței este obligatoriu.") }
             return
         }
+        val cleanDoctorLocation = doctorLocation.trim().replace(Regex("\\s+"), " ")
+        val cleanContent = content.trim().replace(Regex("\\s+"), " ")
+
         val targetId = _state.value.noteDialogTargetId
         val isEditing = targetId != null && targetId != "add"
         viewModelScope.launch {
@@ -804,9 +808,9 @@ class MedicalHistoryViewModel @Inject constructor(
             val primaryDocId = analysisDocumentIds.firstOrNull()
             val note = PersonalNote(
                 id = if (isEditing) targetId!! else "",
-                analysisName = title,
-                doctorLocation = doctorLocation,
-                clinicalObservations = content,
+                analysisName = cleanTitle,
+                doctorLocation = cleanDoctorLocation.ifBlank { null },
+                clinicalObservations = cleanContent.ifBlank { null },
                 noteDate = existing?.noteDate ?: LocalDate.now(),
                 analysisDocumentId = primaryDocId,
                 analysisDocumentIds = analysisDocumentIds,
