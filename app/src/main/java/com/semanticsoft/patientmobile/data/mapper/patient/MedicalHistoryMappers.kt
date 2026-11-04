@@ -1,6 +1,7 @@
 package com.semanticsoft.patientmobile.data.mapper.patient
 
 import com.semanticsoft.patientmobile.core.network.dto.patient.MedicalHistoryAttachmentDto
+import com.semanticsoft.patientmobile.core.network.dto.patient.MedicalHistoryLinkedDocumentDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.MedicationDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.MedicationOcrDraftResponseDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.MedicationScheduleDto
@@ -9,6 +10,7 @@ import com.semanticsoft.patientmobile.core.network.dto.patient.PersonalNoteOcrDr
 import com.semanticsoft.patientmobile.domain.model.patient.DoseUnit
 import com.semanticsoft.patientmobile.domain.model.patient.MealRelation
 import com.semanticsoft.patientmobile.domain.model.patient.MedicalHistoryAttachment
+import com.semanticsoft.patientmobile.domain.model.patient.MedicalHistoryLinkedDocument
 import com.semanticsoft.patientmobile.domain.model.patient.Medication
 import com.semanticsoft.patientmobile.domain.model.patient.MedicationOcrDraft
 import com.semanticsoft.patientmobile.domain.model.patient.MedicationSchedule
@@ -17,21 +19,31 @@ import com.semanticsoft.patientmobile.domain.model.patient.PersonalNoteOcrDraft
 import com.semanticsoft.patientmobile.data.mapper.common.parseDateSafe
 import com.semanticsoft.patientmobile.data.mapper.common.parseInstantSafe
 
-fun MedicationDto.toDomain(): Medication = Medication(
-    id = id,
-    name = name,
-    doseValue = doseValue,
-    doseUnit = try { DoseUnit.valueOf(doseUnit) } catch (_: Exception) { DoseUnit.TABLET },
-    doseUnitLabel = doseUnitLabel,
-    schedules = schedules.map { it.toDomain() },
-    active = active,
-    effectiveDate = effectiveDate?.let(::parseDateSafe),
-    endDate = endDate?.let(::parseDateSafe),
-    analysisDocumentId = analysisDocumentId,
-    attachmentIds = attachments.map { it.id },
-    ocrReviewConfirmed = ocrReviewConfirmed,
-    createdAt = parseInstantSafe(createdAt)
-)
+fun MedicationDto.toDomain(): Medication {
+    val linkedDocIds = buildList {
+        addAll(analysisDocuments.map { it.id }.filter { it.isNotBlank() })
+        addAll(this@toDomain.analysisDocumentIds.filter { it.isNotBlank() })
+        analysisDocumentId?.let { if (it.isNotBlank()) add(it) }
+    }.distinct()
+
+    return Medication(
+        id = id,
+        name = name,
+        doseValue = doseValue,
+        doseUnit = try { DoseUnit.valueOf(doseUnit) } catch (_: Exception) { DoseUnit.TABLET },
+        doseUnitLabel = doseUnitLabel,
+        schedules = schedules.map { it.toDomain() },
+        active = active,
+        effectiveDate = effectiveDate?.let(::parseDateSafe),
+        endDate = endDate?.let(::parseDateSafe),
+        analysisDocumentId = linkedDocIds.firstOrNull(),
+        analysisDocumentIds = linkedDocIds,
+        analysisDocuments = analysisDocuments.map { it.toDomain() },
+        attachmentIds = attachments.map { it.id },
+        ocrReviewConfirmed = ocrReviewConfirmed,
+        createdAt = parseInstantSafe(createdAt)
+    )
+}
 
 fun MedicationScheduleDto.toDomain(): MedicationSchedule =
     MedicationSchedule(
@@ -40,15 +52,33 @@ fun MedicationScheduleDto.toDomain(): MedicationSchedule =
         mealRelationLabel = mealRelationLabel
     )
 
-fun PersonalNoteDto.toDomain(): PersonalNote = PersonalNote(
+fun PersonalNoteDto.toDomain(): PersonalNote {
+    val linkedDocIds = buildList {
+        addAll(analysisDocuments.map { it.id }.filter { it.isNotBlank() })
+        addAll(this@toDomain.analysisDocumentIds.filter { it.isNotBlank() })
+        analysisDocumentId?.let { if (it.isNotBlank()) add(it) }
+    }.distinct()
+
+    return PersonalNote(
+        id = id,
+        analysisName = analysisName,
+        doctorLocation = doctorLocation,
+        clinicalObservations = clinicalObservations,
+        noteDate = parseDateSafe(noteDate),
+        analysisDocumentId = linkedDocIds.firstOrNull(),
+        analysisDocumentIds = linkedDocIds,
+        analysisDocuments = analysisDocuments.map { it.toDomain() },
+        attachmentIds = attachments.map { it.id },
+        createdAt = parseInstantSafe(createdAt)
+    )
+}
+
+fun MedicalHistoryLinkedDocumentDto.toDomain(): MedicalHistoryLinkedDocument = MedicalHistoryLinkedDocument(
     id = id,
-    analysisName = analysisName,
-    doctorLocation = doctorLocation,
-    clinicalObservations = clinicalObservations,
-    noteDate = parseDateSafe(noteDate),
-    analysisDocumentId = analysisDocumentId,
-    attachmentIds = attachments.map { it.id },
-    createdAt = parseInstantSafe(createdAt)
+    originalFileName = originalFileName ?: analysisDocumentName,
+    displayTitle = displayTitle,
+    displaySubtitle = displaySubtitle,
+    sourceLaboratory = sourceLaboratory
 )
 
 fun MedicalHistoryAttachmentDto.toDomain(): MedicalHistoryAttachment = MedicalHistoryAttachment(

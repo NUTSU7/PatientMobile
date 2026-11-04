@@ -14,6 +14,8 @@ data class Medication(
     val effectiveDate: LocalDate? = null,
     val endDate: LocalDate? = null,
     val analysisDocumentId: String? = null,
+    val analysisDocumentIds: List<String> = emptyList(),
+    val analysisDocuments: List<MedicalHistoryLinkedDocument> = emptyList(),
     val attachmentIds: List<String> = emptyList(),
     val ocrReviewConfirmed: Boolean = false,
     val createdAt: Instant? = null

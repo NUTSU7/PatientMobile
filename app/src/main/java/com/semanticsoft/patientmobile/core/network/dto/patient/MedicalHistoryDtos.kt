@@ -4,6 +4,16 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class MedicalHistoryLinkedDocumentDto(
+    val id: String = "",
+    @SerialName("originalFileName") val originalFileName: String? = null,
+    @SerialName("analysisDocumentName") val analysisDocumentName: String? = null,
+    @SerialName("displayTitle") val displayTitle: String? = null,
+    @SerialName("displaySubtitle") val displaySubtitle: String? = null,
+    @SerialName("sourceLaboratory") val sourceLaboratory: String? = null
+)
+
+@Serializable
 data class MedicationDto(
     val id: String,
     val name: String,
@@ -16,6 +26,8 @@ data class MedicationDto(
     @SerialName("endDate") val endDate: String? = null,
     @SerialName("analysisDocumentId") val analysisDocumentId: String? = null,
     @SerialName("analysisDocumentName") val analysisDocumentName: String? = null,
+    @SerialName("analysisDocuments") val analysisDocuments: List<MedicalHistoryLinkedDocumentDto> = emptyList(),
+    @SerialName("analysisDocumentIds") val analysisDocumentIds: List<String> = emptyList(),
     @SerialName("attachments") val attachments: List<MedicalHistoryAttachmentDto> = emptyList(),
     @SerialName("ocrReviewConfirmed") val ocrReviewConfirmed: Boolean = false,
     @SerialName("createdAt") val createdAt: String? = null
@@ -46,6 +58,7 @@ data class CreateMedicationRequest(
     @SerialName("effectiveDate") val effectiveDate: String? = null,
     @SerialName("endDate") val endDate: String? = null,
     @SerialName("analysisDocumentId") val analysisDocumentId: String? = null,
+    @SerialName("analysisDocumentIds") val analysisDocumentIds: List<String> = emptyList(),
     @SerialName("attachmentIds") val attachmentIds: List<String>? = null,
     @SerialName("ocrReviewConfirmed") val ocrReviewConfirmed: Boolean? = null
 )
@@ -66,6 +79,7 @@ data class UpdateMedicationRequest(
     @SerialName("effectiveDate") val effectiveDate: String? = null,
     @SerialName("endDate") val endDate: String? = null,
     @SerialName("analysisDocumentId") val analysisDocumentId: String? = null,
+    @SerialName("analysisDocumentIds") val analysisDocumentIds: List<String> = emptyList(),
     @SerialName("attachmentIds") val attachmentIds: List<String>? = null,
     @SerialName("ocrReviewConfirmed") val ocrReviewConfirmed: Boolean? = null
 )
@@ -79,6 +93,8 @@ data class PersonalNoteDto(
     @SerialName("noteDate") val noteDate: String,
     @SerialName("analysisDocumentId") val analysisDocumentId: String? = null,
     @SerialName("analysisDocumentName") val analysisDocumentName: String? = null,
+    @SerialName("analysisDocuments") val analysisDocuments: List<MedicalHistoryLinkedDocumentDto> = emptyList(),
+    @SerialName("analysisDocumentIds") val analysisDocumentIds: List<String> = emptyList(),
     @SerialName("attachments") val attachments: List<MedicalHistoryAttachmentDto> = emptyList(),
     @SerialName("createdAt") val createdAt: String? = null
 )
@@ -90,6 +106,7 @@ data class CreateNoteRequest(
     @SerialName("clinicalObservations") val clinicalObservations: String? = null,
     @SerialName("noteDate") val noteDate: String,
     @SerialName("analysisDocumentId") val analysisDocumentId: String? = null,
+    @SerialName("analysisDocumentIds") val analysisDocumentIds: List<String> = emptyList(),
     @SerialName("attachmentIds") val attachmentIds: List<String>? = null
 )
 
@@ -100,6 +117,7 @@ data class UpdateNoteRequest(
     @SerialName("clinicalObservations") val clinicalObservations: String? = null,
     @SerialName("noteDate") val noteDate: String,
     @SerialName("analysisDocumentId") val analysisDocumentId: String? = null,
+    @SerialName("analysisDocumentIds") val analysisDocumentIds: List<String> = emptyList(),
     @SerialName("attachmentIds") val attachmentIds: List<String>? = null
 )
 

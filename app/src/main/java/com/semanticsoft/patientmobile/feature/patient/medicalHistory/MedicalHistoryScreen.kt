@@ -279,6 +279,7 @@ fun MedicalHistoryScreen(
                             errorText = state.medicationDialogError,
                             documents = state.filteredDocuments.ifEmpty { state.analysisDocuments },
                             initialAnalysisDocumentId = editingMed?.analysisDocumentId,
+                            initialAnalysisDocumentIds = editingMed?.analysisDocumentIds?.ifEmpty { listOfNotNull(editingMed.analysisDocumentId) } ?: emptyList(),
                             initialAnalysisDocumentName = editingDocName,
                             initialName = editingMed?.name,
                             initialDoseValue = editingMed?.doseValue,
@@ -313,9 +314,9 @@ fun MedicalHistoryScreen(
                                 focusManager.clearFocus()
                                 viewModel.onDismissAddMedicationDialog()
                             },
-                            onSave = { name, doseValue, doseUnit, schedules, durationDays, associatedDocumentId ->
+                            onSave = { name, doseValue, doseUnit, schedules, durationDays, associatedDocumentIds ->
                                 focusManager.clearFocus()
-                                viewModel.addMedicine(name, doseValue, doseUnit, schedules, durationDays, associatedDocumentId)
+                                viewModel.addMedicine(name, doseValue, doseUnit, schedules, durationDays, associatedDocumentIds)
                             }
                         )
                     }
@@ -367,6 +368,7 @@ fun MedicalHistoryScreen(
                             errorText = state.noteDialogError,
                             documents = state.filteredDocuments.ifEmpty { state.analysisDocuments },
                             initialAnalysisDocumentId = editingNote?.analysisDocumentId,
+                            initialAnalysisDocumentIds = editingNote?.analysisDocumentIds?.ifEmpty { listOfNotNull(editingNote.analysisDocumentId) } ?: emptyList(),
                             initialAnalysisDocumentName = editingNoteDocName,
                             initialTitle = editingNote?.title,
                             initialDoctorLocation = editingNote?.author?.takeUnless { it == "Eu" },
@@ -384,9 +386,9 @@ fun MedicalHistoryScreen(
                                 focusManager.clearFocus()
                                 viewModel.onDismissAddNoteDialog()
                             },
-                            onSave = { title, doctorLocation, content, analysisDocumentId ->
+                            onSave = { title, doctorLocation, content, analysisDocumentIds ->
                                 focusManager.clearFocus()
-                                viewModel.addNote(title, doctorLocation, content, analysisDocumentId)
+                                viewModel.addNote(title, doctorLocation, content, analysisDocumentIds)
                             }
                         )
                     }

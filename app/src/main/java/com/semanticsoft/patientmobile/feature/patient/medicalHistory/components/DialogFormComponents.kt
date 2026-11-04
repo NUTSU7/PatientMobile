@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,6 +51,7 @@ import com.semanticsoft.patientmobile.core.ui.theme.Gray300
 import com.semanticsoft.patientmobile.core.ui.theme.Gray400
 import com.semanticsoft.patientmobile.core.ui.theme.Gray500
 import com.semanticsoft.patientmobile.core.ui.theme.Gray900
+import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.core.ui.theme.InputHaloShadow
 import com.semanticsoft.patientmobile.core.ui.theme.InputShadow
 
@@ -161,6 +164,7 @@ fun DialogMultilineField(
             onValueChange = onValueChange,
             textStyle = TextStyle(color = Gray900, fontSize = 13.sp),
             cursorBrush = SolidColor(Gray900),
+            minLines = minLines,
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -230,6 +234,140 @@ fun DialogDropdownField(
                     onClick = {
                         onSelect(option)
                         expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DialogMultiSelectDropdownField(
+    selectedKeys: Set<String>,
+    placeholder: String = "Fără analiză asociată",
+    options: List<DialogDropdownOption>,
+    onSelectionChange: (Set<String>) -> Unit,
+    modifier: Modifier = Modifier,
+    isError: Boolean = false
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val shape = RoundedCornerShape(AppDimens.cornerRadiusSmall)
+
+    val validSelectedKeys = remember(selectedKeys) {
+        selectedKeys.filter { it.isNotEmpty() }.toSet()
+    }
+
+    val displayText = when {
+        validSelectedKeys.isEmpty() -> placeholder
+        validSelectedKeys.size == 1 -> {
+            val singleKey = validSelectedKeys.first()
+            options.find { it.key == singleKey }?.label ?: placeholder
+        }
+        else -> "${validSelectedKeys.size} analize asociate"
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(AppDimens.inputHeightDefault)
+                .shadow(
+                    elevation = 5.dp,
+                    shape = shape,
+                    ambientColor = InputHaloShadow,
+                    spotColor = InputHaloShadow
+                )
+                .shadow(
+                    elevation = 2.dp,
+                    shape = shape,
+                    ambientColor = InputShadow,
+                    spotColor = InputShadow
+                )
+                .background(if (isError) ErrorLightBg else Color.White, shape)
+                .border(BorderStroke(1.dp, Gray300), shape)
+                .padding(horizontal = 12.dp)
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = displayText,
+                    color = if (validSelectedKeys.isEmpty()) Gray500 else Gray900,
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            shape = shape,
+            containerColor = MaterialTheme.colorScheme.surface,
+            shadowElevation = 4.dp,
+            border = BorderStroke(1.dp, Gray300),
+            modifier = Modifier.heightIn(max = 280.dp)
+        ) {
+            // First item: "Fără analiză asociată" to clear all
+            DropdownMenuItem(
+                text = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Fără analiză asociată",
+                            fontSize = 13.sp,
+                            color = if (validSelectedKeys.isEmpty()) Indigo600 else Gray900,
+                            fontWeight = if (validSelectedKeys.isEmpty()) FontWeight.SemiBold else FontWeight.Normal
+                        )
+                    }
+                },
+                onClick = {
+                    onSelectionChange(emptySet())
+                }
+            )
+
+            // Selectable analysis documents
+            options.filter { it.key.isNotEmpty() }.forEach { option ->
+                val isSelected = option.key in validSelectedKeys
+                DropdownMenuItem(
+                    text = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Checkbox(
+                                checked = isSelected,
+                                onCheckedChange = null,
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = Indigo600,
+                                    checkmarkColor = Color.White
+                                )
+                            )
+                            Text(
+                                text = option.label,
+                                fontSize = 13.sp,
+                                color = Gray900,
+                                modifier = Modifier.weight(1f),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    },
+                    onClick = {
+                        val next = if (isSelected) {
+                            validSelectedKeys - option.key
+                        } else {
+                            validSelectedKeys + option.key
+                        }
+                        onSelectionChange(next)
                     }
                 )
             }

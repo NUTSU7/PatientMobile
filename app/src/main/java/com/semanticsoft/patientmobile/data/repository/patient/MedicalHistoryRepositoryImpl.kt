@@ -32,6 +32,7 @@ class MedicalHistoryRepositoryImpl(
     override suspend fun createMedication(medication: Medication): ApiResult<Medication> {
         if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
 
+        val docIds = medication.analysisDocumentIds.ifEmpty { listOfNotNull(medication.analysisDocumentId) }
         val request = CreateMedicationRequest(
             name = medication.name,
             doseValue = medication.doseValue,
@@ -42,9 +43,10 @@ class MedicalHistoryRepositoryImpl(
             active = medication.active,
             effectiveDate = medication.effectiveDate?.toString(),
             endDate = medication.endDate?.toString(),
-            analysisDocumentId = medication.analysisDocumentId,
+            analysisDocumentId = medication.analysisDocumentId ?: docIds.firstOrNull(),
+            analysisDocumentIds = docIds,
             attachmentIds = medication.attachmentIds.ifEmpty { null },
-            ocrReviewConfirmed = medication.ocrReviewConfirmed.takeIf { medication.analysisDocumentId != null }
+            ocrReviewConfirmed = medication.ocrReviewConfirmed.takeIf { docIds.isNotEmpty() }
         )
 
         return safeApiCall { apiService.createMedication(request) }.map { it.toDomain() }
@@ -59,6 +61,7 @@ class MedicalHistoryRepositoryImpl(
     override suspend fun updateMedication(id: String, medication: Medication): ApiResult<Medication> {
         if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
 
+        val docIds = medication.analysisDocumentIds.ifEmpty { listOfNotNull(medication.analysisDocumentId) }
         val request = UpdateMedicationRequest(
             name = medication.name,
             doseValue = medication.doseValue,
@@ -69,9 +72,10 @@ class MedicalHistoryRepositoryImpl(
             active = medication.active,
             effectiveDate = medication.effectiveDate?.toString(),
             endDate = medication.endDate?.toString(),
-            analysisDocumentId = medication.analysisDocumentId,
+            analysisDocumentId = medication.analysisDocumentId ?: docIds.firstOrNull(),
+            analysisDocumentIds = docIds,
             attachmentIds = medication.attachmentIds.ifEmpty { null },
-            ocrReviewConfirmed = medication.ocrReviewConfirmed.takeIf { medication.analysisDocumentId != null }
+            ocrReviewConfirmed = medication.ocrReviewConfirmed.takeIf { docIds.isNotEmpty() }
         )
 
         return safeApiCall { apiService.updateMedication(id, request) }.map { it.toDomain() }
@@ -85,12 +89,14 @@ class MedicalHistoryRepositoryImpl(
     override suspend fun createNote(note: PersonalNote): ApiResult<PersonalNote> {
         if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
 
+        val docIds = note.analysisDocumentIds.ifEmpty { listOfNotNull(note.analysisDocumentId) }
         val request = CreateNoteRequest(
             analysisName = note.analysisName,
             doctorLocation = note.doctorLocation,
             clinicalObservations = note.clinicalObservations,
             noteDate = note.noteDate.toString(),
-            analysisDocumentId = note.analysisDocumentId,
+            analysisDocumentId = note.analysisDocumentId ?: docIds.firstOrNull(),
+            analysisDocumentIds = docIds,
             attachmentIds = note.attachmentIds.ifEmpty { null }
         )
 
@@ -106,12 +112,14 @@ class MedicalHistoryRepositoryImpl(
     override suspend fun updateNote(id: String, note: PersonalNote): ApiResult<PersonalNote> {
         if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
 
+        val docIds = note.analysisDocumentIds.ifEmpty { listOfNotNull(note.analysisDocumentId) }
         val request = UpdateNoteRequest(
             analysisName = note.analysisName,
             doctorLocation = note.doctorLocation,
             clinicalObservations = note.clinicalObservations,
             noteDate = note.noteDate.toString(),
-            analysisDocumentId = note.analysisDocumentId,
+            analysisDocumentId = note.analysisDocumentId ?: docIds.firstOrNull(),
+            analysisDocumentIds = docIds,
             attachmentIds = note.attachmentIds.ifEmpty { null }
         )
 

@@ -66,6 +66,7 @@ data class MedicineItem(
     val daysRemaining: Int,
     val iconType: MedicineIconType = MedicineIconType.PILL,
     val analysisDocumentId: String? = null,
+    val analysisDocumentIds: List<String> = emptyList(),
     val effectiveDate: java.time.LocalDate? = null,
     val endDate: java.time.LocalDate? = null,
     val active: Boolean = true,
@@ -95,6 +96,7 @@ data class PersonalNoteItem(
     val severity: NoteSeverity,
     val accentColor: androidx.compose.ui.graphics.Color? = null,
     val analysisDocumentId: String? = null,
+    val analysisDocumentIds: List<String> = emptyList(),
     val noteDate: java.time.LocalDate = java.time.LocalDate.now(),
     val createdAt: java.time.Instant? = null,
     val attachmentIds: List<String> = emptyList()
@@ -171,8 +173,9 @@ data class MedicalHistoryUiState(
             val docIds = visibleDocumentIds
             return medicines.filter { med ->
                 if (!isDateFilterActive) return@filter true
-                if (med.analysisDocumentId == null) return@filter false
-                med.analysisDocumentId in docIds
+                val medDocIds = med.analysisDocumentIds.ifEmpty { listOfNotNull(med.analysisDocumentId) }
+                if (medDocIds.isEmpty()) return@filter false
+                medDocIds.any { it in docIds }
             }
         }
     val filteredNotes: List<PersonalNoteItem>
@@ -180,8 +183,9 @@ data class MedicalHistoryUiState(
             val docIds = visibleDocumentIds
             return notes.filter { note ->
                 if (!isDateFilterActive) return@filter true
-                if (note.analysisDocumentId == null) return@filter false
-                note.analysisDocumentId in docIds
+                val noteDocIds = note.analysisDocumentIds.ifEmpty { listOfNotNull(note.analysisDocumentId) }
+                if (noteDocIds.isEmpty()) return@filter false
+                noteDocIds.any { it in docIds }
             }
         }
 
@@ -540,7 +544,7 @@ class MedicalHistoryViewModel @Inject constructor(
         doseUnit: String,
         schedules: List<ScheduleEntryData>,
         durationDays: Int,
-        associatedDocumentId: String?
+        associatedDocumentIds: List<String> = emptyList()
     ) {
         if (name.isBlank()) {
             _state.update { it.copy(medicationDialogError = "Denumirea medicamentului este obligatorie.") }
@@ -569,6 +573,7 @@ class MedicalHistoryViewModel @Inject constructor(
             val existing = if (isEditing) _state.value.medicines.find { it.id == targetId } else null
             val effective = existing?.effectiveDate ?: LocalDate.now()
             val end = if (durationDays > 0) effective.plusDays(durationDays.toLong()) else null
+            val primaryDocId = associatedDocumentIds.firstOrNull()
 
             val medication = Medication(
                 id = if (isEditing) targetId!! else "",
@@ -587,9 +592,10 @@ class MedicalHistoryViewModel @Inject constructor(
                 active = existing?.active ?: true,
                 effectiveDate = effective,
                 endDate = end,
-                analysisDocumentId = associatedDocumentId,
+                analysisDocumentId = primaryDocId,
+                analysisDocumentIds = associatedDocumentIds,
                 attachmentIds = (existing?.attachmentIds ?: emptyList()) + _state.value.ocrMedicationAttachmentIds,
-                ocrReviewConfirmed = associatedDocumentId != null,
+                ocrReviewConfirmed = associatedDocumentIds.isNotEmpty(),
                 createdAt = existing?.createdAt
             )
 
@@ -621,7 +627,7 @@ class MedicalHistoryViewModel @Inject constructor(
         title: String,
         doctorLocation: String,
         content: String,
-        analysisDocumentId: String? = null
+        analysisDocumentIds: List<String> = emptyList()
     ) {
         if (title.isBlank()) {
             _state.update { it.copy(noteDialogError = "Titlul noti\u021Bei este obligatoriu.") }
@@ -631,13 +637,15 @@ class MedicalHistoryViewModel @Inject constructor(
         val isEditing = targetId != null && targetId != "add"
         viewModelScope.launch {
             val existing = if (isEditing) _state.value.notes.find { it.id == targetId } else null
+            val primaryDocId = analysisDocumentIds.firstOrNull()
             val note = PersonalNote(
                 id = if (isEditing) targetId!! else "",
                 analysisName = title,
                 doctorLocation = doctorLocation,
                 clinicalObservations = content,
                 noteDate = existing?.noteDate ?: LocalDate.now(),
-                analysisDocumentId = analysisDocumentId,
+                analysisDocumentId = primaryDocId,
+                analysisDocumentIds = analysisDocumentIds,
                 attachmentIds = (existing?.attachmentIds ?: emptyList()) + _state.value.ocrNoteAttachmentIds,
                 createdAt = existing?.createdAt
             )
@@ -915,6 +923,7 @@ class MedicalHistoryViewModel @Inject constructor(
             daysRemaining = days,
             iconType = iconType,
             analysisDocumentId = this.analysisDocumentId,
+            analysisDocumentIds = this.analysisDocumentIds.ifEmpty { listOfNotNull(this.analysisDocumentId) },
             effectiveDate = this.effectiveDate,
             endDate = this.endDate,
             active = this.active,
@@ -935,6 +944,7 @@ class MedicalHistoryViewModel @Inject constructor(
             dateLabel = this.noteDate.toString(),
             severity = severity,
             analysisDocumentId = this.analysisDocumentId,
+            analysisDocumentIds = this.analysisDocumentIds.ifEmpty { listOfNotNull(this.analysisDocumentId) },
             noteDate = this.noteDate,
             createdAt = this.createdAt,
             attachmentIds = this.attachmentIds

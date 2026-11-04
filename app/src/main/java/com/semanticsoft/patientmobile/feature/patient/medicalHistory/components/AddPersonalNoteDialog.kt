@@ -36,6 +36,7 @@ fun AddPersonalNoteDialog(
     errorText: String?,
     documents: List<PatientDocument>,
     initialAnalysisDocumentId: String? = null,
+    initialAnalysisDocumentIds: List<String> = emptyList(),
     initialAnalysisDocumentName: String? = null,
     initialTitle: String? = null,
     initialDoctorLocation: String? = null,
@@ -50,34 +51,40 @@ fun AddPersonalNoteDialog(
     ocrInitialContent: String? = null,
     onOcrFileSelected: (String) -> Unit,
     onDismiss: () -> Unit,
-    onSave: (title: String, doctorLocation: String, content: String, analysisDocumentId: String?) -> Unit,
+    onSave: (title: String, doctorLocation: String, content: String, analysisDocumentIds: List<String>) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var title by rememberSaveable { mutableStateOf("") }
-    var selectedDocumentId by rememberSaveable { mutableStateOf(initialAnalysisDocumentId.orEmpty()) }
+    val initialEffectiveIds = (initialAnalysisDocumentIds.ifEmpty { listOfNotNull(initialAnalysisDocumentId) }).toSet()
+    var selectedDocumentIds by rememberSaveable { mutableStateOf(initialEffectiveIds) }
     var doctorLocation by rememberSaveable { mutableStateOf("") }
     var clinicalObservations by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(initialTitle) { initialTitle?.let { title = it } }
     LaunchedEffect(initialDoctorLocation) { initialDoctorLocation?.let { doctorLocation = it } }
     LaunchedEffect(initialContent) { initialContent?.let { clinicalObservations = it } }
-    LaunchedEffect(initialAnalysisDocumentId) { initialAnalysisDocumentId?.let { selectedDocumentId = it } }
+    LaunchedEffect(initialAnalysisDocumentId, initialAnalysisDocumentIds) {
+        val updated = (initialAnalysisDocumentIds.ifEmpty { listOfNotNull(initialAnalysisDocumentId) }).toSet()
+        if (updated.isNotEmpty()) {
+            selectedDocumentIds = updated
+        }
+    }
 
     LaunchedEffect(ocrInitialTitle) { ocrInitialTitle?.let { title = it } }
     LaunchedEffect(ocrInitialDoctorLocation) { ocrInitialDoctorLocation?.let { doctorLocation = it } }
     LaunchedEffect(ocrInitialContent) { ocrInitialContent?.let { clinicalObservations = it } }
 
-    val selectedDocumentLabel = when {
-        selectedDocumentId.isEmpty() -> "F\u0103r\u0103 analiz\u0103 asociat\u0103"
-        else -> documents.firstOrNull { it.id == selectedDocumentId }?.originalFileName ?: ""
-    }
-
     val documentOptions = buildList {
-        add(DialogDropdownOption(key = "", label = "F\u0103r\u0103 analiz\u0103 asociat\u0103"))
-        if (initialAnalysisDocumentId != null && initialAnalysisDocumentId.isNotEmpty()) {
-            val inList = documents.any { it.id == initialAnalysisDocumentId }
-            if (!inList && initialAnalysisDocumentName != null) {
-                add(DialogDropdownOption(key = initialAnalysisDocumentId, label = "${initialAnalysisDocumentName} (indisponibil\u0103)"))
+        add(DialogDropdownOption(key = "", label = "Fără analiză asociată"))
+        selectedDocumentIds.forEach { id ->
+            val inList = documents.any { it.id == id }
+            if (!inList) {
+                val labelName = if (id == initialAnalysisDocumentId && initialAnalysisDocumentName != null) {
+                    "$initialAnalysisDocumentName (indisponibilă)"
+                } else {
+                    "Analiză ($id)"
+                }
+                add(DialogDropdownOption(key = id, label = labelName))
             }
         }
         addAll(documents.map { doc ->
@@ -100,7 +107,7 @@ fun AddPersonalNoteDialog(
         ) {
             // === FIXED HEADER ===
             Text(
-                text = if (isEditing) "Editeaz\u0103 noti\u021B\u0103" else "Adaug\u0103 noti\u021B\u0103 personal\u0103",
+                text = if (isEditing) "Editează notiță" else "Adaugă notiță personală",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -123,30 +130,29 @@ fun AddPersonalNoteDialog(
 
                 Spacer(modifier = Modifier.height(AppDimens.gapDefault))
 
-                DialogFieldLabel("Titlu noti\u021B\u0103")
+                DialogFieldLabel("Titlu notiță")
                 Spacer(modifier = Modifier.height(AppDimens.gapSmall))
                 DialogTextField(
                     value = title,
                     onValueChange = { title = it },
-                    placeholder = "Analize s\u00EEnge (Profil complet)",
+                    placeholder = "Analize sânge (Profil complet)",
                     isError = isError
                 )
 
                 Spacer(modifier = Modifier.height(AppDimens.gapDefault))
 
-                DialogFieldLabel("Analiz\u0103 asociat\u0103")
+                DialogFieldLabel("Analiză asociată")
                 Spacer(modifier = Modifier.height(AppDimens.gapSmall))
-                DialogDropdownField(
-                    selectedText = selectedDocumentLabel,
-                    placeholder = "F\u0103r\u0103 analiz\u0103 asociat\u0103",
+                DialogMultiSelectDropdownField(
+                    selectedKeys = selectedDocumentIds,
+                    placeholder = "Fără analiză asociată",
                     options = documentOptions,
-                    onSelect = { option ->
-                        if (option.key.isEmpty()) {
-                            selectedDocumentId = ""
-                        } else {
-                            selectedDocumentId = option.key
-                            if (title.isEmpty()) {
-                                title = option.label
+                    onSelectionChange = { nextSelected ->
+                        selectedDocumentIds = nextSelected
+                        if (title.isEmpty() && nextSelected.isNotEmpty()) {
+                            val firstOption = documentOptions.firstOrNull { it.key == nextSelected.first() }
+                            if (firstOption != null && firstOption.key.isNotEmpty()) {
+                                title = firstOption.label
                             }
                         }
                     },
@@ -155,23 +161,23 @@ fun AddPersonalNoteDialog(
 
                 Spacer(modifier = Modifier.height(AppDimens.gapDefault))
 
-                DialogFieldLabel("Doctor / Loca\u021Bie")
+                DialogFieldLabel("Doctor / Locație")
                 Spacer(modifier = Modifier.height(AppDimens.gapSmall))
                 DialogTextField(
                     value = doctorLocation,
                     onValueChange = { doctorLocation = it },
-                    placeholder = "Completeaz\u0103 cu spitalul, doctorul cu care te-ai consultat...",
+                    placeholder = "Completează cu spitalul, doctorul cu care te-ai consultat...",
                     isError = isError
                 )
 
                 Spacer(modifier = Modifier.height(AppDimens.gapDefault))
 
-                DialogFieldLabel("Observa\u021Bii clinice")
+                DialogFieldLabel("Observații clinice")
                 Spacer(modifier = Modifier.height(AppDimens.gapSmall))
                 DialogMultilineField(
                     value = clinicalObservations,
                     onValueChange = { clinicalObservations = it },
-                    placeholder = "Introduce\u021Bi observa\u021Biile medicului...",
+                    placeholder = "Introduceți observațiile medicului...",
                     minLines = 4,
                     isError = isError
                 )
@@ -195,13 +201,13 @@ fun AddPersonalNoteDialog(
             ) {
                 TextButton(onClick = onDismiss) {
                     Text(
-                        text = "Anuleaz\u0103",
+                        text = "Anulează",
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Button(
-                    onClick = { onSave(title, doctorLocation, clinicalObservations, selectedDocumentId.ifEmpty { null }) },
+                    onClick = { onSave(title, doctorLocation, clinicalObservations, selectedDocumentIds.filter { it.isNotEmpty() }) },
                     shape = RoundedCornerShape(AppDimens.cornerRadiusSmall),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Indigo600,
@@ -209,7 +215,7 @@ fun AddPersonalNoteDialog(
                     )
                 ) {
                     Text(
-                        text = "Salveaz\u0103",
+                        text = "Salvează",
                         style = MaterialTheme.typography.labelLarge
                     )
                 }

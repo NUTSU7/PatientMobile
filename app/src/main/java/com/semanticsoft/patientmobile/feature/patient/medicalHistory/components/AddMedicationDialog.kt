@@ -73,6 +73,7 @@ fun AddMedicationDialog(
     errorText: String?,
     documents: List<PatientDocument>,
     initialAnalysisDocumentId: String? = null,
+    initialAnalysisDocumentIds: List<String> = emptyList(),
     initialAnalysisDocumentName: String? = null,
     initialName: String? = null,
     initialDoseValue: Double? = null,
@@ -98,7 +99,7 @@ fun AddMedicationDialog(
         doseUnit: String,
         schedules: List<ScheduleEntryData>,
         durationDays: Int,
-        associatedDocumentId: String?
+        associatedDocumentIds: List<String>
     ) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -106,8 +107,8 @@ fun AddMedicationDialog(
     var doseValue by rememberSaveable { mutableStateOf(1.0) }
     var selectedUnit by rememberSaveable { mutableStateOf(DoseUnit.CAPSULE) }
     var durationDays by rememberSaveable { mutableStateOf(0) }
-    var associatedDocumentId by rememberSaveable { mutableStateOf(initialAnalysisDocumentId.orEmpty()) }
-    var associatedDocumentLabel by rememberSaveable { mutableStateOf(initialAnalysisDocumentName.orEmpty()) }
+    val initialEffectiveIds = (initialAnalysisDocumentIds.ifEmpty { listOfNotNull(initialAnalysisDocumentId) }).toSet()
+    var associatedDocumentIds by rememberSaveable { mutableStateOf(initialEffectiveIds) }
 
     LaunchedEffect(initialName) { initialName?.let { name = it } }
     LaunchedEffect(initialDoseValue) { initialDoseValue?.let { doseValue = it } }
@@ -117,9 +118,11 @@ fun AddMedicationDialog(
         }
     }
     LaunchedEffect(initialDurationDays) { initialDurationDays?.let { durationDays = it } }
-    LaunchedEffect(initialAnalysisDocumentId, initialAnalysisDocumentName) {
-        initialAnalysisDocumentId?.let { associatedDocumentId = it }
-        initialAnalysisDocumentName?.let { associatedDocumentLabel = it }
+    LaunchedEffect(initialAnalysisDocumentId, initialAnalysisDocumentIds) {
+        val updated = (initialAnalysisDocumentIds.ifEmpty { listOfNotNull(initialAnalysisDocumentId) }).toSet()
+        if (updated.isNotEmpty()) {
+            associatedDocumentIds = updated
+        }
     }
 
     LaunchedEffect(ocrInitialName) { ocrInitialName?.let { name = it } }
@@ -172,11 +175,16 @@ fun AddMedicationDialog(
     }
 
     val documentOptions = buildList {
-        add(DialogDropdownOption(key = "", label = "F\u0103r\u0103 analiz\u0103 asociat\u0103"))
-        if (initialAnalysisDocumentId != null && initialAnalysisDocumentId.isNotEmpty()) {
-            val inList = documents.any { it.id == initialAnalysisDocumentId }
-            if (!inList && initialAnalysisDocumentName != null) {
-                add(DialogDropdownOption(key = initialAnalysisDocumentId, label = "${initialAnalysisDocumentName} (indisponibil\u0103)"))
+        add(DialogDropdownOption(key = "", label = "Fără analiză asociată"))
+        associatedDocumentIds.forEach { id ->
+            val inList = documents.any { it.id == id }
+            if (!inList) {
+                val labelName = if (id == initialAnalysisDocumentId && initialAnalysisDocumentName != null) {
+                    "$initialAnalysisDocumentName (indisponibilă)"
+                } else {
+                    "Analiză ($id)"
+                }
+                add(DialogDropdownOption(key = id, label = labelName))
             }
         }
         addAll(documents.map { doc ->
@@ -255,19 +263,16 @@ fun AddMedicationDialog(
 
             DialogFieldLabel("Analiz\u0103 asociat\u0103")
             Spacer(modifier = Modifier.height(AppDimens.gapSmall))
-            DialogDropdownField(
-                selectedText = associatedDocumentLabel,
+            DialogMultiSelectDropdownField(
+                selectedKeys = associatedDocumentIds,
                 placeholder = "F\u0103r\u0103 analiz\u0103 asociat\u0103",
                 options = documentOptions,
-                onSelect = { option ->
-                    if (option.key.isEmpty()) {
-                        associatedDocumentId = ""
-                        associatedDocumentLabel = ""
-                    } else {
-                        associatedDocumentId = option.key
-                        associatedDocumentLabel = option.label
-                        if (name.isEmpty()) {
-                            name = option.label
+                onSelectionChange = { nextSelected ->
+                    associatedDocumentIds = nextSelected
+                    if (name.isEmpty() && nextSelected.isNotEmpty()) {
+                        val firstOption = documentOptions.firstOrNull { it.key == nextSelected.first() }
+                        if (firstOption != null && firstOption.key.isNotEmpty()) {
+                            name = firstOption.label
                         }
                     }
                 },
@@ -485,7 +490,7 @@ fun AddMedicationDialog(
                             selectedUnit.name,
                             scheduleData,
                             durationDays,
-                            associatedDocumentId.ifEmpty { null }
+                            associatedDocumentIds.filter { it.isNotEmpty() }
                         )
                     },
                     colors = ButtonDefaults.buttonColors(
