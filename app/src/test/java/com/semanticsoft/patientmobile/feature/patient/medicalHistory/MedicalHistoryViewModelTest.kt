@@ -272,4 +272,17 @@ class MedicalHistoryViewModelTest {
         assertNull(state.expandedMedicationDraftId)
         assertTrue(state.medicationDrafts.isEmpty())
     }
+
+    @Test
+    fun `onShowEditMedicationDialog preserves mealRelation from schedules`() = runTest {
+        val vm = createViewModel()
+        vm.refresh()
+        advanceUntilIdle()
+
+        vm.onShowEditMedicationDialog("med-1")
+
+        val state = vm.state.value
+        val draft = state.medicationDrafts.first()
+        assertEquals(com.semanticsoft.patientmobile.domain.model.patient.MealRelation.NO_MEAL_RELATION, draft.mealRelation)
+    }
 }

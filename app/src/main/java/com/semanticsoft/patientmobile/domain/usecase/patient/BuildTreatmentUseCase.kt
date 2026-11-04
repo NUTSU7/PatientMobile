@@ -66,7 +66,7 @@ class BuildTreatmentUseCase @Inject constructor() {
                 doseUnit = doseUnit,
                 strength = strength,
                 frequencyText = frequencyText.trim().ifEmpty { null },
-                schedules = schedules,
+                schedules = schedules.map { it.copy(mealRelation = mealRelation) },
                 effectiveDate = startDate,
                 endDate = duration?.let { startDate.plusDays((it - 1).toLong()) },
                 analysisDocumentId = analysisDocumentIds.firstOrNull(),

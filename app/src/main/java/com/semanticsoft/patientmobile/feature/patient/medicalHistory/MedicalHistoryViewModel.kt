@@ -1155,20 +1155,24 @@ class MedicalHistoryViewModel @Inject constructor(
     private fun newMedicationDraft(): MedicationDraft =
         MedicationDraft(draftId = UUID.randomUUID().toString(), startDate = LocalDate.now())
 
-    private fun MedicationOcrItem.toDraft(startDate: LocalDate): MedicationDraft = MedicationDraft(
-        draftId = UUID.randomUUID().toString(),
-        name = name.orEmpty(),
-        doseText = doseValue?.toDoseText().orEmpty(),
-        doseUnit = doseUnit?.let { unit -> runCatching { DoseUnit.valueOf(unit) }.getOrNull() },
-        strength = strength,
-        frequencyText = frequencyText.orEmpty(),
-        startDate = startDate,
-        durationText = durationDays?.toString().orEmpty(),
-        schedules = schedules,
-        requiresOcrReview = true,
-        reviewed = false,
-        unconfirmedFields = unconfirmedFields.filter { it != "strength" }
-    )
+    private fun MedicationOcrItem.toDraft(startDate: LocalDate): MedicationDraft {
+        val commonMeal = schedules.map { it.mealRelation }.distinct().singleOrNull() ?: MealRelation.NO_MEAL_RELATION
+        return MedicationDraft(
+            draftId = UUID.randomUUID().toString(),
+            name = name.orEmpty(),
+            doseText = doseValue?.toDoseText().orEmpty(),
+            doseUnit = doseUnit?.let { unit -> runCatching { DoseUnit.valueOf(unit) }.getOrNull() },
+            strength = strength,
+            frequencyText = frequencyText.orEmpty(),
+            startDate = startDate,
+            durationText = durationDays?.toString().orEmpty(),
+            schedules = schedules,
+            mealRelation = commonMeal,
+            requiresOcrReview = true,
+            reviewed = false,
+            unconfirmedFields = unconfirmedFields.filter { it != "strength" }
+        )
+    }
 
     private fun MedicineItem.toDraft(): MedicationDraft {
         val start = effectiveDate
@@ -1177,6 +1181,7 @@ class MedicalHistoryViewModel @Inject constructor(
         val duration = if (effectiveDate != null && endDate != null) {
             (endDate.toEpochDay() - effectiveDate.toEpochDay() + 1).toInt().takeIf { it > 0 }
         } else null
+        val commonMeal = schedules.map { it.mealRelation }.distinct().singleOrNull() ?: MealRelation.NO_MEAL_RELATION
         return MedicationDraft(
             draftId = UUID.randomUUID().toString(),
             id = id,
@@ -1188,6 +1193,7 @@ class MedicalHistoryViewModel @Inject constructor(
             startDate = start,
             durationText = duration?.toString().orEmpty(),
             schedules = schedules.map { MedicationSchedule(it.administrationTime.take(5), it.mealRelation) },
+            mealRelation = commonMeal,
             requiresOcrReview = attachmentIds.isNotEmpty(),
             reviewed = true
         )

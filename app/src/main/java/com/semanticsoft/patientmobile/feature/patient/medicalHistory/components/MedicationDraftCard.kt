@@ -24,24 +24,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,16 +54,22 @@ import com.semanticsoft.patientmobile.core.ui.theme.WarningNoteText
 import com.semanticsoft.patientmobile.core.ui.theme.icons.ChevronDownIcon
 import com.semanticsoft.patientmobile.core.ui.theme.icons.TrashIcon
 import com.semanticsoft.patientmobile.domain.model.patient.DoseUnit
+import com.semanticsoft.patientmobile.domain.model.patient.MealRelation
 import com.semanticsoft.patientmobile.domain.model.patient.MedicationDraft
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
 private val doseUnitOptions = listOf(DialogDropdownOption(key = "", label = "Necunoscut\u0103")) +
     DoseUnit.entries.map { DialogDropdownOption(key = it.name, label = it.toRoLabel()) }
+
+private val mealRelationOptions = listOf(
+    DialogDropdownOption(key = MealRelation.NO_MEAL_RELATION.name, label = "F\u0103r\u0103 leg\u0103tur\u0103 cu masa"),
+    DialogDropdownOption(key = MealRelation.BEFORE_MEAL.name, label = "\u00CEnainte de mas\u0103"),
+    DialogDropdownOption(key = MealRelation.WITH_MEAL.name, label = "\u00CEn timpul mesei"),
+    DialogDropdownOption(key = MealRelation.AFTER_MEAL.name, label = "Dup\u0103 mas\u0103")
+)
 
 /**
  * One medication card of the treatment editor (web `.mh-treatment-draft`).
@@ -88,6 +85,7 @@ internal fun MedicationDraftCard(
     onToggle: () -> Unit,
     onChange: ((MedicationDraft) -> MedicationDraft) -> Unit,
     onRemove: () -> Unit,
+    onPickDate: () -> Unit,
     onPickTime: (scheduleIndex: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -156,7 +154,8 @@ internal fun MedicationDraftCard(
                             listOfNotNull(dose, draft.doseUnit?.toRoLabel()).joinToString(" ")
                         },
                         draft.frequencyText.takeIf { it.isNotBlank() },
-                        draft.durationText.takeIf { it.isNotBlank() }?.let { "$it zile" }
+                        draft.durationText.takeIf { it.isNotBlank() }?.let { "$it zile" },
+                        draft.mealRelation.takeIf { it != MealRelation.NO_MEAL_RELATION }?.toRoLabel()
                     )
                     if (subtitleParts.isNotEmpty()) {
                         Text(
@@ -258,7 +257,7 @@ internal fun MedicationDraftCard(
                 Spacer(modifier = Modifier.height(AppDimens.gapSmall))
                 StartDateField(
                     date = draft.startDate,
-                    onDateChange = { date -> onChange { it.copy(startDate = date) } }
+                    onClick = onPickDate
                 )
                 if (showLateStartNote) {
                     Spacer(modifier = Modifier.height(AppDimens.gapSmall))
@@ -286,6 +285,18 @@ internal fun MedicationDraftCard(
                     schedules = draft.schedules,
                     onSchedulesChange = { schedules -> onChange { it.copy(schedules = schedules) } },
                     onPickTime = onPickTime
+                )
+
+                Spacer(modifier = Modifier.height(AppDimens.gapDefault))
+                DialogFieldLabel("Rela\u021Bia cu masa (pentru toate orele)")
+                Spacer(modifier = Modifier.height(AppDimens.gapSmall))
+                DialogDropdownField(
+                    selectedText = draft.mealRelation.toRoLabel(),
+                    placeholder = "Alege rela\u021Bia cu masa",
+                    options = mealRelationOptions,
+                    onSelect = { option ->
+                        onChange { it.copy(mealRelation = MealRelation.valueOf(option.key)) }
+                    }
                 )
 
                 if (draft.requiresOcrReview) {
@@ -323,13 +334,15 @@ internal fun WarningNote(text: String, modifier: Modifier = Modifier) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StartDateField(date: LocalDate, onDateChange: (LocalDate) -> Unit) {
-    var showPicker by remember { mutableStateOf(false) }
+private fun StartDateField(
+    date: LocalDate,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     OutlinedButton(
-        onClick = { showPicker = true },
-        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
         border = BorderStroke(1.dp, Indigo600),
         shape = RoundedCornerShape(AppDimens.cornerRadiusSmall)
     ) {
@@ -346,29 +359,6 @@ private fun StartDateField(date: LocalDate, onDateChange: (LocalDate) -> Unit) {
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium
         )
-    }
-    if (showPicker) {
-        val pickerState = rememberDatePickerState(
-            initialSelectedDateMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-        )
-        DatePickerDialog(
-            onDismissRequest = { showPicker = false },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        pickerState.selectedDateMillis?.let { millis ->
-                            onDateChange(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
-                        }
-                        showPicker = false
-                    }
-                ) { Text("OK") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showPicker = false }) { Text("Anuleaz\u0103") }
-            }
-        ) {
-            DatePicker(state = pickerState)
-        }
     }
 }
 
@@ -389,4 +379,11 @@ private fun DoseUnit.toRoLabel(): String = when (this) {
     DoseUnit.CAPSULE -> "Capsul\u0103"
     DoseUnit.ML -> "ml"
     DoseUnit.DROPS -> "Pic\u0103turi"
+}
+
+private fun MealRelation.toRoLabel(): String = when (this) {
+    MealRelation.BEFORE_MEAL -> "\u00CEnainte de mas\u0103"
+    MealRelation.WITH_MEAL -> "\u00CEn timpul mesei"
+    MealRelation.AFTER_MEAL -> "Dup\u0103 mas\u0103"
+    MealRelation.NO_MEAL_RELATION -> "F\u0103r\u0103 leg\u0103tur\u0103 cu masa"
 }

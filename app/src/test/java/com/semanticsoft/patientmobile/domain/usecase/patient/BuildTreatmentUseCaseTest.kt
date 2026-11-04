@@ -135,4 +135,16 @@ class BuildTreatmentUseCaseTest {
         val medication = (invoke(drafts = listOf(d)) as BuildTreatmentResult.Valid).treatment.medications.single()
         assertEquals(DoseUnit.ML, medication.doseUnit)
     }
+
+    @Test
+    fun `draft mealRelation is applied across every schedule`() {
+        val schedules = listOf(
+            MedicationSchedule("08:00", MealRelation.NO_MEAL_RELATION),
+            MedicationSchedule("14:00", MealRelation.NO_MEAL_RELATION)
+        )
+        val d = draft(schedules = schedules).copy(mealRelation = MealRelation.AFTER_MEAL)
+        val medication = (invoke(drafts = listOf(d)) as BuildTreatmentResult.Valid).treatment.medications.single()
+        assertEquals(2, medication.schedules.size)
+        assertTrue(medication.schedules.all { it.mealRelation == MealRelation.AFTER_MEAL })
+    }
 }

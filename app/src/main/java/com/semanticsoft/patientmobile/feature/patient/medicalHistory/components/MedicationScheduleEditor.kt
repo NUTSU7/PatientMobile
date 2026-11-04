@@ -2,9 +2,14 @@ package com.semanticsoft.patientmobile.feature.patient.medicalHistory.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,16 +22,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,14 +42,11 @@ import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.domain.model.patient.MealRelation
 import com.semanticsoft.patientmobile.domain.model.patient.MedicationSchedule
 
-private val mealRelationOptions = listOf(
-    DialogDropdownOption(MealRelation.BEFORE_MEAL.name, "\u00CEnainte de mas\u0103"),
-    DialogDropdownOption(MealRelation.WITH_MEAL.name, "\u00CEn timpul mesei"),
-    DialogDropdownOption(MealRelation.AFTER_MEAL.name, "Dup\u0103 mas\u0103"),
-    DialogDropdownOption(MealRelation.NO_MEAL_RELATION.name, "F\u0103r\u0103 leg\u0103tur\u0103 cu masa")
-)
-
-/** Optional administration hours of one medication ("Ore de administrare" on web). */
+/**
+ * Compact administration hours editor using the original Outlined Indigo design.
+ * Displays hours as chips fitting 2-3 per row with an inline "Adaugă oră" button.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun MedicationScheduleEditor(
     schedules: List<MedicationSchedule>,
@@ -53,102 +54,123 @@ internal fun MedicationScheduleEditor(
     onPickTime: (index: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val chipShape = RoundedCornerShape(AppDimens.cornerRadiusSmall)
+
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(AppDimens.cornerRadiusSmall))
+            .clip(chipShape)
             .background(Gray50)
             .padding(12.dp)
     ) {
         Column {
             Text(
-                text = "Adaug\u0103 una sau mai multe ore zilnice \u00EEn format 24h \u0219i alege rela\u021Bia cu masa. Este op\u021Bional.",
+                text = "Adaug\u0103 una sau mai multe ore zilnice \u00EEn format 24h. Este op\u021Bional.",
                 color = Gray500,
                 fontSize = 13.sp,
                 lineHeight = 18.sp
             )
-            Spacer(modifier = Modifier.height(AppDimens.gapDefault))
+            Spacer(modifier = Modifier.height(AppDimens.gapSmall))
 
-            schedules.forEachIndexed { index, schedule ->
-                Column(modifier = Modifier.fillMaxWidth()) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                schedules.forEachIndexed { index, schedule ->
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .clip(chipShape)
+                            .background(Color.White)
+                            .border(BorderStroke(1.dp, Indigo600), chipShape)
+                            .padding(start = 10.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedButton(
-                            onClick = { onPickTime(index) },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Indigo600),
-                            border = BorderStroke(1.dp, Indigo600),
-                            shape = RoundedCornerShape(AppDimens.cornerRadiusSmall)
+                        Row(
+                            modifier = Modifier.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                role = Role.Button,
+                                onClick = { onPickTime(index) }
+                            ),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Schedule,
                                 contentDescription = null,
                                 tint = Indigo600,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(15.dp)
                             )
-                            Spacer(modifier = Modifier.width(4.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = schedule.administrationTime,
-                                fontSize = 14.sp,
+                                color = Indigo600,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium
                             )
                         }
-                        IconButton(
-                            onClick = { onSchedulesChange(schedules.filterIndexed { i, _ -> i != index }) },
-                            modifier = Modifier.size(32.dp)
+
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    role = Role.Button,
+                                    onClick = {
+                                        onSchedulesChange(schedules.filterIndexed { i, _ -> i != index })
+                                    }
+                                )
+                                .padding(4.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Elimin\u0103",
+                                contentDescription = "Elimin\u0103 ora ${schedule.administrationTime}",
                                 tint = AttentionHigh,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(14.dp)
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(AppDimens.gapSmall))
-                    DialogCompactDropdownField(
-                        selectedText = mealRelationOptions.find { it.key == schedule.mealRelation.name }?.label.orEmpty(),
-                        options = mealRelationOptions,
-                        onSelect = { option ->
-                            val relation = MealRelation.valueOf(option.key)
-                            onSchedulesChange(
-                                schedules.mapIndexed { i, item ->
-                                    if (i == index) item.copy(mealRelation = relation, mealRelationLabel = null) else item
-                                }
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
                 }
-                Spacer(modifier = Modifier.height(AppDimens.gapSmall))
-            }
 
-            TextButton(
-                onClick = {
-                    onSchedulesChange(
-                        schedules + MedicationSchedule(
-                            administrationTime = nextFreeTime(schedules),
-                            mealRelation = MealRelation.NO_MEAL_RELATION
+                // Inline "Adaugă oră" chip (single '+' icon, text without extra '+')
+                Row(
+                    modifier = Modifier
+                        .clip(chipShape)
+                        .background(Color.White)
+                        .border(BorderStroke(1.dp, Indigo600), chipShape)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            role = Role.Button,
+                            onClick = {
+                                onSchedulesChange(
+                                    schedules + MedicationSchedule(
+                                        administrationTime = nextFreeTime(schedules),
+                                        mealRelation = MealRelation.NO_MEAL_RELATION
+                                    )
+                                )
+                            }
                         )
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        tint = Indigo600,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Adaug\u0103 or\u0103",
+                        color = Indigo600,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    tint = Indigo600,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "Adaug\u0103 or\u0103",
-                    color = Indigo600,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
             }
         }
     }
