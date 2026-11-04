@@ -45,7 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.semanticsoft.patientmobile.core.ui.components.DeleteConfirmationDialog
 import com.semanticsoft.patientmobile.core.ui.components.ErrorDialog
 import com.semanticsoft.patientmobile.core.ui.components.LoadingIndicator
-import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.AddMedicationDialog
+import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.AddTreatmentDialog
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.AddPersonalNoteDialog
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.CombinedMedicationNotesCard
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.MedicalHistoryAnalysisSection
@@ -53,7 +53,6 @@ import com.semanticsoft.patientmobile.feature.patient.medicalHistory.MedicalHist
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.MedicalHistoryFiltersCard
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.MedicalHistoryReviewDialog
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.RetryOcrDialog
-import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.ScheduleEntryData
 import com.semanticsoft.patientmobile.domain.model.patient.MealRelation
 import com.semanticsoft.patientmobile.core.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.core.ui.common.dashboardSpacing
@@ -173,6 +172,8 @@ fun MedicalHistoryScreen(
                                             onAddNoteClick = { viewModel.onShowAddNoteDialog() },
                                             onTabSelected = viewModel::onCombinedSectionTabSelected,
                                             onDeleteMedicineClick = viewModel::onShowDeleteMedicationDialog,
+                                            onDeleteTreatmentClick = viewModel::onShowDeleteTreatmentDialog,
+                                            onToggleTreatment = viewModel::onToggleTreatmentExpanded,
                                             onDeleteNoteClick = viewModel::onShowDeleteNoteDialog,
                                             onEditMedicineClick = viewModel::onShowEditMedicationDialog,
                                             onEditNoteClick = viewModel::onShowEditNoteDialog
@@ -195,6 +196,8 @@ fun MedicalHistoryScreen(
                                         onAddNoteClick = { viewModel.onShowAddNoteDialog() },
                                         onTabSelected = viewModel::onCombinedSectionTabSelected,
                                         onDeleteMedicineClick = viewModel::onShowDeleteMedicationDialog,
+                                        onDeleteTreatmentClick = viewModel::onShowDeleteTreatmentDialog,
+                                        onToggleTreatment = viewModel::onToggleTreatmentExpanded,
                                         onDeleteNoteClick = viewModel::onShowDeleteNoteDialog,
                                         onEditMedicineClick = viewModel::onShowEditMedicationDialog,
                                         onEditNoteClick = viewModel::onShowEditNoteDialog
@@ -235,17 +238,6 @@ fun MedicalHistoryScreen(
             enter = fadeIn(animationSpec = tween(200)),
             exit = fadeOut(animationSpec = tween(200))
         ) {
-            val isEditingMedication = state.medicationDialogTargetId != null && state.medicationDialogTargetId != "add"
-            val editingMed = if (isEditingMedication) state.medicines.find { it.id == state.medicationDialogTargetId } else null
-            val durationDays = editingMed?.let { med ->
-                if (med.effectiveDate != null && med.endDate != null) {
-                    (med.endDate.toEpochDay() - med.effectiveDate.toEpochDay()).toInt()
-                } else 0
-            } ?: 0
-            val editingDocName = editingMed?.analysisDocumentId?.let { id ->
-                state.analysisDocuments.find { it.id == id }?.originalFileName
-            }
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -275,48 +267,35 @@ fun MedicalHistoryScreen(
                             onClick = {}
                         )
                     ) {
-                        AddMedicationDialog(
-                            errorText = state.medicationDialogError,
+                        AddTreatmentDialog(
+                            isEditing = state.isEditingMedicationDialog,
+                            showTreatmentName = !state.isEditingStandaloneMedication,
+                            treatmentName = state.treatmentName,
+                            drafts = state.medicationDrafts,
+                            expandedDraftId = state.expandedMedicationDraftId,
+                            analysisDocumentIds = state.medicationAnalysisDocumentIds,
                             documents = state.filteredDocuments.ifEmpty { state.analysisDocuments },
-                            initialAnalysisDocumentId = editingMed?.analysisDocumentId,
-                            initialAnalysisDocumentIds = editingMed?.analysisDocumentIds?.ifEmpty { listOfNotNull(editingMed.analysisDocumentId) } ?: emptyList(),
-                            initialAnalysisDocumentName = editingDocName,
-                            initialName = editingMed?.name,
-                            initialDoseValue = editingMed?.doseValue,
-                            initialDoseUnit = editingMed?.doseUnit?.name,
-                            initialSchedules = editingMed?.schedules?.map { schedule ->
-                                ScheduleEntryData(
-                                    administrationTime = schedule.administrationTime,
-                                    mealRelation = schedule.mealRelation.name
-                                )
-                            },
-                            initialDurationDays = durationDays.takeIf { it > 0 },
-                            isEditing = isEditingMedication,
+                            lateStartDraftIds = state.lateStartDraftIds,
+                            errorText = state.medicationDialogError,
+                            isSaving = state.medicationSaving,
                             ocrIsExtracting = state.medicationOcrExtracting,
                             ocrFeedbackMessage = state.medicationOcrFeedback,
                             ocrFeedbackError = state.medicationOcrFeedbackError,
                             ocrAttachmentFileName = state.medicationOcrDraftResult?.attachment?.originalFileName,
-                            ocrInitialName = if (!isEditingMedication) state.medicationOcrDraftResult?.name else null,
-                            ocrInitialDoseValue = if (!isEditingMedication) state.medicationOcrDraftResult?.doseValue else null,
-                            ocrInitialDoseUnit = if (!isEditingMedication) state.medicationOcrDraftResult?.doseUnit else null,
-                            ocrInitialSchedules = if (!isEditingMedication) {
-                                state.medicationOcrDraftResult?.schedules?.map { schedule ->
-                                    ScheduleEntryData(
-                                        administrationTime = schedule.administrationTime,
-                                        mealRelation = schedule.mealRelation.name
-                                    )
-                                }
-                            } else null,
-                            ocrInitialDurationDays = if (!isEditingMedication) state.medicationOcrDraftResult?.durationDays else null,
-                            ocrUnconfirmedFields = state.medicationOcrDraftResult?.unconfirmedFields ?: emptyList(),
+                            onTreatmentNameChange = viewModel::onTreatmentNameChange,
+                            onAnalysisDocumentsChange = viewModel::onAnalysisDocumentsChange,
+                            onAddDraft = viewModel::onAddMedicationDraft,
+                            onRemoveDraft = viewModel::onRemoveMedicationDraft,
+                            onToggleDraft = viewModel::onToggleMedicationDraft,
+                            onUpdateDraft = viewModel::onUpdateMedicationDraft,
                             onOcrFileSelected = { path -> viewModel.extractMedicationFromFile(path) },
                             onDismiss = {
                                 focusManager.clearFocus()
                                 viewModel.onDismissAddMedicationDialog()
                             },
-                            onSave = { name, doseValue, doseUnit, schedules, durationDays, associatedDocumentIds ->
+                            onSave = {
                                 focusManager.clearFocus()
-                                viewModel.addMedicine(name, doseValue, doseUnit, schedules, durationDays, associatedDocumentIds)
+                                viewModel.saveTreatment()
                             }
                         )
                     }
@@ -443,6 +422,25 @@ fun MedicalHistoryScreen(
                                     onConfirm = {
                                         focusManager.clearFocus()
                                         viewModel.onDeleteMedication(medId)
+                                    }
+                                )
+                            }
+                        }
+                        state.deleteTreatmentTargetId?.let { treatmentId ->
+                            val treatmentName = state.medicines
+                                .firstOrNull { it.treatmentId == treatmentId }
+                                ?.let { it.treatmentName ?: it.name }
+                            if (treatmentName != null) {
+                                DeleteConfirmationDialog(
+                                    title = "\u0218terge tratamentul",
+                                    itemName = treatmentName,
+                                    onDismiss = {
+                                        focusManager.clearFocus()
+                                        viewModel.onDismissDeleteTreatmentDialog()
+                                    },
+                                    onConfirm = {
+                                        focusManager.clearFocus()
+                                        viewModel.onDeleteTreatment(treatmentId)
                                     }
                                 )
                             }

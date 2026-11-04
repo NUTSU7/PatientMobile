@@ -9,11 +9,14 @@ import com.semanticsoft.patientmobile.core.network.dto.patient.CreateMedicationS
 import com.semanticsoft.patientmobile.core.network.dto.patient.CreateNoteRequest
 import com.semanticsoft.patientmobile.domain.model.patient.MedicationOcrDraft
 import com.semanticsoft.patientmobile.domain.model.patient.PersonalNoteOcrDraft
+import com.semanticsoft.patientmobile.core.network.dto.patient.SaveTreatmentRequest
+import com.semanticsoft.patientmobile.core.network.dto.patient.TreatmentMedicationRequest
 import com.semanticsoft.patientmobile.core.network.dto.patient.UpdateMedicationRequest
 import com.semanticsoft.patientmobile.core.network.dto.patient.UpdateNoteRequest
 import com.semanticsoft.patientmobile.data.mapper.patient.toDomain
 import com.semanticsoft.patientmobile.domain.model.patient.Medication
 import com.semanticsoft.patientmobile.domain.model.patient.PersonalNote
+import com.semanticsoft.patientmobile.domain.model.patient.Treatment
 import com.semanticsoft.patientmobile.domain.repository.patient.MedicalHistoryRepository
 import com.semanticsoft.patientmobile.core.util.ApiResult
 import com.semanticsoft.patientmobile.core.util.map
@@ -36,7 +39,9 @@ class MedicalHistoryRepositoryImpl(
         val request = CreateMedicationRequest(
             name = medication.name,
             doseValue = medication.doseValue,
-            doseUnit = medication.doseUnit.name,
+            doseUnit = medication.doseUnit?.name,
+            strength = medication.strength,
+            frequencyText = medication.frequencyText,
             schedules = medication.schedules.map {
                 CreateMedicationScheduleRequest(it.administrationTime, it.mealRelation.name)
             },
@@ -65,7 +70,9 @@ class MedicalHistoryRepositoryImpl(
         val request = UpdateMedicationRequest(
             name = medication.name,
             doseValue = medication.doseValue,
-            doseUnit = medication.doseUnit.name,
+            doseUnit = medication.doseUnit?.name,
+            strength = medication.strength,
+            frequencyText = medication.frequencyText,
             schedules = medication.schedules.map {
                 CreateMedicationScheduleRequest(it.administrationTime, it.mealRelation.name)
             },
@@ -85,6 +92,46 @@ class MedicalHistoryRepositoryImpl(
         if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
         return safeApiCall { apiService.deleteMedication(id) }.map { }
     }
+
+    override suspend fun createTreatment(treatment: Treatment): ApiResult<List<Medication>> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
+        val request = treatment.toRequest()
+        return safeApiCall { apiService.createTreatment(request) }.map { list -> list.map { it.toDomain() } }
+    }
+
+    override suspend fun updateTreatment(id: String, treatment: Treatment): ApiResult<List<Medication>> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
+        val request = treatment.toRequest()
+        return safeApiCall { apiService.updateTreatment(id, request) }.map { list -> list.map { it.toDomain() } }
+    }
+
+    override suspend fun deleteTreatment(id: String): ApiResult<Unit> {
+        if (!networkStateProvider.isOnline()) return ApiResult.NetworkError
+        return safeApiCall { apiService.deleteTreatment(id) }.map { }
+    }
+
+    private fun Treatment.toRequest(): SaveTreatmentRequest = SaveTreatmentRequest(
+        name = name,
+        medications = medications.map { medication ->
+            TreatmentMedicationRequest(
+                id = medication.id.ifBlank { null },
+                name = medication.name,
+                doseValue = medication.doseValue,
+                doseUnit = medication.doseUnit?.name,
+                strength = medication.strength,
+                frequencyText = medication.frequencyText,
+                schedules = medication.schedules.map {
+                    CreateMedicationScheduleRequest(it.administrationTime, it.mealRelation.name)
+                },
+                effectiveDate = (medication.effectiveDate ?: java.time.LocalDate.now()).toString(),
+                endDate = medication.endDate?.toString(),
+                analysisDocumentIds = medication.analysisDocumentIds,
+                ocrReviewConfirmed = true
+            )
+        },
+        attachmentIds = attachmentIds,
+        ocrReviewConfirmed = true
+    )
 
     override suspend fun createNote(note: PersonalNote): ApiResult<PersonalNote> {
         if (!networkStateProvider.isOnline()) return ApiResult.NetworkError

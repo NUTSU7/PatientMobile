@@ -4,6 +4,7 @@ import com.semanticsoft.patientmobile.core.network.dto.patient.MedicalHistoryAtt
 import com.semanticsoft.patientmobile.core.network.dto.patient.MedicalHistoryLinkedDocumentDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.MedicationDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.MedicationOcrDraftResponseDto
+import com.semanticsoft.patientmobile.core.network.dto.patient.MedicationOcrItemDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.MedicationScheduleDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.PersonalNoteDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.PersonalNoteOcrDraftResponseDto
@@ -13,6 +14,7 @@ import com.semanticsoft.patientmobile.domain.model.patient.MedicalHistoryAttachm
 import com.semanticsoft.patientmobile.domain.model.patient.MedicalHistoryLinkedDocument
 import com.semanticsoft.patientmobile.domain.model.patient.Medication
 import com.semanticsoft.patientmobile.domain.model.patient.MedicationOcrDraft
+import com.semanticsoft.patientmobile.domain.model.patient.MedicationOcrItem
 import com.semanticsoft.patientmobile.domain.model.patient.MedicationSchedule
 import com.semanticsoft.patientmobile.domain.model.patient.PersonalNote
 import com.semanticsoft.patientmobile.domain.model.patient.PersonalNoteOcrDraft
@@ -30,8 +32,12 @@ fun MedicationDto.toDomain(): Medication {
         id = id,
         name = name,
         doseValue = doseValue,
-        doseUnit = try { DoseUnit.valueOf(doseUnit) } catch (_: Exception) { DoseUnit.TABLET },
+        doseUnit = doseUnit?.let { unit -> runCatching { DoseUnit.valueOf(unit) }.getOrNull() },
         doseUnitLabel = doseUnitLabel,
+        strength = strength,
+        frequencyText = frequencyText,
+        treatmentId = treatmentId,
+        treatmentName = treatmentName,
         schedules = schedules.map { it.toDomain() },
         active = active,
         effectiveDate = effectiveDate?.let(::parseDateSafe),
@@ -88,9 +94,22 @@ fun MedicalHistoryAttachmentDto.toDomain(): MedicalHistoryAttachment = MedicalHi
     fileSizeBytes = fileSizeBytes
 )
 
+fun MedicationOcrItemDto.toDomain(): MedicationOcrItem = MedicationOcrItem(
+    name = name,
+    strength = strength,
+    doseValue = doseValue,
+    doseUnit = doseUnit,
+    frequencyText = frequencyText,
+    durationDays = durationDays,
+    schedules = schedules.map { it.toDomain() },
+    unconfirmedFields = unconfirmedFields
+)
+
 fun MedicationOcrDraftResponseDto.toDomain(): MedicationOcrDraft = MedicationOcrDraft(
     attachment = attachment.toDomain(),
     rawText = rawText,
+    suggestedTreatmentName = suggestedTreatmentName,
+    medications = medications.map { it.toDomain() },
     name = name,
     strength = strength,
     doseValue = doseValue,

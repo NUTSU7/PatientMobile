@@ -57,12 +57,22 @@ fun MedicineItemRow(item: MedicineItem, onDeleteClick: () -> Unit, onClick: () -
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold
                 )
-                Text(
-                    text = "${item.doseValue} ${item.doseUnitLabel}",
-                    color = Gray500,
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp
-                )
+                val details = listOfNotNull(
+                    item.doseValue?.let { dose ->
+                        val doseText = if (dose % 1.0 == 0.0) dose.toLong().toString() else dose.toString()
+                        listOfNotNull(doseText, item.doseUnitLabel?.takeIf { it.isNotBlank() }).joinToString(" ")
+                    },
+                    item.strength?.takeIf { it.isNotBlank() },
+                    item.frequencyText?.takeIf { it.isNotBlank() }
+                ).joinToString(" \u00B7 ")
+                if (details.isNotEmpty()) {
+                    Text(
+                        text = details,
+                        color = Gray500,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp
+                    )
+                }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -80,7 +90,11 @@ fun MedicineItemRow(item: MedicineItem, onDeleteClick: () -> Unit, onClick: () -
                         )
                     }
                     Text(
-                        text = "\u00CEnc\u0103 ${item.daysRemaining} zile",
+                        text = if (item.endDate == null) {
+                            "F\u0103r\u0103 limit\u0103 de timp"
+                        } else {
+                            "\u00CEnc\u0103 ${item.daysRemaining} zile"
+                        },
                         color = Gray500,
                         fontSize = 12.sp
                     )

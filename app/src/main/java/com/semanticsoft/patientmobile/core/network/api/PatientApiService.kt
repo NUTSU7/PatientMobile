@@ -23,6 +23,7 @@ import com.semanticsoft.patientmobile.core.network.dto.common.PaginatedResponse
 import com.semanticsoft.patientmobile.core.network.dto.patient.PersonalNoteDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.PersonalNoteOcrDraftResponseDto
 import com.semanticsoft.patientmobile.core.network.dto.patient.RenameDocumentRequest
+import com.semanticsoft.patientmobile.core.network.dto.patient.SaveTreatmentRequest
 import com.semanticsoft.patientmobile.core.network.dto.patient.StartExtractionResponse
 import com.semanticsoft.patientmobile.core.network.dto.patient.UpdateMedicationRequest
 import com.semanticsoft.patientmobile.core.network.dto.patient.UpdateNoteRequest
@@ -178,6 +179,18 @@ interface PatientApiService {
 
     @DELETE("patient/medical-history/medications/{medicationId}")
     suspend fun deleteMedication(@Path("medicationId") id: String)
+
+    @POST("patient/medical-history/medications/treatments")
+    suspend fun createTreatment(@Body request: SaveTreatmentRequest): List<MedicationDto>
+
+    @PUT("patient/medical-history/medications/treatments/{treatmentId}")
+    suspend fun updateTreatment(
+        @Path("treatmentId") id: String,
+        @Body request: SaveTreatmentRequest
+    ): List<MedicationDto>
+
+    @DELETE("patient/medical-history/medications/treatments/{treatmentId}")
+    suspend fun deleteTreatment(@Path("treatmentId") id: String)
 
     @POST("patient/medical-history/personal-notes")
     suspend fun createNote(@Body request: CreateNoteRequest): PersonalNoteDto

@@ -17,9 +17,13 @@ data class MedicalHistoryLinkedDocumentDto(
 data class MedicationDto(
     val id: String,
     val name: String,
-    @SerialName("doseValue") val doseValue: Double,
-    @SerialName("doseUnit") val doseUnit: String,
-    @SerialName("doseUnitLabel") val doseUnitLabel: String,
+    @SerialName("doseValue") val doseValue: Double? = null,
+    @SerialName("doseUnit") val doseUnit: String? = null,
+    @SerialName("doseUnitLabel") val doseUnitLabel: String? = null,
+    val strength: String? = null,
+    @SerialName("frequencyText") val frequencyText: String? = null,
+    @SerialName("treatmentId") val treatmentId: String? = null,
+    @SerialName("treatmentName") val treatmentName: String? = null,
     val schedules: List<MedicationScheduleDto> = emptyList(),
     val active: Boolean = true,
     @SerialName("effectiveDate") val effectiveDate: String? = null,
@@ -51,8 +55,10 @@ data class MedicalHistoryAttachmentDto(
 @Serializable
 data class CreateMedicationRequest(
     val name: String,
-    @SerialName("doseValue") val doseValue: Double,
-    @SerialName("doseUnit") val doseUnit: String,
+    @SerialName("doseValue") val doseValue: Double?,
+    @SerialName("doseUnit") val doseUnit: String?,
+    val strength: String? = null,
+    @SerialName("frequencyText") val frequencyText: String? = null,
     val schedules: List<CreateMedicationScheduleRequest>,
     val active: Boolean? = null,
     @SerialName("effectiveDate") val effectiveDate: String? = null,
@@ -72,8 +78,10 @@ data class CreateMedicationScheduleRequest(
 @Serializable
 data class UpdateMedicationRequest(
     val name: String,
-    @SerialName("doseValue") val doseValue: Double,
-    @SerialName("doseUnit") val doseUnit: String,
+    @SerialName("doseValue") val doseValue: Double?,
+    @SerialName("doseUnit") val doseUnit: String?,
+    val strength: String? = null,
+    @SerialName("frequencyText") val frequencyText: String? = null,
     val schedules: List<CreateMedicationScheduleRequest>,
     val active: Boolean? = null,
     @SerialName("effectiveDate") val effectiveDate: String? = null,
@@ -82,6 +90,33 @@ data class UpdateMedicationRequest(
     @SerialName("analysisDocumentIds") val analysisDocumentIds: List<String> = emptyList(),
     @SerialName("attachmentIds") val attachmentIds: List<String>? = null,
     @SerialName("ocrReviewConfirmed") val ocrReviewConfirmed: Boolean? = null
+)
+
+/**
+ * Medication entry of a treatment request. Nullable fields have no default on purpose so they are
+ * always serialized (the backend expects explicit nulls, same as the web client).
+ */
+@Serializable
+data class TreatmentMedicationRequest(
+    val id: String?,
+    val name: String,
+    @SerialName("doseValue") val doseValue: Double?,
+    @SerialName("doseUnit") val doseUnit: String?,
+    val strength: String?,
+    @SerialName("frequencyText") val frequencyText: String?,
+    val schedules: List<CreateMedicationScheduleRequest>,
+    @SerialName("effectiveDate") val effectiveDate: String,
+    @SerialName("endDate") val endDate: String?,
+    @SerialName("analysisDocumentIds") val analysisDocumentIds: List<String>,
+    @SerialName("ocrReviewConfirmed") val ocrReviewConfirmed: Boolean
+)
+
+@Serializable
+data class SaveTreatmentRequest(
+    val name: String,
+    val medications: List<TreatmentMedicationRequest>,
+    @SerialName("attachmentIds") val attachmentIds: List<String>,
+    @SerialName("ocrReviewConfirmed") val ocrReviewConfirmed: Boolean
 )
 
 @Serializable
@@ -122,9 +157,23 @@ data class UpdateNoteRequest(
 )
 
 @Serializable
+data class MedicationOcrItemDto(
+    val name: String? = null,
+    val strength: String? = null,
+    @SerialName("doseValue") val doseValue: Double? = null,
+    @SerialName("doseUnit") val doseUnit: String? = null,
+    @SerialName("frequencyText") val frequencyText: String? = null,
+    @SerialName("durationDays") val durationDays: Int? = null,
+    val schedules: List<MedicationScheduleDto> = emptyList(),
+    @SerialName("unconfirmedFields") val unconfirmedFields: List<String> = emptyList()
+)
+
+@Serializable
 data class MedicationOcrDraftResponseDto(
     val attachment: MedicalHistoryAttachmentDto,
     @SerialName("rawText") val rawText: String? = null,
+    @SerialName("suggestedTreatmentName") val suggestedTreatmentName: String? = null,
+    val medications: List<MedicationOcrItemDto> = emptyList(),
     val name: String? = null,
     val strength: String? = null,
     @SerialName("doseValue") val doseValue: Double? = null,

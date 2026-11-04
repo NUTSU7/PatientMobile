@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.semanticsoft.patientmobile.domain.model.patient.DoseUnit
 import com.semanticsoft.patientmobile.domain.model.patient.MealRelation
 import com.semanticsoft.patientmobile.domain.model.patient.Medication
+import com.semanticsoft.patientmobile.domain.model.patient.MedicationDraft
+import com.semanticsoft.patientmobile.domain.model.patient.MedicationOcrItem
 import com.semanticsoft.patientmobile.domain.model.patient.MedicationSchedule
 import com.semanticsoft.patientmobile.domain.model.patient.PatientDocument
 import com.semanticsoft.patientmobile.domain.model.patient.PersonalNote
@@ -14,17 +16,20 @@ import com.semanticsoft.patientmobile.domain.repository.common.GlobalSyncManager
 import com.semanticsoft.patientmobile.domain.repository.patient.MedicalHistoryRepository
 import com.semanticsoft.patientmobile.domain.repository.patient.MedicalResultRepository
 import com.semanticsoft.patientmobile.domain.repository.patient.OcrRepository
+import com.semanticsoft.patientmobile.domain.usecase.patient.BuildTreatmentResult
+import com.semanticsoft.patientmobile.domain.usecase.patient.BuildTreatmentUseCase
 import com.semanticsoft.patientmobile.domain.model.patient.OcrStatus
 import com.semanticsoft.patientmobile.domain.model.patient.MedicationOcrDraft
 import com.semanticsoft.patientmobile.domain.model.patient.PersonalNoteOcrDraft
 import com.semanticsoft.patientmobile.feature.patient.upload.ImageNormalizer
 import com.semanticsoft.patientmobile.core.util.ApiResult
-import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.ScheduleEntryData
 import com.semanticsoft.patientmobile.core.util.toUserMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
+import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -59,9 +64,13 @@ enum class DocumentReadiness { Checking, Pending, Ready, Failed, Unavailable }
 data class MedicineItem(
     val id: String,
     val name: String,
-    val doseValue: Double,
-    val doseUnitLabel: String,
-    val doseUnit: DoseUnit = DoseUnit.CAPSULE,
+    val doseValue: Double? = null,
+    val doseUnitLabel: String? = null,
+    val doseUnit: DoseUnit? = null,
+    val strength: String? = null,
+    val frequencyText: String? = null,
+    val treatmentId: String? = null,
+    val treatmentName: String? = null,
     val schedules: List<MedicineScheduleUiItem>,
     val daysRemaining: Int,
     val iconType: MedicineIconType = MedicineIconType.PILL,
@@ -74,6 +83,23 @@ data class MedicineItem(
     val attachmentIds: List<String> = emptyList(),
     val ocrReviewConfirmed: Boolean = false
 )
+
+/** Entry of the medicines list: a standalone medication or a collapsible treatment group. */
+sealed interface MedicineListEntry {
+    val key: String
+
+    data class Single(val item: MedicineItem) : MedicineListEntry {
+        override val key: String get() = item.id
+    }
+
+    data class Treatment(
+        val treatmentId: String,
+        val name: String,
+        val items: List<MedicineItem>
+    ) : MedicineListEntry {
+        override val key: String get() = "treatment:$treatmentId"
+    }
+}
 
 data class MedicineScheduleUiItem(
     val administrationTime: String,
@@ -118,6 +144,14 @@ data class MedicalHistoryUiState(
     val medicationDialogTargetId: String? = null,
     val noteDialogTargetId: String? = null,
     val medicationDialogError: String? = null,
+    val medicationDialogTreatmentId: String? = null,
+    val medicationSaving: Boolean = false,
+    val treatmentName: String = "",
+    val medicationDrafts: List<MedicationDraft> = emptyList(),
+    val expandedMedicationDraftId: String? = null,
+    val medicationAnalysisDocumentIds: Set<String> = emptySet(),
+    val treatmentExpanded: Map<String, Boolean> = emptyMap(),
+    val deleteTreatmentTargetId: String? = null,
     val noteDialogError: String? = null,
     val deleteMedicationTargetId: String? = null,
     val deleteNoteTargetId: String? = null,
@@ -150,7 +184,56 @@ data class MedicalHistoryUiState(
         get() = noteDialogTargetId != null
 
     val showDeleteMedicationDialog: Boolean
-        get() = deleteMedicationTargetId != null
+        get() = deleteMedicationTargetId != null || deleteTreatmentTargetId != null
+
+    /** True when the dialog edits an existing medication or treatment instead of creating one. */
+    val isEditingMedicationDialog: Boolean
+        get() = medicationDialogTargetId != null && medicationDialogTargetId != ADD_TARGET_ID
+
+    /** Only a standalone medication (not part of a treatment) is edited with a single card. */
+    val isEditingStandaloneMedication: Boolean
+        get() = isEditingMedicationDialog && medicationDialogTreatmentId == null
+
+    /** Drafts starting more than 14 days after a selected analysis (informative note, like on web). */
+    val lateStartDraftIds: Set<String>
+        get() {
+            val analysisDates = allDocuments
+                .filter { it.id in medicationAnalysisDocumentIds }
+                .map { (it.observedAt ?: it.uploadedAt).atZone(ZoneId.systemDefault()).toLocalDate() }
+            if (analysisDates.isEmpty()) return emptySet()
+            return medicationDrafts
+                .filter { draft -> analysisDates.any { ChronoUnit.DAYS.between(it, draft.startDate) > LATE_START_DAYS } }
+                .map { it.draftId }
+                .toSet()
+        }
+
+    val medicineEntries: List<MedicineListEntry>
+        get() {
+            val entries = mutableListOf<MedicineListEntry>()
+            val groupIndex = mutableMapOf<String, Int>()
+            filteredMedicines.forEach { item ->
+                val treatmentId = item.treatmentId
+                if (treatmentId == null) {
+                    entries.add(MedicineListEntry.Single(item))
+                } else {
+                    val index = groupIndex[treatmentId]
+                    if (index == null) {
+                        groupIndex[treatmentId] = entries.size
+                        entries.add(
+                            MedicineListEntry.Treatment(
+                                treatmentId = treatmentId,
+                                name = item.treatmentName ?: item.name,
+                                items = listOf(item)
+                            )
+                        )
+                    } else {
+                        val group = entries[index] as MedicineListEntry.Treatment
+                        entries[index] = group.copy(items = group.items + item)
+                    }
+                }
+            }
+            return entries
+        }
 
     val showDeleteNoteDialog: Boolean
         get() = deleteNoteTargetId != null
@@ -208,6 +291,9 @@ data class MedicalHistoryUiState(
         }.sortedByDescending { it.observedAt ?: it.uploadedAt }
 }
 
+private const val ADD_TARGET_ID = "add"
+private const val LATE_START_DAYS = 14L
+
 @HiltViewModel
 class MedicalHistoryViewModel @Inject constructor(
     private val authRepository: AuthRepository,
@@ -215,7 +301,8 @@ class MedicalHistoryViewModel @Inject constructor(
     private val medicalResultRepository: MedicalResultRepository,
     private val medicalHistoryRepository: MedicalHistoryRepository,
     private val ocrRepository: OcrRepository,
-    private val globalSyncManager: GlobalSyncManager
+    private val globalSyncManager: GlobalSyncManager,
+    private val buildTreatment: BuildTreatmentUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MedicalHistoryUiState(isLoading = true))
@@ -427,16 +514,122 @@ class MedicalHistoryViewModel @Inject constructor(
     }
 
     fun onShowAddMedicationDialog() {
-        _state.update { it.copy(medicationDialogTargetId = "add", medicationDialogError = null) }
+        val initialDraft = newMedicationDraft()
+        _state.update {
+            it.copy(
+                medicationDialogTargetId = ADD_TARGET_ID,
+                medicationDialogTreatmentId = null,
+                medicationDialogError = null,
+                treatmentName = "",
+                medicationDrafts = listOf(initialDraft),
+                expandedMedicationDraftId = initialDraft.draftId,
+                medicationAnalysisDocumentIds = emptySet(),
+                ocrMedicationAttachmentIds = emptyList()
+            )
+        }
     }
 
+    /** Opens the dialog for a standalone medication, or for its whole treatment when it belongs to one. */
     fun onShowEditMedicationDialog(medicationId: String) {
-        _state.update { it.copy(medicationDialogTargetId = medicationId, medicationDialogError = null) }
+        val current = _state.value
+        val medication = current.medicines.find { it.id == medicationId } ?: return
+        val treatmentId = medication.treatmentId
+        val members = if (treatmentId != null) {
+            current.medicines.filter { it.treatmentId == treatmentId }
+        } else {
+            listOf(medication)
+        }
+        _state.update {
+            it.copy(
+                medicationDialogTargetId = treatmentId ?: medication.id,
+                medicationDialogTreatmentId = treatmentId,
+                medicationDialogError = null,
+                treatmentName = medication.treatmentName ?: medication.name,
+                medicationDrafts = members.map { member -> member.toDraft() },
+                expandedMedicationDraftId = null,
+                medicationAnalysisDocumentIds = members
+                    .flatMap { member -> member.analysisDocumentIds.ifEmpty { listOfNotNull(member.analysisDocumentId) } }
+                    .toSet(),
+                ocrMedicationAttachmentIds = members.flatMap { member -> member.attachmentIds }.distinct()
+            )
+        }
     }
 
     fun onDismissAddMedicationDialog() {
-        _state.update { it.copy(medicationDialogTargetId = null, medicationDialogError = null) }
+        _state.update {
+            it.copy(
+                medicationDialogTargetId = null,
+                medicationDialogTreatmentId = null,
+                medicationDialogError = null,
+                medicationSaving = false,
+                treatmentName = "",
+                medicationDrafts = emptyList(),
+                expandedMedicationDraftId = null,
+                medicationAnalysisDocumentIds = emptySet()
+            )
+        }
         clearMedicationOcrDraft()
+    }
+
+    fun onTreatmentNameChange(name: String) {
+        _state.update { it.copy(treatmentName = name) }
+    }
+
+    fun onAnalysisDocumentsChange(ids: Set<String>) {
+        _state.update { current ->
+            val firstId = ids.firstOrNull { it.isNotEmpty() }
+            val firstDraft = current.medicationDrafts.singleOrNull()
+            val suggestedName = if (firstId != null && current.treatmentName.isBlank() && firstDraft?.name.isNullOrBlank()) {
+                current.allDocuments.find { it.id == firstId }?.originalFileName
+            } else null
+            current.copy(
+                medicationAnalysisDocumentIds = ids.filter { it.isNotEmpty() }.toSet(),
+                treatmentName = suggestedName ?: current.treatmentName
+            )
+        }
+    }
+
+    fun onAddMedicationDraft() {
+        val newDraft = newMedicationDraft()
+        _state.update {
+            it.copy(
+                medicationDrafts = it.medicationDrafts + newDraft,
+                expandedMedicationDraftId = newDraft.draftId
+            )
+        }
+    }
+
+    fun onToggleMedicationDraft(draftId: String) {
+        _state.update { current ->
+            val nextId = if (current.expandedMedicationDraftId == draftId) null else draftId
+            current.copy(expandedMedicationDraftId = nextId)
+        }
+    }
+
+    fun onRemoveMedicationDraft(draftId: String) {
+        _state.update { current ->
+            if (current.medicationDrafts.size <= 1) current
+            else {
+                val remaining = current.medicationDrafts.filterNot { it.draftId == draftId }
+                val nextExpanded = if (current.expandedMedicationDraftId == draftId) {
+                    remaining.lastOrNull()?.draftId
+                } else {
+                    current.expandedMedicationDraftId
+                }
+                current.copy(
+                    medicationDrafts = remaining,
+                    expandedMedicationDraftId = nextExpanded
+                )
+            }
+        }
+    }
+
+    fun onUpdateMedicationDraft(draftId: String, transform: (MedicationDraft) -> MedicationDraft) {
+        _state.update { current ->
+            current.copy(
+                medicationDrafts = current.medicationDrafts.map { if (it.draftId == draftId) transform(it) else it }
+            )
+        }
     }
 
     fun onShowAddNoteDialog() {
@@ -460,13 +653,20 @@ class MedicalHistoryViewModel @Inject constructor(
                 is ApiResult.Success -> {
                     val draft = result.data
                     val attachmentIds = _state.value.ocrMedicationAttachmentIds + listOf(draft.attachment.id)
-                    _state.update {
-                        it.copy(
+                    _state.update { current ->
+                        val today = LocalDate.now()
+                        val keptDrafts = current.medicationDrafts.filter { !it.id.isNullOrBlank() || it.name.isNotBlank() }
+                        val ocrDrafts = draft.items.map { item -> item.toDraft(today) }
+                        val nextExpanded = ocrDrafts.firstOrNull()?.draftId ?: current.expandedMedicationDraftId
+                        current.copy(
                             medicationOcrDraftResult = draft,
                             medicationOcrExtracting = false,
                             medicationOcrFeedback = "Sugestiile OCR au fost aplicate \u00EEn c\u00E2mpuri.",
                             medicationOcrFeedbackError = false,
-                            ocrMedicationAttachmentIds = attachmentIds
+                            ocrMedicationAttachmentIds = attachmentIds,
+                            medicationDrafts = keptDrafts + ocrDrafts,
+                            expandedMedicationDraftId = nextExpanded,
+                            treatmentName = current.treatmentName.ifBlank { draft.suggestedTreatmentName.orEmpty() }
                         )
                     }
                 }
@@ -538,85 +738,49 @@ class MedicalHistoryViewModel @Inject constructor(
         }
     }
 
-    fun addMedicine(
-        name: String,
-        doseValue: Double,
-        doseUnit: String,
-        schedules: List<ScheduleEntryData>,
-        durationDays: Int,
-        associatedDocumentIds: List<String> = emptyList()
-    ) {
-        if (name.isBlank()) {
-            _state.update { it.copy(medicationDialogError = "Denumirea medicamentului este obligatorie.") }
-            return
-        }
-        if (doseValue <= 0.0) {
-            _state.update { it.copy(medicationDialogError = "Doza trebuie s\u0103 fie mai mare dec\u00E2t 0.") }
-            return
-        }
-        val emptySchedules = schedules.isEmpty()
-        if (emptySchedules) {
-            _state.update { it.copy(medicationDialogError = "Adaug\u0103 cel pu\u021Bin o or\u0103 de administrare.") }
-            return
-        }
-        val targetId = _state.value.medicationDialogTargetId
-        val isEditing = targetId != null && targetId != "add"
-        viewModelScope.launch {
-            val doseUnitEnum = try { DoseUnit.valueOf(doseUnit) } catch (_: Exception) { DoseUnit.CAPSULE }
-            val medicationSchedules = schedules.map { entry ->
-                MedicationSchedule(
-                    administrationTime = entry.administrationTime,
-                    mealRelation = try { MealRelation.valueOf(entry.mealRelation) } catch (_: Exception) { MealRelation.NO_MEAL_RELATION }
-                )
+    /** Validates the cards and saves them: new treatment, edited treatment, or edited standalone medication. */
+    fun saveTreatment() {
+        val current = _state.value
+        if (current.medicationSaving) return
+        val attachmentIds = current.ocrMedicationAttachmentIds.distinct()
+        val result = buildTreatment(
+            treatmentName = current.treatmentName,
+            drafts = current.medicationDrafts,
+            analysisDocumentIds = current.medicationAnalysisDocumentIds.toList(),
+            attachmentIds = attachmentIds
+        )
+        val treatment = when (result) {
+            is BuildTreatmentResult.Invalid -> {
+                _state.update { it.copy(medicationDialogError = result.message) }
+                return
             }
-
-            val existing = if (isEditing) _state.value.medicines.find { it.id == targetId } else null
-            val effective = existing?.effectiveDate ?: LocalDate.now()
-            val end = if (durationDays > 0) effective.plusDays(durationDays.toLong()) else null
-            val primaryDocId = associatedDocumentIds.firstOrNull()
-
-            val medication = Medication(
-                id = if (isEditing) targetId!! else "",
-                name = name,
-                doseValue = doseValue,
-                doseUnit = doseUnitEnum,
-                doseUnitLabel = doseUnitEnum.name.lowercase(),
-                schedules = medicationSchedules.ifEmpty {
-                    listOf(
-                        MedicationSchedule(
-                            administrationTime = "08:00",
-                            mealRelation = MealRelation.NO_MEAL_RELATION
-                        )
+            is BuildTreatmentResult.Valid -> result.treatment
+        }
+        _state.update { it.copy(medicationSaving = true, medicationDialogError = null) }
+        viewModelScope.launch {
+            val treatmentId = current.medicationDialogTreatmentId
+            val apiResult: ApiResult<*> = when {
+                treatmentId != null -> medicalHistoryRepository.updateTreatment(treatmentId, treatment)
+                current.isEditingStandaloneMedication -> {
+                    val targetId = current.medicationDialogTargetId.orEmpty()
+                    val existing = current.medicines.find { it.id == targetId }
+                    val updated = treatment.medications.first().copy(
+                        id = targetId,
+                        active = existing?.active ?: true,
+                        attachmentIds = attachmentIds
                     )
-                },
-                active = existing?.active ?: true,
-                effectiveDate = effective,
-                endDate = end,
-                analysisDocumentId = primaryDocId,
-                analysisDocumentIds = associatedDocumentIds,
-                attachmentIds = (existing?.attachmentIds ?: emptyList()) + _state.value.ocrMedicationAttachmentIds,
-                ocrReviewConfirmed = associatedDocumentIds.isNotEmpty(),
-                createdAt = existing?.createdAt
-            )
-
-            if (isEditing) {
-                when (val result = medicalHistoryRepository.updateMedication(targetId!!, medication)) {
-                    is ApiResult.Success -> {
-                        globalSyncManager.triggerSync()
-                        onDismissAddMedicationDialog()
-                    }
-                    is ApiResult.HttpError, is ApiResult.NetworkError, is ApiResult.AuthError -> {
-                        _state.update { it.copy(medicationDialogError = result.toUserMessage()) }
-                    }
+                    medicalHistoryRepository.updateMedication(targetId, updated)
                 }
-            } else {
-                when (val result = medicalHistoryRepository.createMedication(medication)) {
-                    is ApiResult.Success -> {
-                        globalSyncManager.triggerSync()
-                        onDismissAddMedicationDialog()
-                    }
-                    is ApiResult.HttpError, is ApiResult.NetworkError, is ApiResult.AuthError -> {
-                        _state.update { it.copy(medicationDialogError = result.toUserMessage()) }
+                else -> medicalHistoryRepository.createTreatment(treatment)
+            }
+            when (apiResult) {
+                is ApiResult.Success -> {
+                    globalSyncManager.triggerSync()
+                    onDismissAddMedicationDialog()
+                }
+                is ApiResult.HttpError, is ApiResult.NetworkError, is ApiResult.AuthError -> {
+                    _state.update {
+                        it.copy(medicationSaving = false, medicationDialogError = apiResult.toUserMessage())
                     }
                 }
             }
@@ -692,6 +856,39 @@ class MedicalHistoryViewModel @Inject constructor(
                 is ApiResult.HttpError, is ApiResult.NetworkError, is ApiResult.AuthError -> {
                     _refreshErrors.emit(result.toUserMessage())
                     _state.update { it.copy(deleteMedicationTargetId = null) }
+                }
+            }
+        }
+    }
+
+    fun onToggleTreatmentExpanded(treatmentId: String, expanded: Boolean) {
+        _state.update { it.copy(treatmentExpanded = it.treatmentExpanded + (treatmentId to expanded)) }
+    }
+
+    fun onShowDeleteTreatmentDialog(treatmentId: String) {
+        _state.update { it.copy(deleteTreatmentTargetId = treatmentId) }
+    }
+
+    fun onDismissDeleteTreatmentDialog() {
+        _state.update { it.copy(deleteTreatmentTargetId = null) }
+    }
+
+    fun onDeleteTreatment(treatmentId: String) {
+        viewModelScope.launch {
+            when (val result = medicalHistoryRepository.deleteTreatment(treatmentId)) {
+                is ApiResult.Success -> {
+                    _state.update {
+                        it.copy(
+                            deleteTreatmentTargetId = null,
+                            treatmentExpanded = it.treatmentExpanded - treatmentId
+                        )
+                    }
+                    globalSyncManager.triggerSync()
+                    refresh()
+                }
+                is ApiResult.HttpError, is ApiResult.NetworkError, is ApiResult.AuthError -> {
+                    _refreshErrors.emit(result.toUserMessage())
+                    _state.update { it.copy(deleteTreatmentTargetId = null) }
                 }
             }
         }
@@ -913,6 +1110,10 @@ class MedicalHistoryViewModel @Inject constructor(
             doseValue = this.doseValue,
             doseUnitLabel = this.doseUnitLabel,
             doseUnit = this.doseUnit,
+            strength = this.strength,
+            frequencyText = this.frequencyText,
+            treatmentId = this.treatmentId,
+            treatmentName = this.treatmentName,
             schedules = this.schedules.map {
                 MedicineScheduleUiItem(
                     administrationTime = it.administrationTime,
@@ -950,6 +1151,50 @@ class MedicalHistoryViewModel @Inject constructor(
             attachmentIds = this.attachmentIds
         )
     }
+
+    private fun newMedicationDraft(): MedicationDraft =
+        MedicationDraft(draftId = UUID.randomUUID().toString(), startDate = LocalDate.now())
+
+    private fun MedicationOcrItem.toDraft(startDate: LocalDate): MedicationDraft = MedicationDraft(
+        draftId = UUID.randomUUID().toString(),
+        name = name.orEmpty(),
+        doseText = doseValue?.toDoseText().orEmpty(),
+        doseUnit = doseUnit?.let { unit -> runCatching { DoseUnit.valueOf(unit) }.getOrNull() },
+        strength = strength,
+        frequencyText = frequencyText.orEmpty(),
+        startDate = startDate,
+        durationText = durationDays?.toString().orEmpty(),
+        schedules = schedules,
+        requiresOcrReview = true,
+        reviewed = false,
+        unconfirmedFields = unconfirmedFields.filter { it != "strength" }
+    )
+
+    private fun MedicineItem.toDraft(): MedicationDraft {
+        val start = effectiveDate
+            ?: createdAt?.atZone(ZoneId.systemDefault())?.toLocalDate()
+            ?: LocalDate.now()
+        val duration = if (effectiveDate != null && endDate != null) {
+            (endDate.toEpochDay() - effectiveDate.toEpochDay() + 1).toInt().takeIf { it > 0 }
+        } else null
+        return MedicationDraft(
+            draftId = UUID.randomUUID().toString(),
+            id = id,
+            name = name,
+            doseText = doseValue?.toDoseText().orEmpty(),
+            doseUnit = doseUnit,
+            strength = strength,
+            frequencyText = frequencyText.orEmpty(),
+            startDate = start,
+            durationText = duration?.toString().orEmpty(),
+            schedules = schedules.map { MedicationSchedule(it.administrationTime.take(5), it.mealRelation) },
+            requiresOcrReview = attachmentIds.isNotEmpty(),
+            reviewed = true
+        )
+    }
+
+    private fun Double.toDoseText(): String =
+        if (this % 1.0 == 0.0) toLong().toString() else toString()
 
     private fun normalizeIfNeeded(filePath: String): String {
         val file = File(filePath)

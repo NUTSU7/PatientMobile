@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.common.DashboardSpacing
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.CombinedSectionTab
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.MedicalHistoryUiState
+import com.semanticsoft.patientmobile.feature.patient.medicalHistory.MedicineListEntry
 import com.semanticsoft.patientmobile.core.ui.theme.Gray500
 import com.semanticsoft.patientmobile.core.ui.theme.Gray900
 import com.semanticsoft.patientmobile.core.ui.theme.GrayLightBg
@@ -45,6 +46,8 @@ fun CombinedMedicationNotesCard(
     onAddNoteClick: () -> Unit,
     onTabSelected: (CombinedSectionTab) -> Unit,
     onDeleteMedicineClick: (String) -> Unit,
+    onDeleteTreatmentClick: (String) -> Unit,
+    onToggleTreatment: (treatmentId: String, expanded: Boolean) -> Unit,
     onDeleteNoteClick: (String) -> Unit,
     onEditMedicineClick: (String) -> Unit,
     onEditNoteClick: (String) -> Unit,
@@ -184,12 +187,25 @@ fun CombinedMedicationNotesCard(
                     )
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(spacing.listItemGap)) {
-                        state.filteredMedicines.forEach { medicine ->
-                            MedicineItemRow(
-                                item = medicine,
-                                onDeleteClick = { onDeleteMedicineClick(medicine.id) },
-                                onClick = { onEditMedicineClick(medicine.id) }
-                            )
+                        state.medicineEntries.forEach { entry ->
+                            when (entry) {
+                                is MedicineListEntry.Single -> MedicineItemRow(
+                                    item = entry.item,
+                                    onDeleteClick = { onDeleteMedicineClick(entry.item.id) },
+                                    onClick = { onEditMedicineClick(entry.item.id) }
+                                )
+                                is MedicineListEntry.Treatment -> TreatmentGroupCard(
+                                    group = entry,
+                                    state = state,
+                                    spacing = spacing,
+                                    expanded = state.treatmentExpanded[entry.treatmentId] ?: (entry.items.size <= 1),
+                                    onToggle = { expanded -> onToggleTreatment(entry.treatmentId, expanded) },
+                                    onOpenClick = { onEditMedicineClick(entry.items.first().id) },
+                                    onDeleteTreatmentClick = { onDeleteTreatmentClick(entry.treatmentId) },
+                                    onDeleteMedicineClick = onDeleteMedicineClick,
+                                    onEditMedicineClick = onEditMedicineClick
+                                )
+                            }
                         }
                     }
                 }
@@ -239,7 +255,7 @@ private fun MedicinesEmptyState(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "+ Adaug\u0103 medicament",
+                text = "+ Adaug\u0103 tratament",
                 color = Color.White,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium

@@ -132,3 +132,8 @@ fun statusChipText(status: IndicatorStatus): Color = when (status) {
     IndicatorStatus.ATTENTION -> StatusAttentionText
     IndicatorStatus.NO_REFERENCE -> StatusNoReferenceText
 }
+
+// Warning note (OCR "de verificat" / timing hints)
+val WarningNoteBg = Color(0xFFFFFBEB)
+val WarningNoteBorder = Color(0xFFFDE68A)
+val WarningNoteText = Color(0xFF92400E)

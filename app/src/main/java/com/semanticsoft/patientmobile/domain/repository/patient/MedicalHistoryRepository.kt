@@ -3,6 +3,7 @@ package com.semanticsoft.patientmobile.domain.repository.patient
 import com.semanticsoft.patientmobile.domain.model.patient.Medication
 import com.semanticsoft.patientmobile.domain.model.patient.MedicationOcrDraft
 import com.semanticsoft.patientmobile.domain.model.patient.PersonalNote
+import com.semanticsoft.patientmobile.domain.model.patient.Treatment
 import com.semanticsoft.patientmobile.domain.model.patient.PersonalNoteOcrDraft
 import com.semanticsoft.patientmobile.core.util.ApiResult
 
@@ -11,6 +12,10 @@ interface MedicalHistoryRepository {
     suspend fun getMedications(): ApiResult<List<Medication>>
     suspend fun updateMedication(id: String, medication: Medication): ApiResult<Medication>
     suspend fun deleteMedication(id: String): ApiResult<Unit>
+
+    suspend fun createTreatment(treatment: Treatment): ApiResult<List<Medication>>
+    suspend fun updateTreatment(id: String, treatment: Treatment): ApiResult<List<Medication>>
+    suspend fun deleteTreatment(id: String): ApiResult<Unit>
 
     suspend fun createNote(note: PersonalNote): ApiResult<PersonalNote>
     suspend fun getNotes(): ApiResult<List<PersonalNote>>
