@@ -47,7 +47,7 @@ import com.semanticsoft.patientmobile.core.ui.components.ErrorDialog
 import com.semanticsoft.patientmobile.core.ui.components.LoadingIndicator
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.AddTreatmentDialog
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.AddPersonalNoteDialog
-import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.CombinedMedicationNotesCard
+import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.CombinedTreatmentNotesCard
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.MedicalHistoryAnalysisSection
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.MedicalHistoryEvent
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.components.MedicalHistoryFiltersCard
@@ -165,10 +165,10 @@ fun MedicalHistoryScreen(
                                     }
 
                                     Box(modifier = Modifier.width(400.dp)) {
-                                        CombinedMedicationNotesCard(
+                                        CombinedTreatmentNotesCard(
                                             state = state,
                                             spacing = spacing,
-                                            onAddMedicineClick = { viewModel.onShowAddMedicationDialog() },
+                                            onAddTreatmentClick = { viewModel.onShowAddMedicationDialog() },
                                             onAddNoteClick = { viewModel.onShowAddNoteDialog() },
                                             onTabSelected = viewModel::onCombinedSectionTabSelected,
                                             onDeleteMedicineClick = viewModel::onShowDeleteMedicationDialog,
@@ -189,10 +189,10 @@ fun MedicalHistoryScreen(
                                         onReviewClick = viewModel::onReviewClick,
                                         documentDisplayNames = state.documentDisplayNames
                                     )
-                                    CombinedMedicationNotesCard(
+                                    CombinedTreatmentNotesCard(
                                         state = state,
                                         spacing = spacing,
-                                        onAddMedicineClick = { viewModel.onShowAddMedicationDialog() },
+                                        onAddTreatmentClick = { viewModel.onShowAddMedicationDialog() },
                                         onAddNoteClick = { viewModel.onShowAddNoteDialog() },
                                         onTabSelected = viewModel::onCombinedSectionTabSelected,
                                         onDeleteMedicineClick = viewModel::onShowDeleteMedicationDialog,

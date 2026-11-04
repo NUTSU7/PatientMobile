@@ -1,6 +1,5 @@
 package com.semanticsoft.patientmobile.feature.patient.medicalHistory.components
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,14 +34,12 @@ import com.semanticsoft.patientmobile.core.ui.theme.GrayLightBg
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.core.ui.theme.Purple500
 import com.semanticsoft.patientmobile.core.ui.theme.icons.NoteIcon
-import com.semanticsoft.patientmobile.core.ui.theme.icons.MedicalNoteIcon
-import com.semanticsoft.patientmobile.core.ui.theme.icons.PillIcon
 
 @Composable
-fun CombinedMedicationNotesCard(
+fun CombinedTreatmentNotesCard(
     state: MedicalHistoryUiState,
     spacing: DashboardSpacing,
-    onAddMedicineClick: () -> Unit,
+    onAddTreatmentClick: () -> Unit,
     onAddNoteClick: () -> Unit,
     onTabSelected: (CombinedSectionTab) -> Unit,
     onDeleteMedicineClick: (String) -> Unit,
@@ -56,11 +53,11 @@ fun CombinedMedicationNotesCard(
     val selectedTab = state.selectedCombinedSectionTab
 
     val addClick = when (selectedTab) {
-        CombinedSectionTab.MEDICINES -> onAddMedicineClick
+        CombinedSectionTab.TREATMENTS -> onAddTreatmentClick
         CombinedSectionTab.NOTES -> onAddNoteClick
     }
     val hasItems = when (selectedTab) {
-        CombinedSectionTab.MEDICINES -> state.filteredMedicines.isNotEmpty()
+        CombinedSectionTab.TREATMENTS -> state.filteredMedicines.isNotEmpty()
         CombinedSectionTab.NOTES -> state.filteredNotes.isNotEmpty()
     }
 
@@ -70,8 +67,7 @@ fun CombinedMedicationNotesCard(
             .shadow(1.dp, RoundedCornerShape(24.dp))
             .background(Color.White, RoundedCornerShape(24.dp))
             .border(1.dp, Color(0xFFF3F4F6), RoundedCornerShape(24.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(spacing.markerHeaderGap)
+            .padding(16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -114,76 +110,64 @@ fun CombinedMedicationNotesCard(
             }
         }
 
+        Spacer(modifier = Modifier.height(14.dp))
+
         Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(GrayLightBg, RoundedCornerShape(999.dp))
+                .padding(horizontal = 4.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val isNotesSelected = selectedTab == CombinedSectionTab.NOTES
+            Box(
                 modifier = Modifier
-                    .background(GrayLightBg, RoundedCornerShape(999.dp))
-                    .padding(horizontal = 4.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .weight(1f)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(
+                        if (isNotesSelected) Color.White else Color.Transparent
+                    )
+                    .clickable { onTabSelected(CombinedSectionTab.NOTES) }
+                    .padding(vertical = 9.dp),
+                contentAlignment = Alignment.Center
             ) {
-                val isNotesSelected = selectedTab == CombinedSectionTab.NOTES
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(
-                            if (isNotesSelected) Color.White else Color.Transparent
-                        )
-                        .clickable { onTabSelected(CombinedSectionTab.NOTES) }
-                        .padding(horizontal = 18.dp, vertical = 9.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Icon(
-                            imageVector = MedicalNoteIcon,
-                            contentDescription = "Notite",
-                            modifier = Modifier.size(20.dp),
-                            tint = Purple500
-                        )
-                        Text(
-                            text = "Notițe",
-                            color = if (isNotesSelected) Gray900 else Gray500,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-                val isMedSelected = selectedTab == CombinedSectionTab.MEDICINES
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(
-                            if (isMedSelected) Color.White else Color.Transparent
-                        )
-                        .clickable { onTabSelected(CombinedSectionTab.MEDICINES) }
-                        .padding(horizontal = 18.dp, vertical = 9.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        PillIcon(
-                            modifier = Modifier.size(16.dp),
-                            color = Purple500
-                        )
-                        Text(
-                            text = "Medicamente",
-                            color = if (isMedSelected) Gray900 else Gray500,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
+                Text(
+                    text = "Notițe",
+                    color = if (isNotesSelected) Gray900 else Gray500,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            val isTreatmentsSelected = selectedTab == CombinedSectionTab.TREATMENTS
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(
+                        if (isTreatmentsSelected) Color.White else Color.Transparent
+                    )
+                    .clickable { onTabSelected(CombinedSectionTab.TREATMENTS) }
+                    .padding(vertical = 9.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Tratamente",
+                    color = if (isTreatmentsSelected) Gray900 else Gray500,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         when (selectedTab) {
-            CombinedSectionTab.MEDICINES -> {
+            CombinedSectionTab.TREATMENTS -> {
                 if (state.filteredMedicines.isEmpty()) {
-                    MedicinesEmptyState(
+                    TreatmentsEmptyState(
                         spacing = spacing,
-                        onAddClick = onAddMedicineClick
+                        onAddClick = onAddTreatmentClick
                     )
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(spacing.listItemGap)) {
@@ -235,7 +219,7 @@ fun CombinedMedicationNotesCard(
 }
 
 @Composable
-private fun MedicinesEmptyState(
+private fun TreatmentsEmptyState(
     spacing: DashboardSpacing,
     onAddClick: () -> Unit
 ) {

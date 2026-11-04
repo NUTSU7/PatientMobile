@@ -55,7 +55,7 @@ enum class MedicineIconType {
 }
 
 enum class CombinedSectionTab {
-    MEDICINES,
+    TREATMENTS,
     NOTES
 }
 
