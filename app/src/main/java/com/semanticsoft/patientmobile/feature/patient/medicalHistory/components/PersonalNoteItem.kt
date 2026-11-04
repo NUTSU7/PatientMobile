@@ -7,9 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,11 +27,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.AttentionHigh
 import com.semanticsoft.patientmobile.core.ui.theme.Gray500
 import com.semanticsoft.patientmobile.core.ui.theme.Gray900
 import com.semanticsoft.patientmobile.core.ui.theme.GrayLightBorder
-import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 import com.semanticsoft.patientmobile.core.ui.theme.Purple500
 import com.semanticsoft.patientmobile.core.ui.theme.icons.TrashIcon
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.PersonalNoteItem
@@ -55,6 +56,7 @@ fun PersonalNoteCard(
     note: PersonalNoteItem,
     onDeleteClick: () -> Unit,
     onClick: () -> Unit = {},
+    analysisSummary: String = "",
     modifier: Modifier = Modifier
 ) {
     val shape = RoundedCornerShape(16.dp)
@@ -66,6 +68,10 @@ fun PersonalNoteCard(
 
     val cleanContent = remember(note.content) {
         cleanWhitespace(note.content).ifBlank { "Fără observații clinice." }
+    }
+
+    val effectiveAnalysisSummary = remember(analysisSummary, note.analysisSummary) {
+        cleanWhitespace(analysisSummary.ifBlank { note.analysisSummary })
     }
 
     val formattedDate = remember(note.noteDate, note.dateLabel) {
@@ -90,7 +96,7 @@ fun PersonalNoteCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 130.dp)
+            .height(AppDimens.personalNoteCardHeight)
             .clip(shape)
             .background(Color.White)
             .border(1.dp, GrayLightBorder, shape)
@@ -110,12 +116,12 @@ fun PersonalNoteCard(
 
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(10.dp)
                 .padding(start = 6.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Header Row: Tag and Title on left, Delete button at top right
+            // Header Row: Title and Associated Analyses on left, Delete button at top right
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top
@@ -127,18 +133,19 @@ fun PersonalNoteCard(
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Text(
-                        text = "NOTIȚĂ PERSONALĂ",
-                        color = Indigo600,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
+                        text = cleanTitle.ifBlank { "Notiță personală" },
+                        color = Gray900,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    if (cleanTitle.isNotBlank() && !cleanTitle.equals("Notiță personală", ignoreCase = true)) {
+                    if (effectiveAnalysisSummary.isNotEmpty()) {
                         Text(
-                            text = cleanTitle,
-                            color = Gray900,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
+                            text = "Analize asociate: $effectiveAnalysisSummary",
+                            color = Gray500,
+                            fontSize = 12.sp,
+                            maxLines = 3,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
@@ -167,7 +174,7 @@ fun PersonalNoteCard(
                 color = Gray900,
                 fontSize = 13.sp,
                 lineHeight = 18.sp,
-                maxLines = 4,
+                maxLines = if (effectiveAnalysisSummary.isNotEmpty()) 2 else 4,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(horizontal = 4.dp)
             )

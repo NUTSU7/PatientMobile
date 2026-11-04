@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,9 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.common.DashboardSpacing
+import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.AttentionHigh
 import com.semanticsoft.patientmobile.core.ui.theme.GrayLightBorder
 import com.semanticsoft.patientmobile.core.ui.theme.Gray500
@@ -74,16 +78,19 @@ internal fun TreatmentGroupCard(
         verticalArrangement = Arrangement.spacedBy(spacing.listItemGap)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(AppDimens.treatmentCardHeaderHeight),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
                 modifier = Modifier
                     .weight(1f)
+                    .fillMaxHeight()
                     .clip(RoundedCornerShape(8.dp))
                     .clickable(onClick = onOpenClick)
                     .padding(4.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically)
             ) {
                 Text(
                     text = "TRATAMENT \u00B7 $count " + if (count == 1) "MEDICAMENT" else "MEDICAMENTE",
@@ -95,11 +102,19 @@ internal fun TreatmentGroupCard(
                     text = group.name.ifBlank { "Tratament" },
                     color = Gray900,
                     fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(text = "Import: $importDate", color = Gray500, fontSize = 12.sp)
                 if (analysisSummary.isNotEmpty()) {
-                    Text(text = "Analize asociate: $analysisSummary", color = Gray500, fontSize = 12.sp)
+                    Text(
+                        text = "Analize asociate: $analysisSummary",
+                        color = Gray500,
+                        fontSize = 12.sp,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
             Box(

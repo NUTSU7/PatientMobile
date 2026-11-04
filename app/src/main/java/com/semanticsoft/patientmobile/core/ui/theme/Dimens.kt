@@ -34,4 +34,7 @@ object AppDimens {
     val cornerRadiusDashboardCard = 18.dp
     val cornerRadiusLarge = 24.dp
     val cornerRadiusPill = 999.dp
+
+    val personalNoteCardHeight = 168.dp
+    val treatmentCardHeaderHeight = 108.dp
 }

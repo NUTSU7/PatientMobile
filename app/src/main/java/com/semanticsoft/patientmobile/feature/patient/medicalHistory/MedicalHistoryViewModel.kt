@@ -125,7 +125,8 @@ data class PersonalNoteItem(
     val analysisDocumentIds: List<String> = emptyList(),
     val noteDate: java.time.LocalDate = java.time.LocalDate.now(),
     val createdAt: java.time.Instant? = null,
-    val attachmentIds: List<String> = emptyList()
+    val attachmentIds: List<String> = emptyList(),
+    val analysisSummary: String = ""
 )
 
 data class MedicalHistoryUiState(
@@ -1141,6 +1142,10 @@ class MedicalHistoryViewModel @Inject constructor(
     private fun PersonalNote.toUiItem(
         severity: NoteSeverity = NoteSeverity.OK
     ): PersonalNoteItem {
+        val summary = this.analysisDocuments
+            .mapNotNull { it.displayTitle ?: it.originalFileName }
+            .joinToString(", ")
+
         return PersonalNoteItem(
             id = this.id,
             title = this.analysisName,
@@ -1152,7 +1157,8 @@ class MedicalHistoryViewModel @Inject constructor(
             analysisDocumentIds = this.analysisDocumentIds.ifEmpty { listOfNotNull(this.analysisDocumentId) },
             noteDate = this.noteDate,
             createdAt = this.createdAt,
-            attachmentIds = this.attachmentIds
+            attachmentIds = this.attachmentIds,
+            analysisSummary = summary
         )
     }
 

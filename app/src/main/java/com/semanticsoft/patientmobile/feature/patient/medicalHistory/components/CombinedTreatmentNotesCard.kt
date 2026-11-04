@@ -182,7 +182,7 @@ fun CombinedTreatmentNotesCard(
                                     group = entry,
                                     state = state,
                                     spacing = spacing,
-                                    expanded = state.treatmentExpanded[entry.treatmentId] ?: (entry.items.size <= 1),
+                                    expanded = state.treatmentExpanded[entry.treatmentId] ?: false,
                                     onToggle = { expanded -> onToggleTreatment(entry.treatmentId, expanded) },
                                     onOpenClick = { onEditMedicineClick(entry.items.first().id) },
                                     onDeleteTreatmentClick = { onDeleteTreatmentClick(entry.treatmentId) },
@@ -205,8 +205,18 @@ fun CombinedTreatmentNotesCard(
                         verticalArrangement = Arrangement.spacedBy(spacing.listItemGap)
                     ) {
                         state.filteredNotes.forEach { note ->
+                            val docIds = note.analysisDocumentIds.ifEmpty { listOfNotNull(note.analysisDocumentId) }
+                            val noteAnalysisSummary = docIds
+                                .distinct()
+                                .mapNotNull { id ->
+                                    state.documentDisplayNames[id] ?: state.allDocuments.find { it.id == id }?.originalFileName
+                                }
+                                .joinToString(", ")
+                                .ifBlank { note.analysisSummary }
+
                             PersonalNoteCard(
                                 note = note,
+                                analysisSummary = noteAnalysisSummary,
                                 onDeleteClick = { onDeleteNoteClick(note.id) },
                                 onClick = { onEditNoteClick(note.id) }
                             )
