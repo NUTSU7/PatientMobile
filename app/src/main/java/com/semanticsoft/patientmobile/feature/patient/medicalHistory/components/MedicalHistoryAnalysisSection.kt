@@ -25,7 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.domain.model.patient.PatientDocument
+import com.semanticsoft.patientmobile.feature.patient.uploadedAnalyses.PatientDocument
 import com.semanticsoft.patientmobile.core.ui.common.DashboardSpacing
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.MedicalHistoryUiState
 import com.semanticsoft.patientmobile.core.ui.theme.Gray50

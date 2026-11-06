@@ -1,8 +1,6 @@
 package com.semanticsoft.patientmobile.feature.auth.login
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,14 +18,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.KeyboardArrowDown
-import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -39,14 +31,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.components.LoadingIndicator
@@ -54,16 +41,8 @@ import com.semanticsoft.patientmobile.core.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.core.ui.components.form.FormInput
 import com.semanticsoft.patientmobile.core.ui.components.form.FormLabel
 import com.semanticsoft.patientmobile.core.ui.components.auth.AuthTopHeader
-import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
-import com.semanticsoft.patientmobile.core.ui.theme.Gray300
-import com.semanticsoft.patientmobile.core.ui.theme.Gray500
-import com.semanticsoft.patientmobile.core.ui.theme.Gray900
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
-import com.semanticsoft.patientmobile.core.ui.theme.InputHaloShadow
-import com.semanticsoft.patientmobile.core.ui.theme.InputShadow
-import com.semanticsoft.patientmobile.core.ui.theme.LightPurpleBg
 import com.semanticsoft.patientmobile.core.ui.theme.Purple500
-import com.semanticsoft.patientmobile.core.ui.theme.SurfaceWhite
 
 @Composable
 fun LoginScreen(
@@ -71,14 +50,10 @@ fun LoginScreen(
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onLoginClick: () -> Unit,
-    onLaboratorAccess: () -> Unit,
-    onGoToRegister: () -> Unit,
-    onGoToLabRegister: () -> Unit,
-    onGoToForgotPassword: () -> Unit
+    onGoToRegister: () -> Unit
 ) {
     SetStatusBar(color = Color(0xFF3B82F6), darkIcons = false)
     var passwordVisible by remember { mutableStateOf(false) }
-    var selectedRole by remember { mutableStateOf("Pacient") }
     var hasAttemptedLogin by remember { mutableStateOf(false) }
 
     val missingCredentialsMessage = when {
@@ -148,14 +123,6 @@ fun LoginScreen(
                     fontWeight = FontWeight.Bold,
                     lineHeight = titleLineHeight
                 )
-                Spacer(modifier = Modifier.height(if (isVeryCompactHeight) 20.dp else 28.dp))
-                FormLabel("Mă loghez ca")
-                Spacer(modifier = Modifier.height(tinySpacing))
-                RoleField(
-                    text = selectedRole,
-                    onRoleChange = { selectedRole = it },
-                    inputHeight = inputHeight
-                )
                 Spacer(modifier = Modifier.height(sectionSpacing))
                 FormLabel("Adresa de email")
                 Spacer(modifier = Modifier.height(tinySpacing))
@@ -168,20 +135,7 @@ fun LoginScreen(
                 )
 
                 Spacer(modifier = Modifier.height(sectionSpacing))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    FormLabel("Parol\u0103")
-                    Text(
-                        text = "Ai uitat parola?",
-                        color = Color(0xFF4F46E5),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.clickable(onClick = onGoToForgotPassword)
-                    )
-                }
+                FormLabel("Parol\u0103")
                 Spacer(modifier = Modifier.height(tinySpacing))
                 FormInput(
                     value = state.password,
@@ -213,12 +167,8 @@ fun LoginScreen(
                             RoundedCornerShape(999.dp)
                         )
                         .clickable {
-                            if (selectedRole == "Laborator") {
-                                onLaboratorAccess()
-                            } else {
-                                hasAttemptedLogin = true
-                                onLoginClick()
-                            }
+                            hasAttemptedLogin = true
+                            onLoginClick()
                         },
                     contentAlignment = Alignment.Center
                 ) {
@@ -271,136 +221,6 @@ fun LoginScreen(
                             color = Color(0xFF4F46E5),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "E\u0219ti laborator?",
-                        color = Color(0xFF6B7280),
-                        fontSize = 14.sp
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    TextButton(onClick = onGoToLabRegister, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
-                        Text(
-                            text = buildAnnotatedString {
-                                append("\u00CEnregistreaz\u0103-te ca partener ")
-                                withStyle(SpanStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)) {
-                                    append("\u2192")
-                                }
-                            },
-                            color = Color(0xFF4F46E5),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RoleField(
-    text: String,
-    onRoleChange: (String) -> Unit,
-    inputHeight: Dp
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val options = listOf("Pacient", "Laborator")
-    val shape = RoundedCornerShape(8.dp)
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(inputHeight)
-            .shadow(
-                elevation = 5.dp,
-                shape = shape,
-                ambientColor = InputHaloShadow,
-                spotColor = InputHaloShadow
-            )
-            .shadow(
-                elevation = 2.dp,
-                shape = shape,
-                ambientColor = InputShadow,
-                spotColor = InputShadow
-            )
-            .background(SurfaceWhite, shape)
-            .border(1.dp, Gray300, shape)
-            .padding(horizontal = 21.dp)
-            .clickable { expanded = true }
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.PersonOutline,
-                contentDescription = null,
-                tint = Gray500,
-                modifier = Modifier.size(16.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = text,
-                color = Gray900,
-                fontSize = 13.sp,
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                imageVector = Icons.Outlined.KeyboardArrowDown,
-                contentDescription = null,
-                tint = Gray500,
-                modifier = Modifier.size(16.dp)
-            )
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            containerColor = Color.Transparent,
-            shadowElevation = 0.dp,
-            tonalElevation = 0.dp
-        ) {
-            Card(
-                shape = RoundedCornerShape(AppDimens.cornerRadiusSmall),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                border = BorderStroke(1.dp, Gray300)
-            ) {
-                Column(modifier = Modifier.width(220.dp)) {
-                    options.forEach { option ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = option,
-                                    color = Gray900,
-                                    fontSize = 13.sp,
-                                    fontWeight = if (text == option) FontWeight.SemiBold else FontWeight.Medium
-                                )
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.PersonOutline,
-                                    contentDescription = null,
-                                    tint = if (text == option) Indigo600 else Gray500,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            },
-                            onClick = {
-                                onRoleChange(option)
-                                expanded = false
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(if (text == option) LightPurpleBg else Color.Transparent)
                         )
                     }
                 }

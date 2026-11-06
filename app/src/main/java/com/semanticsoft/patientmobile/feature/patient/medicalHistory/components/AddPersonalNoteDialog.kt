@@ -27,7 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.semanticsoft.patientmobile.domain.model.patient.PatientDocument
+import com.semanticsoft.patientmobile.feature.patient.uploadedAnalyses.PatientDocument
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
 

@@ -25,7 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.domain.model.patient.PatientDocument
+import com.semanticsoft.patientmobile.feature.patient.uploadedAnalyses.PatientDocument
 import com.semanticsoft.patientmobile.core.ui.theme.Gray100
 import com.semanticsoft.patientmobile.core.ui.theme.Gray500
 import com.semanticsoft.patientmobile.core.ui.theme.Gray900

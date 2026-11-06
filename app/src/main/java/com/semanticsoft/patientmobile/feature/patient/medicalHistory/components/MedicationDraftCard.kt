@@ -53,9 +53,9 @@ import com.semanticsoft.patientmobile.core.ui.theme.WarningNoteBorder
 import com.semanticsoft.patientmobile.core.ui.theme.WarningNoteText
 import com.semanticsoft.patientmobile.core.ui.theme.icons.ChevronDownIcon
 import com.semanticsoft.patientmobile.core.ui.theme.icons.TrashIcon
-import com.semanticsoft.patientmobile.domain.model.patient.DoseUnit
-import com.semanticsoft.patientmobile.domain.model.patient.MealRelation
-import com.semanticsoft.patientmobile.domain.model.patient.MedicationDraft
+import com.semanticsoft.patientmobile.feature.patient.medicalHistory.DoseUnit
+import com.semanticsoft.patientmobile.feature.patient.medicalHistory.MealRelation
+import com.semanticsoft.patientmobile.feature.patient.medicalHistory.MedicationDraft
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 

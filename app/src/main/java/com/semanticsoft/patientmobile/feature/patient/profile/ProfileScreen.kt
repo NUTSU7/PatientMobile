@@ -42,7 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.semanticsoft.patientmobile.core.ui.common.SetStatusBar
@@ -250,7 +250,7 @@ fun ProfileScreen(
     onUploadClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val vm: ProfileViewModel = hiltViewModel()
+    val vm: ProfileViewModel = viewModel()
     val state by vm.state.collectAsStateWithLifecycle()
 
     LifecycleResumeEffect(Unit) {

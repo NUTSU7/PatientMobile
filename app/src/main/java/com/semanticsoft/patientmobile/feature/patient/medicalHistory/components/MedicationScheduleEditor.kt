@@ -39,8 +39,8 @@ import com.semanticsoft.patientmobile.core.ui.theme.AttentionHigh
 import com.semanticsoft.patientmobile.core.ui.theme.Gray50
 import com.semanticsoft.patientmobile.core.ui.theme.Gray500
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
-import com.semanticsoft.patientmobile.domain.model.patient.MealRelation
-import com.semanticsoft.patientmobile.domain.model.patient.MedicationSchedule
+import com.semanticsoft.patientmobile.feature.patient.medicalHistory.MealRelation
+import com.semanticsoft.patientmobile.feature.patient.medicalHistory.MedicationSchedule
 
 /**
  * Compact administration hours editor using the original Outlined Indigo design.

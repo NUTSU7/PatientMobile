@@ -16,7 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -42,7 +42,7 @@ fun PatientNavScreen(
     modifier: Modifier = Modifier
 ) {
     var showUploadModal by rememberSaveable { mutableStateOf(false) }
-    val uploadFileViewModel: UploadFileViewModel = hiltViewModel()
+    val uploadFileViewModel: UploadFileViewModel = viewModel()
     val uploadFileState by uploadFileViewModel.state.collectAsStateWithLifecycle()
     val processingStatus by uploadFileViewModel.processingStatus.collectAsStateWithLifecycle()
     val uploadLaunchers = rememberUploadFileLaunchers(uploadFileViewModel)

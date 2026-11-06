@@ -2,11 +2,6 @@ package com.semanticsoft.patientmobile.feature.auth.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.semanticsoft.patientmobile.domain.model.common.UserRole
-import com.semanticsoft.patientmobile.domain.usecase.common.LoginUseCase
-import com.semanticsoft.patientmobile.core.util.ApiResult
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -24,14 +19,11 @@ data class LoginUiState(
 )
 
 sealed class LoginEvent {
-    data class LoginSuccess(val role: UserRole) : LoginEvent()
+    data object LoginSuccess : LoginEvent()
     data class LoginFailure(val message: String) : LoginEvent()
 }
 
-@HiltViewModel
-class LoginViewModel @Inject constructor(
-    private val loginUseCase: LoginUseCase
-) : ViewModel() {
+class LoginViewModel : ViewModel() {
 
     private val _events = MutableSharedFlow<LoginEvent>()
     val events: SharedFlow<LoginEvent> = _events.asSharedFlow()
@@ -57,36 +49,7 @@ class LoginViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
-
-            when (val result = loginUseCase(currentEmail.trim(), currentPassword)) {
-                is ApiResult.Success -> {
-                    _state.update { it.copy(isLoading = false, errorMessage = null) }
-                    _events.emit(LoginEvent.LoginSuccess(result.data.user.role))
-                }
-
-                is ApiResult.AuthError -> {
-                    val message = "Email sau parolă incorecte."
-                    _state.update { it.copy(isLoading = false, errorMessage = message, password = "") }
-                    _events.emit(LoginEvent.LoginFailure(message))
-                }
-
-                is ApiResult.HttpError -> {
-                    val message = when (result.code) {
-                        401, 403 -> "Email sau parolă incorecte."
-                        429 -> "Prea multe încercări. Încearcă din nou în câteva minute."
-                        else -> result.message.ifBlank { "Eroare server (${result.code})." }
-                    }
-                    _state.update { it.copy(isLoading = false, errorMessage = message, password = "") }
-                    _events.emit(LoginEvent.LoginFailure(message))
-                }
-
-                is ApiResult.NetworkError -> {
-                    val message = "Nu există conexiune la internet."
-                    _state.update { it.copy(isLoading = false, errorMessage = message, password = "") }
-                    _events.emit(LoginEvent.LoginFailure(message))
-                }
-            }
+            _events.emit(LoginEvent.LoginSuccess)
         }
     }
 }

@@ -57,7 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.semanticsoft.patientmobile.core.ui.common.SetStatusBar
 import com.semanticsoft.patientmobile.core.ui.common.dashboardSpacing
@@ -79,7 +79,7 @@ import com.semanticsoft.patientmobile.core.ui.theme.icons.SortIcon
 @Composable
 fun UploadedAnalysesScreen(
     navigateToExplanation: (String) -> Unit = { },
-    viewModel: UploadedAnalysesViewModel = hiltViewModel(),
+    viewModel: UploadedAnalysesViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
     SetStatusBar(color = Color.White, darkIcons = true)

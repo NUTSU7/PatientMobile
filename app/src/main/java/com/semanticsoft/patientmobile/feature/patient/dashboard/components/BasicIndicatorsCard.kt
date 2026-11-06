@@ -22,9 +22,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.domain.model.patient.IndicatorSegments
-import com.semanticsoft.patientmobile.domain.model.patient.IndicatorStatus
-import com.semanticsoft.patientmobile.domain.model.patient.IndicatorTrendDirection
+import com.semanticsoft.patientmobile.feature.patient.dashboard.IndicatorSegments
+import com.semanticsoft.patientmobile.feature.patient.dashboard.IndicatorStatus
+import com.semanticsoft.patientmobile.feature.patient.dashboard.IndicatorTrendDirection
 import com.semanticsoft.patientmobile.core.ui.theme.statusChipBg
 import com.semanticsoft.patientmobile.core.ui.theme.statusChipText
 import com.semanticsoft.patientmobile.core.ui.theme.statusFillColor

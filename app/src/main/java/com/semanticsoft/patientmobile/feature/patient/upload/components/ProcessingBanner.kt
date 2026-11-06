@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.semanticsoft.patientmobile.domain.model.patient.ProcessingStatus
+import com.semanticsoft.patientmobile.feature.patient.upload.ProcessingStatus
 
 @Composable
 fun ProcessingBanner(

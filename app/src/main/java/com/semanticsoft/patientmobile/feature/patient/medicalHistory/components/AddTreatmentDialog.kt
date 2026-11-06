@@ -53,8 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.semanticsoft.patientmobile.core.ui.theme.AppDimens
 import com.semanticsoft.patientmobile.core.ui.theme.Indigo600
-import com.semanticsoft.patientmobile.domain.model.patient.MedicationDraft
-import com.semanticsoft.patientmobile.domain.model.patient.PatientDocument
+import com.semanticsoft.patientmobile.feature.patient.medicalHistory.MedicationDraft
+import com.semanticsoft.patientmobile.feature.patient.uploadedAnalyses.PatientDocument
 import java.time.LocalDate
 import kotlinx.coroutines.delay
 

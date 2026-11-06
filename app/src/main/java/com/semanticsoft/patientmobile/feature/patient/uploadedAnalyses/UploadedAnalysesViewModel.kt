@@ -2,16 +2,9 @@ package com.semanticsoft.patientmobile.feature.patient.uploadedAnalyses
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.semanticsoft.patientmobile.domain.model.patient.PatientDocument
-import com.semanticsoft.patientmobile.domain.repository.patient.DocumentRepository
-import com.semanticsoft.patientmobile.domain.repository.common.GlobalSyncManager
 import com.semanticsoft.patientmobile.feature.patient.uploadedAnalyses.components.SortCriteria
 import com.semanticsoft.patientmobile.feature.patient.uploadedAnalyses.components.SortOrder
-import com.semanticsoft.patientmobile.core.util.ApiResult
-import com.semanticsoft.patientmobile.core.util.toUserMessage
-import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -67,13 +60,9 @@ data class UploadedAnalysesUiState(
         }
 }
 
-@HiltViewModel
-class UploadedAnalysesViewModel @Inject constructor(
-    private val documentRepository: DocumentRepository,
-    private val globalSyncManager: GlobalSyncManager
-) : ViewModel() {
+class UploadedAnalysesViewModel : ViewModel() {
 
-    private val _state = MutableStateFlow(UploadedAnalysesUiState(isLoading = true))
+    private val _state = MutableStateFlow(UploadedAnalysesUiState())
     val state: StateFlow<UploadedAnalysesUiState> = _state.asStateFlow()
 
     private val _refreshErrors = MutableSharedFlow<String>()
@@ -82,12 +71,6 @@ class UploadedAnalysesViewModel @Inject constructor(
     private val _effects = MutableSharedFlow<UploadedAnalysesEffect>()
     val effects: SharedFlow<UploadedAnalysesEffect> = _effects.asSharedFlow()
 
-    init {
-        viewModelScope.launch {
-            globalSyncManager.syncEvents.collect { refreshDocuments() }
-        }
-    }
-
     fun onSortCriteriaSelected(criteria: SortCriteria) {
         _state.update { it.copy(sortCriteria = criteria) }
     }
@@ -95,8 +78,6 @@ class UploadedAnalysesViewModel @Inject constructor(
     fun onSortOrderSelected(order: SortOrder) {
         _state.update { it.copy(sortOrder = order) }
     }
-
-    // ── Rename Dialog ─────────────────────────────────────────────────────
 
     fun onShowRenameDialog(documentId: String) {
         _state.update { it.copy(dialogState = DialogState.Rename(documentId)) }
@@ -107,26 +88,13 @@ class UploadedAnalysesViewModel @Inject constructor(
     }
 
     fun onRenameDocument(documentId: String, newName: String) {
-        viewModelScope.launch {
-            val doc = _state.value.documents.firstOrNull { it.id == documentId }
-            val existingExt = doc?.originalFileName?.substringAfterLast('.', "")?.takeIf { it.isNotBlank() } ?: "pdf"
-            val trimmed = newName.trim()
-            val finalName = if (trimmed.contains('.')) trimmed else "$trimmed.$existingExt"
-            when (val result = documentRepository.renameDocument(documentId, finalName)) {
-                is ApiResult.Success -> {
-                    _state.update { it.copy(dialogState = DialogState.None) }
-                    globalSyncManager.triggerSync()
-                }
-                is ApiResult.HttpError, is ApiResult.NetworkError, is ApiResult.AuthError -> {
-                    _state.update {
-                        it.copy(dialogState = DialogState.Rename(documentId, error = result.toUserMessage()))
-                    }
-                }
+        _state.update { current ->
+            val updated = current.allDocuments.map {
+                if (it.id == documentId) it.copy(originalFileName = newName) else it
             }
+            current.copy(allDocuments = updated, dialogState = DialogState.None)
         }
     }
-
-    // ── Single Delete Dialog ──────────────────────────────────────────────
 
     fun onShowDeleteDialog(documentId: String) {
         _state.update { it.copy(dialogState = DialogState.SingleDelete(documentId)) }
@@ -137,28 +105,13 @@ class UploadedAnalysesViewModel @Inject constructor(
     }
 
     fun onDeleteDocument(documentId: String) {
-        viewModelScope.launch {
-            _state.update { it.copy(isDeleting = true) }
-            when (val result = documentRepository.deleteDocument(documentId)) {
-                is ApiResult.Success -> {
-                    _state.update {
-                        it.copy(
-                            dialogState = DialogState.None,
-                            isDeleting = false,
-                            allDocuments = it.allDocuments.filterNot { doc -> doc.id == documentId }
-                        )
-                    }
-                    globalSyncManager.triggerSync()
-                }
-                is ApiResult.HttpError, is ApiResult.NetworkError, is ApiResult.AuthError -> {
-                    _refreshErrors.emit(result.toUserMessage())
-                    _state.update { it.copy(dialogState = DialogState.None, isDeleting = false) }
-                }
-            }
+        _state.update { current ->
+            current.copy(
+                allDocuments = current.allDocuments.filterNot { it.id == documentId },
+                dialogState = DialogState.None
+            )
         }
     }
-
-    // ── Selection Mode ────────────────────────────────────────────────────
 
     fun enterSelectionMode(documentId: String) {
         _state.update { it.copy(isSelectionMode = true, selectedDocumentIds = setOf(documentId)) }
@@ -189,8 +142,6 @@ class UploadedAnalysesViewModel @Inject constructor(
         }
     }
 
-    // ── Bulk Delete Dialog ────────────────────────────────────────────────
-
     fun onShowBulkDeleteDialog(ids: Set<String>) {
         if (ids.isEmpty()) return
         _state.update { it.copy(dialogState = DialogState.BulkDelete(ids)) }
@@ -201,93 +152,28 @@ class UploadedAnalysesViewModel @Inject constructor(
     }
 
     fun onBulkDelete() {
-        viewModelScope.launch {
-            val bulkState = _state.value.dialogState as? DialogState.BulkDelete ?: return@launch
-            val ids = bulkState.documentIds.toList()
-            val deletedIds = ids.toSet()
-            _state.update { it.copy(isDeleting = true) }
-            when (val result = documentRepository.bulkDelete(ids)) {
-                is ApiResult.Success -> {
-                    _state.update {
-                        it.copy(
-                            isSelectionMode = false,
-                            selectedDocumentIds = emptySet(),
-                            dialogState = DialogState.None,
-                            isDeleting = false,
-                            allDocuments = it.allDocuments.filterNot { doc -> doc.id in deletedIds }
-                        )
-                    }
-                    globalSyncManager.triggerSync()
-                }
-                is ApiResult.HttpError,
-                is ApiResult.NetworkError,
-                is ApiResult.AuthError -> {
-                    _state.update {
-                        it.copy(isDeleting = false, dialogState = DialogState.None)
-                    }
-                    _refreshErrors.emit(result.toUserMessage())
-                }
-            }
+        val bulkState = _state.value.dialogState as? DialogState.BulkDelete ?: return
+        val ids = bulkState.documentIds
+        _state.update { current ->
+            current.copy(
+                allDocuments = current.allDocuments.filterNot { it.id in ids },
+                isSelectionMode = false,
+                selectedDocumentIds = emptySet(),
+                dialogState = DialogState.None
+            )
         }
     }
-
-    // ── Download Document ─────────────────────────────────────────────────
 
     fun onDownloadDocument(documentId: String) {
-        viewModelScope.launch {
-            when (val result = documentRepository.downloadDocument(documentId)) {
-                is ApiResult.Success -> {
-                    _effects.emit(UploadedAnalysesEffect.OpenFile(result.data))
-                }
-                is ApiResult.HttpError, is ApiResult.NetworkError -> {
-                    _refreshErrors.emit(result.toUserMessage())
-                }
-                is ApiResult.AuthError -> {
-                    _refreshErrors.emit(result.toUserMessage())
-                }
+        val doc = _state.value.allDocuments.firstOrNull { it.id == documentId }
+        doc?.localFilePath?.let { path ->
+            viewModelScope.launch {
+                _effects.emit(UploadedAnalysesEffect.OpenFile(File(path)))
             }
         }
     }
 
-    // ── Data Refresh ──────────────────────────────────────────────────────
-
     fun refreshDocuments() {
-        viewModelScope.launch {
-            val hasData = _state.value.allDocuments.isNotEmpty()
-            if (!hasData) {
-                _state.update { it.copy(isLoading = true, errorMessage = null) }
-            }
-
-            when (val result = documentRepository.getDocuments(0, 20)) {
-                is ApiResult.HttpError -> {
-                    if (hasData) {
-                        _refreshErrors.emit(result.toUserMessage())
-                        _state.update { it.copy(isLoading = false) }
-                    } else {
-                        _state.update { it.copy(isLoading = false, errorMessage = result.toUserMessage()) }
-                    }
-                }
-                is ApiResult.NetworkError -> {
-                    if (hasData) {
-                        _refreshErrors.emit(result.toUserMessage())
-                        _state.update { it.copy(isLoading = false) }
-                    } else {
-                        _state.update { it.copy(isLoading = false, errorMessage = result.toUserMessage()) }
-                    }
-                }
-                is ApiResult.AuthError -> {
-                    _state.update { it.copy(isLoading = false, errorMessage = result.toUserMessage()) }
-                }
-                is ApiResult.Success -> {
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            errorMessage = null,
-                            allDocuments = result.data
-                        )
-                    }
-                }
-            }
-        }
+        // Default no-op
     }
 }

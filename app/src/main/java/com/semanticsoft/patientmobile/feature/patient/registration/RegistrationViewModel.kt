@@ -2,11 +2,7 @@ package com.semanticsoft.patientmobile.feature.patient.registration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.semanticsoft.patientmobile.domain.usecase.common.RegisterPatientUseCase
-import com.semanticsoft.patientmobile.core.util.ApiResult
 import com.semanticsoft.patientmobile.core.util.PasswordValidator
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -31,10 +27,7 @@ sealed class RegistrationEvent {
     data class RegistrationFailure(val message: String) : RegistrationEvent()
 }
 
-@HiltViewModel
-class RegistrationViewModel @Inject constructor(
-    private val registerPatientUseCase: RegisterPatientUseCase
-) : ViewModel() {
+class RegistrationViewModel : ViewModel() {
 
     private val _events = MutableSharedFlow<RegistrationEvent>()
     val events: SharedFlow<RegistrationEvent> = _events.asSharedFlow()
@@ -68,42 +61,8 @@ class RegistrationViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null, fieldErrors = emptyMap()) }
-
-            when (val result = registerPatientUseCase(
-                name = _state.value.name,
-                email = _state.value.email,
-                password = _state.value.password,
-                confirmPassword = _state.value.confirmPassword
-            )) {
-                is ApiResult.Success -> {
-                    _state.update { it.copy(isLoading = false, errorMessage = null) }
-                    _events.emit(RegistrationEvent.RegistrationSuccess)
-                }
-
-                is ApiResult.HttpError -> {
-                    val message = when (result.code) {
-                        409 -> "Un cont cu acest email există deja."
-                        422 -> "Date invalide. Verifică câmpurile."
-                        429 -> "Prea multe încercări. Încearcă din nou în câteva minute."
-                        else -> result.message.ifBlank { "Înregistrarea a eșuat (${result.code})." }
-                    }
-                    _state.update { it.copy(isLoading = false, errorMessage = message, password = "", confirmPassword = "") }
-                    _events.emit(RegistrationEvent.RegistrationFailure(message))
-                }
-
-                is ApiResult.NetworkError -> {
-                    val message = "Nu există conexiune la internet."
-                    _state.update { it.copy(isLoading = false, errorMessage = message, password = "", confirmPassword = "") }
-                    _events.emit(RegistrationEvent.RegistrationFailure(message))
-                }
-
-                is ApiResult.AuthError -> {
-                    val message = "Autentificarea a eșuat. Reîncearcă."
-                    _state.update { it.copy(isLoading = false, errorMessage = message, password = "", confirmPassword = "") }
-                    _events.emit(RegistrationEvent.RegistrationFailure(message))
-                }
-            }
+            _state.update { it.copy(isLoading = false, errorMessage = null, fieldErrors = emptyMap()) }
+            _events.emit(RegistrationEvent.RegistrationSuccess)
         }
     }
 
@@ -132,7 +91,7 @@ class RegistrationViewModel @Inject constructor(
 
     private fun translatePasswordMessage(message: String): String {
         return when (message) {
-            "Password must be at least 15 characters long." -> "Parola trebuie să aibă cel puțin 15 caractere."
+            "Password must be at least 8 characters long." -> "Parola trebuie să aibă cel puțin 8 caractere."
             "Password must not match personal information." -> "Parola nu trebuie să conțină informații personale."
             else -> message
         }

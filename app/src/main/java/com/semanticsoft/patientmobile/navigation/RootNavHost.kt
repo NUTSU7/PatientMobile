@@ -3,38 +3,21 @@ package com.semanticsoft.patientmobile.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalContext
-import android.widget.Toast
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.semanticsoft.patientmobile.domain.model.common.UserRole
 import com.semanticsoft.patientmobile.feature.auth.AuthEvent
 import com.semanticsoft.patientmobile.feature.auth.AuthState
 import com.semanticsoft.patientmobile.feature.auth.AuthViewModel
-import com.semanticsoft.patientmobile.feature.auth.forgotPassword.ForgotPasswordEvent
-import com.semanticsoft.patientmobile.feature.auth.forgotPassword.ForgotPasswordScreen
-import com.semanticsoft.patientmobile.feature.auth.forgotPassword.ForgotPasswordViewModel
 import com.semanticsoft.patientmobile.feature.auth.login.LoginEvent
 import com.semanticsoft.patientmobile.feature.auth.login.LoginScreen
 import com.semanticsoft.patientmobile.feature.auth.login.LoginViewModel
-import com.semanticsoft.patientmobile.feature.laborator.activateAccount.ActivateAccountEvent
-import com.semanticsoft.patientmobile.feature.laborator.activateAccount.ActivateAccountScreen
-import com.semanticsoft.patientmobile.feature.laborator.activateAccount.ActivateAccountViewModel
-import com.semanticsoft.patientmobile.feature.laborator.dpa.DpaEvent
-import com.semanticsoft.patientmobile.feature.laborator.dpa.DpaScreen
-import com.semanticsoft.patientmobile.feature.laborator.dpa.DpaViewModel
-import com.semanticsoft.patientmobile.feature.laborator.dashboard.DashboardViewModel as LaboratorDashboardViewModel
-import com.semanticsoft.patientmobile.feature.laborator.navigation.LaboratorNavScreen
-import com.semanticsoft.patientmobile.feature.laborator.registration.RegistrationEvent as RegistrationLabEvent
-import com.semanticsoft.patientmobile.feature.laborator.registration.RegistrationScreen as RegistrationLabScreen
-import com.semanticsoft.patientmobile.feature.laborator.registration.RegistrationViewModel as RegistrationLabViewModel
 import com.semanticsoft.patientmobile.feature.patient.analysisExplanation.AnalysisExplanationScreen
 import com.semanticsoft.patientmobile.feature.patient.analysisExplanation.AnalysisExplanationViewModel
 import com.semanticsoft.patientmobile.feature.patient.dashboard.DashboardEvent
@@ -49,8 +32,7 @@ import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun RootNavHost(navController: NavHostController = rememberNavController()) {
-    val context = LocalContext.current
-    val authViewModel: AuthViewModel = hiltViewModel()
+    val authViewModel: AuthViewModel = viewModel()
     val authState by authViewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(authViewModel) {
@@ -78,18 +60,14 @@ fun RootNavHost(navController: NavHostController = rememberNavController()) {
         startDestination = AppDestination.Login.route
     ) {
         composable(AppDestination.Login.route) {
-            val vm: LoginViewModel = hiltViewModel()
+            val vm: LoginViewModel = viewModel()
             val state by vm.state.collectAsStateWithLifecycle()
 
             LaunchedEffect(vm) {
                 vm.events.collectLatest { event ->
                     when (event) {
                         is LoginEvent.LoginSuccess -> {
-                            val destination = when (event.role) {
-                                UserRole.LABORATOR -> AppDestination.Laborator
-                                else -> AppDestination.Patient
-                            }
-                            navController.navigate(destination.route) {
+                            navController.navigate(AppDestination.Patient.route) {
                                 popUpTo(AppDestination.Login.route) { inclusive = true }
                             }
                         }
@@ -103,50 +81,12 @@ fun RootNavHost(navController: NavHostController = rememberNavController()) {
                 onEmailChange = vm::onEmailChange,
                 onPasswordChange = vm::onPasswordChange,
                 onLoginClick = vm::login,
-                onLaboratorAccess = {
-                    navController.navigate(AppDestination.LaboratorActivateAccount.route) {
-                        popUpTo(AppDestination.Login.route) { inclusive = true }
-                    }
-                },
-                onGoToRegister = { navController.navigate(AppDestination.PatientRegistration.route) },
-                onGoToLabRegister = { navController.navigate(AppDestination.LaboratorRegistration.route) },
-                onGoToForgotPassword = { navController.navigate(AppDestination.ForgotPassword.route) }
-            )
-        }
-
-        composable(AppDestination.ForgotPassword.route) {
-            val vm: ForgotPasswordViewModel = hiltViewModel()
-            val state by vm.state.collectAsStateWithLifecycle()
-
-            LaunchedEffect(vm) {
-                vm.events.collectLatest { event ->
-                    when (event) {
-                        ForgotPasswordEvent.PasswordChanged -> {
-                            Toast.makeText(context, "Parola schimbată cu succes", Toast.LENGTH_SHORT).show()
-                            navController.navigate(AppDestination.Login.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        }
-                    }
-                }
-            }
-
-            ForgotPasswordScreen(
-                state = state,
-                onEmailChange = vm::onEmailChange,
-                onRequestSubmit = vm::onRequestSubmit,
-                onCodeChange = vm::onCodeChange,
-                onResendClick = vm::onResendClick,
-                onNewPasswordChange = vm::onNewPasswordChange,
-                onConfirmPasswordChange = vm::onConfirmPasswordChange,
-                onSubmitNewPassword = vm::onSubmitNewPassword,
-                onRequestNewCode = vm::onRequestNewCode,
-                onBackToLogin = { navController.popBackStack() }
+                onGoToRegister = { navController.navigate(AppDestination.PatientRegistration.route) }
             )
         }
 
         composable(AppDestination.PatientRegistration.route) {
-            val vm: RegistrationViewModel = hiltViewModel()
+            val vm: RegistrationViewModel = viewModel()
             val state by vm.state.collectAsStateWithLifecycle()
 
             LaunchedEffect(vm) {
@@ -173,91 +113,8 @@ fun RootNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        composable(AppDestination.LaboratorRegistration.route) {
-            val vm: RegistrationLabViewModel = hiltViewModel()
-            val state by vm.state.collectAsStateWithLifecycle()
-
-            LaunchedEffect(vm) {
-                vm.events.collectLatest { event ->
-                    when (event) {
-                        is RegistrationLabEvent.RegistrationSuccess -> {
-                            navController.navigate(AppDestination.Laborator.route) {
-                                popUpTo(AppDestination.Login.route)
-                            }
-                        }
-                        is RegistrationLabEvent.RegistrationFailure -> Unit
-                    }
-                }
-            }
-
-            RegistrationLabScreen(
-                state = state,
-                onLabNameChange = vm::onLabNameChange,
-                onCountryChange = vm::onCountryChange,
-                onCuiChange = vm::onCuiChange,
-                onContactNameChange = vm::onContactNameChange,
-                onRoleChange = vm::onRoleChange,
-                onEmailChange = vm::onEmailChange,
-                onPhoneChange = vm::onPhoneChange,
-                onMessageChange = vm::onMessageChange,
-                onRegisterClick = vm::onRegisterClick,
-                onGoToLogin = { navController.popBackStack() }
-            )
-        }
-
-        composable(AppDestination.LaboratorActivateAccount.route) {
-            val vm: ActivateAccountViewModel = hiltViewModel()
-            val state by vm.state.collectAsStateWithLifecycle()
-
-            LaunchedEffect(vm) {
-                vm.events.collectLatest { event ->
-                    when (event) {
-                        ActivateAccountEvent.Activated -> {
-                            navController.navigate(AppDestination.LaboratorDpa.route) {
-                                popUpTo(AppDestination.LaboratorActivateAccount.route) { inclusive = true }
-                            }
-                        }
-                    }
-                }
-            }
-
-            ActivateAccountScreen(
-                state = state,
-                onPasswordChange = vm::onPasswordChange,
-                onConfirmPasswordChange = vm::onConfirmPasswordChange,
-                onTermsAcceptedChange = vm::onTermsAcceptedChange,
-                onActivateClick = vm::onActivateClick,
-                onTermsClick = {},
-                onPrivacyClick = {}
-            )
-        }
-
-        composable(AppDestination.LaboratorDpa.route) {
-            val vm: DpaViewModel = hiltViewModel()
-            val state by vm.state.collectAsStateWithLifecycle()
-
-            LaunchedEffect(vm) {
-                vm.events.collectLatest { event ->
-                    when (event) {
-                        DpaEvent.ContinueToPortal -> {
-                            navController.navigate(AppDestination.Laborator.route) {
-                                popUpTo(AppDestination.LaboratorDpa.route) { inclusive = true }
-                            }
-                        }
-                    }
-                }
-            }
-
-            DpaScreen(
-                state = state,
-                onAcceptedChange = vm::onAcceptedChange,
-                onContinueClick = vm::onContinueClick,
-                onDownloadPdfClick = {}
-            )
-        }
-
         composable(AppDestination.Patient.route) {
-            val vm: DashboardViewModel = hiltViewModel()
+            val vm: DashboardViewModel = viewModel()
 
             LifecycleResumeEffect(Unit) {
                 vm.refresh()
@@ -291,27 +148,11 @@ fun RootNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
-        composable(AppDestination.Laborator.route) {
-            val vm: LaboratorDashboardViewModel = hiltViewModel()
-
-            LifecycleResumeEffect(Unit) {
-                vm.refresh()
-                onPauseOrDispose { }
-            }
-
-            LaboratorNavScreen(
-                dashboardState = vm.state,
-                onPeriodSelected = vm::onPeriodSelected,
-                onCompareToggle = vm::onCompareToggle,
-                onLogout = authViewModel::logout
-            )
-        }
-
         composable(
             route = AppDestination.AnalysisExplanation.ROUTE_PATTERN,
             arguments = listOf(navArgument(AppDestination.AnalysisExplanation.ARG_DOCUMENT_ID) { type = NavType.StringType })
         ) {
-            val vm: AnalysisExplanationViewModel = hiltViewModel()
+            val vm: AnalysisExplanationViewModel = viewModel()
 
             LifecycleResumeEffect(Unit) {
                 vm.refresh()
@@ -327,7 +168,7 @@ fun RootNavHost(navController: NavHostController = rememberNavController()) {
             route = AppDestination.ReportResults.ROUTE_PATTERN,
             arguments = listOf(navArgument(AppDestination.ReportResults.ARG_REPORT_ID) { type = NavType.StringType })
         ) {
-            val vm: ReportResultsViewModel = hiltViewModel()
+            val vm: ReportResultsViewModel = viewModel()
 
             LifecycleResumeEffect(Unit) {
                 vm.loadResults()

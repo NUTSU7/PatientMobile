@@ -9,7 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.semanticsoft.patientmobile.feature.patient.dashboard.DashboardScreen
 import com.semanticsoft.patientmobile.feature.patient.dashboard.DashboardUiState
-import com.semanticsoft.patientmobile.domain.model.patient.ProcessingStatus
+import com.semanticsoft.patientmobile.feature.patient.upload.ProcessingStatus
 import com.semanticsoft.patientmobile.feature.patient.medicalHistory.MedicalHistoryScreen
 import com.semanticsoft.patientmobile.feature.patient.profile.ProfileScreen
 import com.semanticsoft.patientmobile.feature.patient.uploadedAnalyses.UploadedAnalysesScreen
