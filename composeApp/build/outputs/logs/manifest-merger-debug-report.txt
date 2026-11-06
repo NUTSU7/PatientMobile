@@ -1,0 +1,438 @@
+-- Merging decision tree log ---
+provider#androidx.core.content.FileProvider
+INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:25:9-33:20
+	android:grantUriPermissions
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:29:13-47
+	android:authorities
+		INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:27:13-64
+	android:exported
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:28:13-37
+	android:name
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:26:13-62
+manifest
+ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:2:1-46:12
+INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:2:1-46:12
+INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:2:1-46:12
+INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:2:1-46:12
+MERGED from [androidx.navigation:navigation-common:2.8.2] /Users/liviu/.gradle/caches/transforms-4/b0fac16ab881a67114234934d634f0a9/transformed/navigation-common-2.8.2/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.navigation:navigation-runtime:2.8.2] /Users/liviu/.gradle/caches/transforms-4/a380fba13e1170265b96be0a3085082c/transformed/navigation-runtime-2.8.2/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.navigation:navigation-common-ktx:2.8.2] /Users/liviu/.gradle/caches/transforms-4/e275e936ac9f1bd4ef6f936ce499b49e/transformed/navigation-common-ktx-2.8.2/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.navigation:navigation-runtime-ktx:2.8.2] /Users/liviu/.gradle/caches/transforms-4/7148db3621cc8ffa4fdb5717c5f77cb6/transformed/navigation-runtime-ktx-2.8.2/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.navigation:navigation-compose:2.8.2] /Users/liviu/.gradle/caches/transforms-4/56a9817d503eed270e35ae631649b15e/transformed/navigation-compose-2.8.2/AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.android.material:material:1.13.0] /Users/liviu/.gradle/caches/transforms-4/45eb2d52c342fa758e93fafc33a104c0/transformed/material-1.13.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.0] /Users/liviu/.gradle/caches/transforms-4/81f73a2ff659c97ea8ef592894a343d7/transformed/constraintlayout-2.1.0/AndroidManifest.xml:2:1-11:12
+MERGED from [androidx.appcompat:appcompat-resources:1.7.0] /Users/liviu/.gradle/caches/transforms-4/905649a2fa165f630ffcadc591d0077e/transformed/appcompat-resources-1.7.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.appcompat:appcompat:1.7.0] /Users/liviu/.gradle/caches/transforms-4/22ff47ccb8bd23bdf9c42b74b75c4ce2/transformed/appcompat-1.7.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] /Users/liviu/.gradle/caches/transforms-4/1ff86c0115b135d376c6462561b3d5a2/transformed/viewpager2-1.0.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.fragment:fragment:1.5.4] /Users/liviu/.gradle/caches/transforms-4/df2607c8d6bd268abe8ff168a5c5ed51/transformed/fragment-1.5.4/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.activity:activity:1.9.2] /Users/liviu/.gradle/caches/transforms-4/850fa39bb188eb70a57d8e355820bfe6/transformed/activity-1.9.2/AndroidManifest.xml:17:1-22:12
+MERGED from [org.jetbrains.compose.components:components-resources-android:1.7.0] /Users/liviu/.gradle/caches/transforms-4/b5052f03532c994a544cad7e332845d1/transformed/library-release/AndroidManifest.xml:2:1-16:12
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /Users/liviu/.gradle/caches/transforms-4/83a4f9af3f4027b7ecc30630815d4029/transformed/emoji2-views-helper-1.3.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.material3:material3-android:1.3.0] /Users/liviu/.gradle/caches/transforms-4/f32dbd5cc8380bb12555baad7e46f1b2/transformed/material3-release/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.compose.material:material-ripple-android:1.7.1] /Users/liviu/.gradle/caches/transforms-4/f56c29197e856ff0cb456626160bcc81/transformed/material-ripple-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.foundation:foundation-layout-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/dc95afd994f5d417eaef0d4562ea8864/transformed/foundation-layout-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.foundation:foundation-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/87e32a04b36d64e7c12c48ed8d1148b2/transformed/foundation-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.animation:animation-core-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/1a3df23bd5423a841cbd8fc699877506/transformed/animation-core-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.animation:animation-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/8969c7445902df4edd25305897b05887/transformed/animation-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/6bdac7c40cbab9cfb6512760438dd095/transformed/ui-tooling-preview-release/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.compose.ui:ui-util-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/a349de3b76a7a6587b661e0983c903b1/transformed/ui-util-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-unit-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/536b8e3c955f34581ef5c2fc6e116c0d/transformed/ui-unit-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-graphics-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/1318caa63164af94595bcadbc0b8f534/transformed/ui-graphics-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-geometry-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/7a27a87284c9573dbe575ff283c26ed0/transformed/ui-geometry-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-text-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/472df37f81bfb4b9f94e5bac5b485a18/transformed/ui-text-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/liviu/.gradle/caches/transforms-4/359c1808d70673d2b1df8c5404b4b91b/transformed/emoji2-1.3.0/AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.loader:loader:1.0.0] /Users/liviu/.gradle/caches/transforms-4/7b34049c2a4201fc283d951f9bdfd911/transformed/loader-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.graphics:graphics-shapes-android:1.0.1] /Users/liviu/.gradle/caches/transforms-4/c3ba197aa69651735db2c3cf439c6bfc/transformed/graphics-shapes-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /Users/liviu/.gradle/caches/transforms-4/86df3c07ffbc2796fa0ac2f8065f08bd/transformed/customview-poolingcontainer-1.0.0/AndroidManifest.xml:17:1-23:12
+MERGED from [androidx.core:core-ktx:1.13.1] /Users/liviu/.gradle/caches/transforms-4/027e0bc2ac74256579996ed82820b222/transformed/core-ktx-1.13.1/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] /Users/liviu/.gradle/caches/transforms-4/3100d238ae22ea42c6e2bb1d3266cd24/transformed/coordinatorlayout-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] /Users/liviu/.gradle/caches/transforms-4/a5dcc0435f2a63eda24b9e1bc1a79b6e/transformed/drawerlayout-1.1.1/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.transition:transition:1.5.0] /Users/liviu/.gradle/caches/transforms-4/3eca7088ece87c52cc00798c35e214db/transformed/transition-1.5.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.1.0] /Users/liviu/.gradle/caches/transforms-4/71f87c70b4818870fb09bb8fe859ed12/transformed/dynamicanimation-1.1.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.recyclerview:recyclerview:1.2.1] /Users/liviu/.gradle/caches/transforms-4/0af0e32559d62ad25cf0f88e64216b9c/transformed/recyclerview-1.2.1/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/liviu/.gradle/caches/transforms-4/1bb9fb67915c016cc28323cc779d25f4/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/liviu/.gradle/caches/transforms-4/5ab307d84534c0a952819fff99314e8a/transformed/vectordrawable-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/liviu/.gradle/caches/transforms-4/d8f9634198979762e12338984abf4f0d/transformed/viewpager-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.customview:customview:1.1.0] /Users/liviu/.gradle/caches/transforms-4/34bb018325d88c9abc73c017683ec0d3/transformed/customview-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.autofill:autofill:1.0.0] /Users/liviu/.gradle/caches/transforms-4/ca9a0bcfcd1cc686977ee51e0436aab3/transformed/autofill-1.0.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.graphics:graphics-path:1.0.1] /Users/liviu/.gradle/caches/transforms-4/b89974c85715898694b158b559d0515c/transformed/graphics-path-1.0.1/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:17:1-30:12
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] /Users/liviu/.gradle/caches/transforms-4/09818c467bdd59159cbdbc82e6a419e0/transformed/savedstate-ktx-1.2.1/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate:1.2.1] /Users/liviu/.gradle/caches/transforms-4/b2269e5fe86d76cdf510e3638e0ee630/transformed/savedstate-1.2.1/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.8.6] /Users/liviu/.gradle/caches/transforms-4/4eb157990aabccdba53ce9e92c95adc5/transformed/lifecycle-livedata-core-ktx-2.8.6/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.8.6] /Users/liviu/.gradle/caches/transforms-4/21cb9feed84b37ac00b6adce270a3528/transformed/lifecycle-livedata-2.8.6/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/3d46131749ddaaecaed391c87e9cee86/transformed/lifecycle-runtime-ktx-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/8b84259e3179e2d8e096fe47b01608dc/transformed/lifecycle-runtime-release/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.8.6] /Users/liviu/.gradle/caches/transforms-4/8d7a998677334da773b8fbc18e76a4eb/transformed/lifecycle-viewmodel-2.8.6/AndroidManifest.xml:2:1-5:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/10462a054342db3429f0c516456695d5/transformed/lifecycle-viewmodel-release/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-process:2.8.6] /Users/liviu/.gradle/caches/transforms-4/c26c4b5d1dc781a4889ca94caa9ebcfc/transformed/lifecycle-process-2.8.6/AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.8.6] /Users/liviu/.gradle/caches/transforms-4/7baffc0874a1f99305431002512c417e/transformed/lifecycle-livedata-core-2.8.6/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.6] /Users/liviu/.gradle/caches/transforms-4/17f4e99b314c7396b3ea305341c9bde9/transformed/lifecycle-viewmodel-savedstate-2.8.6/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6] /Users/liviu/.gradle/caches/transforms-4/67e9a88dd6d3c18969201b6fa1cf6355/transformed/lifecycle-viewmodel-ktx-2.8.6/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-runtime-compose-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/a0518bed159d4ac0c2379e77537db40f/transformed/lifecycle-runtime-compose-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/6c2ba3a2ba1840300c33056f2e9da05c/transformed/lifecycle-viewmodel-compose-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.material:material-icons-extended-android:1.7.1] /Users/liviu/.gradle/caches/transforms-4/84d4b77c7c934c141bd316b86464c162/transformed/material-icons-extended-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.material:material-icons-core-android:1.7.1] /Users/liviu/.gradle/caches/transforms-4/9da9d58df0e1bf531c5acf4e6eae484d/transformed/material-icons-core-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.ui:ui-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/cfcfa8954cd69ac05103d069318bfc8e/transformed/ui-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.activity:activity-ktx:1.9.2] /Users/liviu/.gradle/caches/transforms-4/7866718af33b38b663dfd66c2fb21bc7/transformed/activity-ktx-1.9.2/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.activity:activity-compose:1.9.2] /Users/liviu/.gradle/caches/transforms-4/6be2dd62c4e16bcb5f172760945771e8/transformed/activity-compose-1.9.2/AndroidManifest.xml:2:1-7:12
+MERGED from [org.jetbrains.compose.components:components-ui-tooling-preview-android:1.7.0] /Users/liviu/.gradle/caches/transforms-4/7b9db7b6634520f945541d7142fd822f/transformed/library-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.runtime:runtime-saveable-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/9e9da96e339d5d8ea68b5a53bae1b5cc/transformed/runtime-saveable-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.compose.runtime:runtime-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/b8ef5d7ccfcd1edb25f850df75dcdaed/transformed/runtime-release/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] /Users/liviu/.gradle/caches/transforms-4/f88234030e682332c295dfa0f1cb9fb1/transformed/annotation-experimental-1.4.1/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.cardview:cardview:1.0.0] /Users/liviu/.gradle/caches/transforms-4/db5bfaedd65700ec8322fbc3b741ce4d/transformed/cardview-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/liviu/.gradle/caches/transforms-4/6978007ef16f5b08bfde5c2d371c5666/transformed/interpolator-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/liviu/.gradle/caches/transforms-4/7dd1b157a581a80e9f1a96c31df63f75/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/liviu/.gradle/caches/transforms-4/c5436ac3e027878636055e46f13dd61a/transformed/cursoradapter-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/liviu/.gradle/caches/transforms-4/413c26fb01dfe881c4b3792f6317c200/transformed/startup-runtime-1.1.1/AndroidManifest.xml:17:1-33:12
+MERGED from [androidx.tracing:tracing:1.0.0] /Users/liviu/.gradle/caches/transforms-4/aad65feca61a7bf58ec8c4a12d08e093/transformed/tracing-1.0.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/liviu/.gradle/caches/transforms-4/23e8cff647e211039f1ff64c5ac71a0a/transformed/core-runtime-2.2.0/AndroidManifest.xml:17:1-22:12
+	package
+		INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml
+	android:versionName
+		INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml
+	xmlns:tools
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:3:5-51
+	android:versionCode
+		INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml
+	xmlns:android
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:2:11-69
+uses-feature#android.hardware.camera
+ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:5:5-85
+	android:required
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:5:58-82
+	android:name
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:5:19-57
+queries
+ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:7:5-11:15
+intent#action:name:android.media.action.IMAGE_CAPTURE
+ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:8:9-10:18
+action#android.media.action.IMAGE_CAPTURE
+ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:9:13-73
+	android:name
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:9:21-70
+application
+ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:13:5-44:19
+INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:13:5-44:19
+MERGED from [com.google.android.material:material:1.13.0] /Users/liviu/.gradle/caches/transforms-4/45eb2d52c342fa758e93fafc33a104c0/transformed/material-1.13.0/AndroidManifest.xml:22:5-20
+MERGED from [com.google.android.material:material:1.13.0] /Users/liviu/.gradle/caches/transforms-4/45eb2d52c342fa758e93fafc33a104c0/transformed/material-1.13.0/AndroidManifest.xml:22:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.0] /Users/liviu/.gradle/caches/transforms-4/81f73a2ff659c97ea8ef592894a343d7/transformed/constraintlayout-2.1.0/AndroidManifest.xml:9:5-20
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.0] /Users/liviu/.gradle/caches/transforms-4/81f73a2ff659c97ea8ef592894a343d7/transformed/constraintlayout-2.1.0/AndroidManifest.xml:9:5-20
+MERGED from [org.jetbrains.compose.components:components-resources-android:1.7.0] /Users/liviu/.gradle/caches/transforms-4/b5052f03532c994a544cad7e332845d1/transformed/library-release/AndroidManifest.xml:7:5-14:19
+MERGED from [org.jetbrains.compose.components:components-resources-android:1.7.0] /Users/liviu/.gradle/caches/transforms-4/b5052f03532c994a544cad7e332845d1/transformed/library-release/AndroidManifest.xml:7:5-14:19
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/liviu/.gradle/caches/transforms-4/359c1808d70673d2b1df8c5404b4b91b/transformed/emoji2-1.3.0/AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/liviu/.gradle/caches/transforms-4/359c1808d70673d2b1df8c5404b4b91b/transformed/emoji2-1.3.0/AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:28:5-89
+MERGED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:28:5-89
+MERGED from [androidx.lifecycle:lifecycle-process:2.8.6] /Users/liviu/.gradle/caches/transforms-4/c26c4b5d1dc781a4889ca94caa9ebcfc/transformed/lifecycle-process-2.8.6/AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.lifecycle:lifecycle-process:2.8.6] /Users/liviu/.gradle/caches/transforms-4/c26c4b5d1dc781a4889ca94caa9ebcfc/transformed/lifecycle-process-2.8.6/AndroidManifest.xml:23:5-33:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/liviu/.gradle/caches/transforms-4/7dd1b157a581a80e9f1a96c31df63f75/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/liviu/.gradle/caches/transforms-4/7dd1b157a581a80e9f1a96c31df63f75/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/liviu/.gradle/caches/transforms-4/413c26fb01dfe881c4b3792f6317c200/transformed/startup-runtime-1.1.1/AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/liviu/.gradle/caches/transforms-4/413c26fb01dfe881c4b3792f6317c200/transformed/startup-runtime-1.1.1/AndroidManifest.xml:25:5-31:19
+	android:extractNativeLibs
+		INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml
+	android:appComponentFactory
+		ADDED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
+	android:supportsRtl
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:21:9-35
+	android:label
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:19:9-41
+	android:fullBackupContent
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:17:9-54
+	android:roundIcon
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:20:9-54
+	tools:targetApi
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:23:9-29
+	android:icon
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:18:9-43
+	android:allowBackup
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:15:9-36
+	android:theme
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:22:9-51
+	android:dataExtractionRules
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:16:9-65
+	android:name
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:14:9-43
+activity#com.estcomputer.patient.MainActivity
+ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:35:9-43:20
+	android:exported
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:37:13-36
+	android:name
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:36:13-41
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:38:13-42:29
+action#android.intent.action.MAIN
+ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:39:17-69
+	android:name
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:39:25-66
+category#android.intent.category.LAUNCHER
+ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:41:17-77
+	android:name
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:41:27-74
+meta-data#android.support.FILE_PROVIDER_PATHS
+ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:30:13-32:54
+	android:resource
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:32:17-51
+	android:name
+		ADDED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml:31:17-67
+uses-sdk
+INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml
+INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml
+MERGED from [androidx.navigation:navigation-common:2.8.2] /Users/liviu/.gradle/caches/transforms-4/b0fac16ab881a67114234934d634f0a9/transformed/navigation-common-2.8.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.navigation:navigation-common:2.8.2] /Users/liviu/.gradle/caches/transforms-4/b0fac16ab881a67114234934d634f0a9/transformed/navigation-common-2.8.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.navigation:navigation-runtime:2.8.2] /Users/liviu/.gradle/caches/transforms-4/a380fba13e1170265b96be0a3085082c/transformed/navigation-runtime-2.8.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.navigation:navigation-runtime:2.8.2] /Users/liviu/.gradle/caches/transforms-4/a380fba13e1170265b96be0a3085082c/transformed/navigation-runtime-2.8.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.navigation:navigation-common-ktx:2.8.2] /Users/liviu/.gradle/caches/transforms-4/e275e936ac9f1bd4ef6f936ce499b49e/transformed/navigation-common-ktx-2.8.2/AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigation:navigation-common-ktx:2.8.2] /Users/liviu/.gradle/caches/transforms-4/e275e936ac9f1bd4ef6f936ce499b49e/transformed/navigation-common-ktx-2.8.2/AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigation:navigation-runtime-ktx:2.8.2] /Users/liviu/.gradle/caches/transforms-4/7148db3621cc8ffa4fdb5717c5f77cb6/transformed/navigation-runtime-ktx-2.8.2/AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigation:navigation-runtime-ktx:2.8.2] /Users/liviu/.gradle/caches/transforms-4/7148db3621cc8ffa4fdb5717c5f77cb6/transformed/navigation-runtime-ktx-2.8.2/AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigation:navigation-compose:2.8.2] /Users/liviu/.gradle/caches/transforms-4/56a9817d503eed270e35ae631649b15e/transformed/navigation-compose-2.8.2/AndroidManifest.xml:5:5-44
+MERGED from [androidx.navigation:navigation-compose:2.8.2] /Users/liviu/.gradle/caches/transforms-4/56a9817d503eed270e35ae631649b15e/transformed/navigation-compose-2.8.2/AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.material:material:1.13.0] /Users/liviu/.gradle/caches/transforms-4/45eb2d52c342fa758e93fafc33a104c0/transformed/material-1.13.0/AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.material:material:1.13.0] /Users/liviu/.gradle/caches/transforms-4/45eb2d52c342fa758e93fafc33a104c0/transformed/material-1.13.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.0] /Users/liviu/.gradle/caches/transforms-4/81f73a2ff659c97ea8ef592894a343d7/transformed/constraintlayout-2.1.0/AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.constraintlayout:constraintlayout:2.1.0] /Users/liviu/.gradle/caches/transforms-4/81f73a2ff659c97ea8ef592894a343d7/transformed/constraintlayout-2.1.0/AndroidManifest.xml:5:5-7:41
+MERGED from [androidx.appcompat:appcompat-resources:1.7.0] /Users/liviu/.gradle/caches/transforms-4/905649a2fa165f630ffcadc591d0077e/transformed/appcompat-resources-1.7.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.7.0] /Users/liviu/.gradle/caches/transforms-4/905649a2fa165f630ffcadc591d0077e/transformed/appcompat-resources-1.7.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat:1.7.0] /Users/liviu/.gradle/caches/transforms-4/22ff47ccb8bd23bdf9c42b74b75c4ce2/transformed/appcompat-1.7.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat:1.7.0] /Users/liviu/.gradle/caches/transforms-4/22ff47ccb8bd23bdf9c42b74b75c4ce2/transformed/appcompat-1.7.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] /Users/liviu/.gradle/caches/transforms-4/1ff86c0115b135d376c6462561b3d5a2/transformed/viewpager2-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager2:viewpager2:1.0.0] /Users/liviu/.gradle/caches/transforms-4/1ff86c0115b135d376c6462561b3d5a2/transformed/viewpager2-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.5.4] /Users/liviu/.gradle/caches/transforms-4/df2607c8d6bd268abe8ff168a5c5ed51/transformed/fragment-1.5.4/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.5.4] /Users/liviu/.gradle/caches/transforms-4/df2607c8d6bd268abe8ff168a5c5ed51/transformed/fragment-1.5.4/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.activity:activity:1.9.2] /Users/liviu/.gradle/caches/transforms-4/850fa39bb188eb70a57d8e355820bfe6/transformed/activity-1.9.2/AndroidManifest.xml:20:5-44
+MERGED from [androidx.activity:activity:1.9.2] /Users/liviu/.gradle/caches/transforms-4/850fa39bb188eb70a57d8e355820bfe6/transformed/activity-1.9.2/AndroidManifest.xml:20:5-44
+MERGED from [org.jetbrains.compose.components:components-resources-android:1.7.0] /Users/liviu/.gradle/caches/transforms-4/b5052f03532c994a544cad7e332845d1/transformed/library-release/AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.components:components-resources-android:1.7.0] /Users/liviu/.gradle/caches/transforms-4/b5052f03532c994a544cad7e332845d1/transformed/library-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /Users/liviu/.gradle/caches/transforms-4/83a4f9af3f4027b7ecc30630815d4029/transformed/emoji2-views-helper-1.3.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /Users/liviu/.gradle/caches/transforms-4/83a4f9af3f4027b7ecc30630815d4029/transformed/emoji2-views-helper-1.3.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material3:material3-android:1.3.0] /Users/liviu/.gradle/caches/transforms-4/f32dbd5cc8380bb12555baad7e46f1b2/transformed/material3-release/AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.material3:material3-android:1.3.0] /Users/liviu/.gradle/caches/transforms-4/f32dbd5cc8380bb12555baad7e46f1b2/transformed/material3-release/AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.material:material-ripple-android:1.7.1] /Users/liviu/.gradle/caches/transforms-4/f56c29197e856ff0cb456626160bcc81/transformed/material-ripple-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-ripple-android:1.7.1] /Users/liviu/.gradle/caches/transforms-4/f56c29197e856ff0cb456626160bcc81/transformed/material-ripple-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-layout-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/dc95afd994f5d417eaef0d4562ea8864/transformed/foundation-layout-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-layout-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/dc95afd994f5d417eaef0d4562ea8864/transformed/foundation-layout-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/87e32a04b36d64e7c12c48ed8d1148b2/transformed/foundation-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.foundation:foundation-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/87e32a04b36d64e7c12c48ed8d1148b2/transformed/foundation-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-core-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/1a3df23bd5423a841cbd8fc699877506/transformed/animation-core-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-core-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/1a3df23bd5423a841cbd8fc699877506/transformed/animation-core-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/8969c7445902df4edd25305897b05887/transformed/animation-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.animation:animation-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/8969c7445902df4edd25305897b05887/transformed/animation-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/6bdac7c40cbab9cfb6512760438dd095/transformed/ui-tooling-preview-release/AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-tooling-preview-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/6bdac7c40cbab9cfb6512760438dd095/transformed/ui-tooling-preview-release/AndroidManifest.xml:20:5-44
+MERGED from [androidx.compose.ui:ui-util-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/a349de3b76a7a6587b661e0983c903b1/transformed/ui-util-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-util-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/a349de3b76a7a6587b661e0983c903b1/transformed/ui-util-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-unit-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/536b8e3c955f34581ef5c2fc6e116c0d/transformed/ui-unit-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-unit-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/536b8e3c955f34581ef5c2fc6e116c0d/transformed/ui-unit-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-graphics-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/1318caa63164af94595bcadbc0b8f534/transformed/ui-graphics-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-graphics-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/1318caa63164af94595bcadbc0b8f534/transformed/ui-graphics-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-geometry-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/7a27a87284c9573dbe575ff283c26ed0/transformed/ui-geometry-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-geometry-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/7a27a87284c9573dbe575ff283c26ed0/transformed/ui-geometry-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-text-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/472df37f81bfb4b9f94e5bac5b485a18/transformed/ui-text-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-text-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/472df37f81bfb4b9f94e5bac5b485a18/transformed/ui-text-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/liviu/.gradle/caches/transforms-4/359c1808d70673d2b1df8c5404b4b91b/transformed/emoji2-1.3.0/AndroidManifest.xml:21:5-44
+MERGED from [androidx.emoji2:emoji2:1.3.0] /Users/liviu/.gradle/caches/transforms-4/359c1808d70673d2b1df8c5404b4b91b/transformed/emoji2-1.3.0/AndroidManifest.xml:21:5-44
+MERGED from [androidx.loader:loader:1.0.0] /Users/liviu/.gradle/caches/transforms-4/7b34049c2a4201fc283d951f9bdfd911/transformed/loader-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.loader:loader:1.0.0] /Users/liviu/.gradle/caches/transforms-4/7b34049c2a4201fc283d951f9bdfd911/transformed/loader-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.graphics:graphics-shapes-android:1.0.1] /Users/liviu/.gradle/caches/transforms-4/c3ba197aa69651735db2c3cf439c6bfc/transformed/graphics-shapes-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.graphics:graphics-shapes-android:1.0.1] /Users/liviu/.gradle/caches/transforms-4/c3ba197aa69651735db2c3cf439c6bfc/transformed/graphics-shapes-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /Users/liviu/.gradle/caches/transforms-4/86df3c07ffbc2796fa0ac2f8065f08bd/transformed/customview-poolingcontainer-1.0.0/AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /Users/liviu/.gradle/caches/transforms-4/86df3c07ffbc2796fa0ac2f8065f08bd/transformed/customview-poolingcontainer-1.0.0/AndroidManifest.xml:20:5-21:38
+MERGED from [androidx.core:core-ktx:1.13.1] /Users/liviu/.gradle/caches/transforms-4/027e0bc2ac74256579996ed82820b222/transformed/core-ktx-1.13.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core-ktx:1.13.1] /Users/liviu/.gradle/caches/transforms-4/027e0bc2ac74256579996ed82820b222/transformed/core-ktx-1.13.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] /Users/liviu/.gradle/caches/transforms-4/3100d238ae22ea42c6e2bb1d3266cd24/transformed/coordinatorlayout-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.coordinatorlayout:coordinatorlayout:1.1.0] /Users/liviu/.gradle/caches/transforms-4/3100d238ae22ea42c6e2bb1d3266cd24/transformed/coordinatorlayout-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] /Users/liviu/.gradle/caches/transforms-4/a5dcc0435f2a63eda24b9e1bc1a79b6e/transformed/drawerlayout-1.1.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.drawerlayout:drawerlayout:1.1.1] /Users/liviu/.gradle/caches/transforms-4/a5dcc0435f2a63eda24b9e1bc1a79b6e/transformed/drawerlayout-1.1.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.transition:transition:1.5.0] /Users/liviu/.gradle/caches/transforms-4/3eca7088ece87c52cc00798c35e214db/transformed/transition-1.5.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.transition:transition:1.5.0] /Users/liviu/.gradle/caches/transforms-4/3eca7088ece87c52cc00798c35e214db/transformed/transition-1.5.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.1.0] /Users/liviu/.gradle/caches/transforms-4/71f87c70b4818870fb09bb8fe859ed12/transformed/dynamicanimation-1.1.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.dynamicanimation:dynamicanimation:1.1.0] /Users/liviu/.gradle/caches/transforms-4/71f87c70b4818870fb09bb8fe859ed12/transformed/dynamicanimation-1.1.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.recyclerview:recyclerview:1.2.1] /Users/liviu/.gradle/caches/transforms-4/0af0e32559d62ad25cf0f88e64216b9c/transformed/recyclerview-1.2.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.recyclerview:recyclerview:1.2.1] /Users/liviu/.gradle/caches/transforms-4/0af0e32559d62ad25cf0f88e64216b9c/transformed/recyclerview-1.2.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/liviu/.gradle/caches/transforms-4/1bb9fb67915c016cc28323cc779d25f4/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /Users/liviu/.gradle/caches/transforms-4/1bb9fb67915c016cc28323cc779d25f4/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/liviu/.gradle/caches/transforms-4/5ab307d84534c0a952819fff99314e8a/transformed/vectordrawable-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /Users/liviu/.gradle/caches/transforms-4/5ab307d84534c0a952819fff99314e8a/transformed/vectordrawable-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/liviu/.gradle/caches/transforms-4/d8f9634198979762e12338984abf4f0d/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] /Users/liviu/.gradle/caches/transforms-4/d8f9634198979762e12338984abf4f0d/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.1.0] /Users/liviu/.gradle/caches/transforms-4/34bb018325d88c9abc73c017683ec0d3/transformed/customview-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview:1.1.0] /Users/liviu/.gradle/caches/transforms-4/34bb018325d88c9abc73c017683ec0d3/transformed/customview-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.autofill:autofill:1.0.0] /Users/liviu/.gradle/caches/transforms-4/ca9a0bcfcd1cc686977ee51e0436aab3/transformed/autofill-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.autofill:autofill:1.0.0] /Users/liviu/.gradle/caches/transforms-4/ca9a0bcfcd1cc686977ee51e0436aab3/transformed/autofill-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.graphics:graphics-path:1.0.1] /Users/liviu/.gradle/caches/transforms-4/b89974c85715898694b158b559d0515c/transformed/graphics-path-1.0.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.graphics:graphics-path:1.0.1] /Users/liviu/.gradle/caches/transforms-4/b89974c85715898694b158b559d0515c/transformed/graphics-path-1.0.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] /Users/liviu/.gradle/caches/transforms-4/09818c467bdd59159cbdbc82e6a419e0/transformed/savedstate-ktx-1.2.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate-ktx:1.2.1] /Users/liviu/.gradle/caches/transforms-4/09818c467bdd59159cbdbc82e6a419e0/transformed/savedstate-ktx-1.2.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] /Users/liviu/.gradle/caches/transforms-4/b2269e5fe86d76cdf510e3638e0ee630/transformed/savedstate-1.2.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.2.1] /Users/liviu/.gradle/caches/transforms-4/b2269e5fe86d76cdf510e3638e0ee630/transformed/savedstate-1.2.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.8.6] /Users/liviu/.gradle/caches/transforms-4/4eb157990aabccdba53ce9e92c95adc5/transformed/lifecycle-livedata-core-ktx-2.8.6/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core-ktx:2.8.6] /Users/liviu/.gradle/caches/transforms-4/4eb157990aabccdba53ce9e92c95adc5/transformed/lifecycle-livedata-core-ktx-2.8.6/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.8.6] /Users/liviu/.gradle/caches/transforms-4/21cb9feed84b37ac00b6adce270a3528/transformed/lifecycle-livedata-2.8.6/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.8.6] /Users/liviu/.gradle/caches/transforms-4/21cb9feed84b37ac00b6adce270a3528/transformed/lifecycle-livedata-2.8.6/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/3d46131749ddaaecaed391c87e9cee86/transformed/lifecycle-runtime-ktx-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-ktx-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/3d46131749ddaaecaed391c87e9cee86/transformed/lifecycle-runtime-ktx-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/8b84259e3179e2d8e096fe47b01608dc/transformed/lifecycle-runtime-release/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/8b84259e3179e2d8e096fe47b01608dc/transformed/lifecycle-runtime-release/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.8.6] /Users/liviu/.gradle/caches/transforms-4/8d7a998677334da773b8fbc18e76a4eb/transformed/lifecycle-viewmodel-2.8.6/AndroidManifest.xml:4:5-43
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.8.6] /Users/liviu/.gradle/caches/transforms-4/8d7a998677334da773b8fbc18e76a4eb/transformed/lifecycle-viewmodel-2.8.6/AndroidManifest.xml:4:5-43
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/10462a054342db3429f0c516456695d5/transformed/lifecycle-viewmodel-release/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/10462a054342db3429f0c516456695d5/transformed/lifecycle-viewmodel-release/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.8.6] /Users/liviu/.gradle/caches/transforms-4/c26c4b5d1dc781a4889ca94caa9ebcfc/transformed/lifecycle-process-2.8.6/AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-process:2.8.6] /Users/liviu/.gradle/caches/transforms-4/c26c4b5d1dc781a4889ca94caa9ebcfc/transformed/lifecycle-process-2.8.6/AndroidManifest.xml:21:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.8.6] /Users/liviu/.gradle/caches/transforms-4/7baffc0874a1f99305431002512c417e/transformed/lifecycle-livedata-core-2.8.6/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.8.6] /Users/liviu/.gradle/caches/transforms-4/7baffc0874a1f99305431002512c417e/transformed/lifecycle-livedata-core-2.8.6/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.6] /Users/liviu/.gradle/caches/transforms-4/17f4e99b314c7396b3ea305341c9bde9/transformed/lifecycle-viewmodel-savedstate-2.8.6/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.8.6] /Users/liviu/.gradle/caches/transforms-4/17f4e99b314c7396b3ea305341c9bde9/transformed/lifecycle-viewmodel-savedstate-2.8.6/AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6] /Users/liviu/.gradle/caches/transforms-4/67e9a88dd6d3c18969201b6fa1cf6355/transformed/lifecycle-viewmodel-ktx-2.8.6/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6] /Users/liviu/.gradle/caches/transforms-4/67e9a88dd6d3c18969201b6fa1cf6355/transformed/lifecycle-viewmodel-ktx-2.8.6/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-compose-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/a0518bed159d4ac0c2379e77537db40f/transformed/lifecycle-runtime-compose-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime-compose-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/a0518bed159d4ac0c2379e77537db40f/transformed/lifecycle-runtime-compose-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/6c2ba3a2ba1840300c33056f2e9da05c/transformed/lifecycle-viewmodel-compose-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose-android:2.8.6] /Users/liviu/.gradle/caches/transforms-4/6c2ba3a2ba1840300c33056f2e9da05c/transformed/lifecycle-viewmodel-compose-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-icons-extended-android:1.7.1] /Users/liviu/.gradle/caches/transforms-4/84d4b77c7c934c141bd316b86464c162/transformed/material-icons-extended-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-icons-extended-android:1.7.1] /Users/liviu/.gradle/caches/transforms-4/84d4b77c7c934c141bd316b86464c162/transformed/material-icons-extended-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-icons-core-android:1.7.1] /Users/liviu/.gradle/caches/transforms-4/9da9d58df0e1bf531c5acf4e6eae484d/transformed/material-icons-core-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.material:material-icons-core-android:1.7.1] /Users/liviu/.gradle/caches/transforms-4/9da9d58df0e1bf531c5acf4e6eae484d/transformed/material-icons-core-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/cfcfa8954cd69ac05103d069318bfc8e/transformed/ui-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.ui:ui-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/cfcfa8954cd69ac05103d069318bfc8e/transformed/ui-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-ktx:1.9.2] /Users/liviu/.gradle/caches/transforms-4/7866718af33b38b663dfd66c2fb21bc7/transformed/activity-ktx-1.9.2/AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-ktx:1.9.2] /Users/liviu/.gradle/caches/transforms-4/7866718af33b38b663dfd66c2fb21bc7/transformed/activity-ktx-1.9.2/AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-compose:1.9.2] /Users/liviu/.gradle/caches/transforms-4/6be2dd62c4e16bcb5f172760945771e8/transformed/activity-compose-1.9.2/AndroidManifest.xml:5:5-44
+MERGED from [androidx.activity:activity-compose:1.9.2] /Users/liviu/.gradle/caches/transforms-4/6be2dd62c4e16bcb5f172760945771e8/transformed/activity-compose-1.9.2/AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.components:components-ui-tooling-preview-android:1.7.0] /Users/liviu/.gradle/caches/transforms-4/7b9db7b6634520f945541d7142fd822f/transformed/library-release/AndroidManifest.xml:5:5-44
+MERGED from [org.jetbrains.compose.components:components-ui-tooling-preview-android:1.7.0] /Users/liviu/.gradle/caches/transforms-4/7b9db7b6634520f945541d7142fd822f/transformed/library-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-saveable-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/9e9da96e339d5d8ea68b5a53bae1b5cc/transformed/runtime-saveable-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-saveable-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/9e9da96e339d5d8ea68b5a53bae1b5cc/transformed/runtime-saveable-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/b8ef5d7ccfcd1edb25f850df75dcdaed/transformed/runtime-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.compose.runtime:runtime-android:1.7.2] /Users/liviu/.gradle/caches/transforms-4/b8ef5d7ccfcd1edb25f850df75dcdaed/transformed/runtime-release/AndroidManifest.xml:5:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] /Users/liviu/.gradle/caches/transforms-4/f88234030e682332c295dfa0f1cb9fb1/transformed/annotation-experimental-1.4.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.annotation:annotation-experimental:1.4.1] /Users/liviu/.gradle/caches/transforms-4/f88234030e682332c295dfa0f1cb9fb1/transformed/annotation-experimental-1.4.1/AndroidManifest.xml:5:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] /Users/liviu/.gradle/caches/transforms-4/db5bfaedd65700ec8322fbc3b741ce4d/transformed/cardview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.cardview:cardview:1.0.0] /Users/liviu/.gradle/caches/transforms-4/db5bfaedd65700ec8322fbc3b741ce4d/transformed/cardview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/liviu/.gradle/caches/transforms-4/6978007ef16f5b08bfde5c2d371c5666/transformed/interpolator-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.interpolator:interpolator:1.0.0] /Users/liviu/.gradle/caches/transforms-4/6978007ef16f5b08bfde5c2d371c5666/transformed/interpolator-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/liviu/.gradle/caches/transforms-4/7dd1b157a581a80e9f1a96c31df63f75/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/liviu/.gradle/caches/transforms-4/7dd1b157a581a80e9f1a96c31df63f75/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/liviu/.gradle/caches/transforms-4/c5436ac3e027878636055e46f13dd61a/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /Users/liviu/.gradle/caches/transforms-4/c5436ac3e027878636055e46f13dd61a/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:21:5-44
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/liviu/.gradle/caches/transforms-4/413c26fb01dfe881c4b3792f6317c200/transformed/startup-runtime-1.1.1/AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/liviu/.gradle/caches/transforms-4/413c26fb01dfe881c4b3792f6317c200/transformed/startup-runtime-1.1.1/AndroidManifest.xml:21:5-23:41
+MERGED from [androidx.tracing:tracing:1.0.0] /Users/liviu/.gradle/caches/transforms-4/aad65feca61a7bf58ec8c4a12d08e093/transformed/tracing-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.tracing:tracing:1.0.0] /Users/liviu/.gradle/caches/transforms-4/aad65feca61a7bf58ec8c4a12d08e093/transformed/tracing-1.0.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/liviu/.gradle/caches/transforms-4/23e8cff647e211039f1ff64c5ac71a0a/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.2.0] /Users/liviu/.gradle/caches/transforms-4/23e8cff647e211039f1ff64c5ac71a0a/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
+	android:targetSdkVersion
+		INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/liviu/Coding/PatientMobile/composeApp/src/androidMain/AndroidManifest.xml
+provider#org.jetbrains.compose.resources.AndroidContextProvider
+ADDED from [org.jetbrains.compose.components:components-resources-android:1.7.0] /Users/liviu/.gradle/caches/transforms-4/b5052f03532c994a544cad7e332845d1/transformed/library-release/AndroidManifest.xml:8:9-13:20
+	android:enabled
+		ADDED from [org.jetbrains.compose.components:components-resources-android:1.7.0] /Users/liviu/.gradle/caches/transforms-4/b5052f03532c994a544cad7e332845d1/transformed/library-release/AndroidManifest.xml:11:13-35
+	android:authorities
+		ADDED from [org.jetbrains.compose.components:components-resources-android:1.7.0] /Users/liviu/.gradle/caches/transforms-4/b5052f03532c994a544cad7e332845d1/transformed/library-release/AndroidManifest.xml:10:13-84
+	android:exported
+		ADDED from [org.jetbrains.compose.components:components-resources-android:1.7.0] /Users/liviu/.gradle/caches/transforms-4/b5052f03532c994a544cad7e332845d1/transformed/library-release/AndroidManifest.xml:12:13-37
+	android:name
+		ADDED from [org.jetbrains.compose.components:components-resources-android:1.7.0] /Users/liviu/.gradle/caches/transforms-4/b5052f03532c994a544cad7e332845d1/transformed/library-release/AndroidManifest.xml:9:13-82
+provider#androidx.startup.InitializationProvider
+ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/liviu/.gradle/caches/transforms-4/359c1808d70673d2b1df8c5404b4b91b/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.8.6] /Users/liviu/.gradle/caches/transforms-4/c26c4b5d1dc781a4889ca94caa9ebcfc/transformed/lifecycle-process-2.8.6/AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.lifecycle:lifecycle-process:2.8.6] /Users/liviu/.gradle/caches/transforms-4/c26c4b5d1dc781a4889ca94caa9ebcfc/transformed/lifecycle-process-2.8.6/AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/liviu/.gradle/caches/transforms-4/413c26fb01dfe881c4b3792f6317c200/transformed/startup-runtime-1.1.1/AndroidManifest.xml:26:9-30:34
+MERGED from [androidx.startup:startup-runtime:1.1.1] /Users/liviu/.gradle/caches/transforms-4/413c26fb01dfe881c4b3792f6317c200/transformed/startup-runtime-1.1.1/AndroidManifest.xml:26:9-30:34
+	tools:node
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/liviu/.gradle/caches/transforms-4/359c1808d70673d2b1df8c5404b4b91b/transformed/emoji2-1.3.0/AndroidManifest.xml:28:13-31
+	android:authorities
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/liviu/.gradle/caches/transforms-4/359c1808d70673d2b1df8c5404b4b91b/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+	android:exported
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/liviu/.gradle/caches/transforms-4/359c1808d70673d2b1df8c5404b4b91b/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/liviu/.gradle/caches/transforms-4/359c1808d70673d2b1df8c5404b4b91b/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+meta-data#androidx.emoji2.text.EmojiCompatInitializer
+ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/liviu/.gradle/caches/transforms-4/359c1808d70673d2b1df8c5404b4b91b/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/liviu/.gradle/caches/transforms-4/359c1808d70673d2b1df8c5404b4b91b/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.emoji2:emoji2:1.3.0] /Users/liviu/.gradle/caches/transforms-4/359c1808d70673d2b1df8c5404b4b91b/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:23:9-81
+permission#com.estcomputer.patient.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:22:5-24:47
+	android:protectionLevel
+		ADDED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:24:9-44
+	android:name
+		ADDED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:23:9-81
+uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:26:22-94
+uses-permission#com.estcomputer.patient.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+ADDED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:26:5-97
+	android:name
+		ADDED from [androidx.core:core:1.13.1] /Users/liviu/.gradle/caches/transforms-4/38b15b00081baeb2856bf37a447e9283/transformed/core-1.13.1/AndroidManifest.xml:26:22-94
+meta-data#androidx.lifecycle.ProcessLifecycleInitializer
+ADDED from [androidx.lifecycle:lifecycle-process:2.8.6] /Users/liviu/.gradle/caches/transforms-4/c26c4b5d1dc781a4889ca94caa9ebcfc/transformed/lifecycle-process-2.8.6/AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.lifecycle:lifecycle-process:2.8.6] /Users/liviu/.gradle/caches/transforms-4/c26c4b5d1dc781a4889ca94caa9ebcfc/transformed/lifecycle-process-2.8.6/AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.lifecycle:lifecycle-process:2.8.6] /Users/liviu/.gradle/caches/transforms-4/c26c4b5d1dc781a4889ca94caa9ebcfc/transformed/lifecycle-process-2.8.6/AndroidManifest.xml:30:17-78
+meta-data#androidx.profileinstaller.ProfileInstallerInitializer
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+	android:value
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+receiver#androidx.profileinstaller.ProfileInstallReceiver
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+	android:enabled
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+	android:exported
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+	android:permission
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+	android:directBootAware
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+action#androidx.profileinstaller.action.INSTALL_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+action#androidx.profileinstaller.action.SKIP_FILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+action#androidx.profileinstaller.action.SAVE_PROFILE
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+action#androidx.profileinstaller.action.BENCHMARK_OPERATION
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
+	android:name
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] /Users/liviu/.gradle/caches/transforms-4/cbac82d7fb3a509ac75a4940b5d59dca/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92

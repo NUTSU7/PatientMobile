@@ -19,6 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PatientMobile"
-include(":app")
- 
+rootProject.name = "patient"
+include(":composeApp")
