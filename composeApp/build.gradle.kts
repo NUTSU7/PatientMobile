@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
+    id("patient.verification")
 }
 
 kotlin {
@@ -25,6 +26,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":shared:domain"))
+            implementation(project(":shared:fhir"))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -37,6 +40,10 @@ kotlin {
             implementation(libs.androidx.navigation.compose)
         }
         androidMain.dependencies {
+            implementation(project(":shared:crypto"))
+            implementation(project(":shared:data"))
+            implementation(project(":shared:platform"))
+            implementation(project(":shared:ingestion"))
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.core.ktx)
