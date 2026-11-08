@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decizii arhitectură Patient</title>
+<style>
+:root{
+  --bg:#f7f7f5;--surface:#ffffff;--text:#1d1f23;--muted:#5d636d;--line:#e2e3e0;
+  --accent:#1f6f5c;--accent-soft:#e3f1ec;--warn:#9a5b00;--warn-soft:#fbf0dc;
+  --no:#a23535;--no-soft:#f8e4e4;--code:#f0f1ee;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15171a;--surface:#1d2024;--text:#e6e7e9;--muted:#a1a7b0;--line:#30343a;
+    --accent:#5cc3a6;--accent-soft:#1e332d;--warn:#e7b25d;--warn-soft:#352a17;
+    --no:#ef8a8a;--no-soft:#3a2222;--code:#262a2f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15171a;--surface:#1d2024;--text:#e6e7e9;--muted:#a1a7b0;--line:#30343a;
+  --accent:#5cc3a6;--accent-soft:#1e332d;--warn:#e7b25d;--warn-soft:#352a17;
+  --no:#ef8a8a;--no-soft:#3a2222;--code:#262a2f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:32px 16px 80px;display:grid;grid-template-columns:240px minmax(0,1fr);gap:40px}
+nav{position:sticky;top:24px;align-self:start;font-size:14px}
+nav b{display:block;margin-bottom:8px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:12px}
+nav a{display:block;padding:3px 0;color:var(--muted);text-decoration:none}
+nav a:hover{color:var(--accent)}
+header{margin-bottom:28px}
+h1{font-size:30px;line-height:1.2;margin:0 0 8px}
+.meta{color:var(--muted);font-size:14px}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.ok{background:var(--accent-soft);color:var(--accent)}
+.open{background:var(--warn-soft);color:var(--warn)}
+.no{background:var(--no-soft);color:var(--no)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px 24px;margin-bottom:18px}
+h2{font-size:20px;margin:0 0 12px}
+h3{font-size:16px;margin:18px 0 6px}
+p{margin:8px 0}
+ul{margin:6px 0;padding-left:22px}
+li{margin:3px 0}
+table{width:100%;border-collapse:collapse;font-size:14.5px;margin:8px 0}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600;font-size:13px}
+.tbl{overflow-x:auto}
+code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:13.5px}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:6px}
+.card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--bg)}
+.card b{display:block;margin-bottom:2px}
+.card span{color:var(--muted);font-size:14px}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:10px 14px;border-radius:6px;font-size:14.5px}
+.keys{font-family:ui-monospace,Consolas,monospace;font-size:13px;background:var(--code);padding:14px;border-radius:8px;white-space:pre;overflow-x:auto;line-height:1.5}
+footer{color:var(--muted);font-size:13px;margin-top:24px}
+@media (max-width:860px){
+  .wrap{grid-template-columns:1fr;gap:16px}
+  nav{position:static;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  section{padding:18px 16px}
+  h1{font-size:24px}
+}
+@media print{nav{display:none}.wrap{display:block}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <b>Cuprins</b>
+  <a href="#rezumat">Rezumat</a>
+  <a href="#context">1. Context și decizia administrației</a>
+  <a href="#principii">2. Principii</a>
+  <a href="#functii">3. Ce face prima versiune</a>
+  <a href="#server">4. Fără server, fără cloud</a>
+  <a href="#acces">5. Acces și chei</a>
+  <a href="#securitate">6. Securitate</a>
+  <a href="#date">7. Modelul de date</a>
+  <a href="#ingestie">8. Citirea documentelor</a>
+  <a href="#ai">9. Asistentul AI</a>
+  <a href="#scop">10. Scop informativ</a>
+  <a href="#backup">11. Backup și telefon nou</a>
+  <a href="#medic">12. Exportul pentru medic</a>
+  <a href="#legal">13. Conformitate legală</a>
+  <a href="#retragere">14. Sistemul actual</a>
+  <a href="#etape">15. Etape F0–F7</a>
+  <a href="#adr">16. Documente de decizie</a>
+  <a href="#deschise">17. Necesită răspuns</a>
+</nav>
+
+<main>
+<header>
+  <h1>Patient mobile-first: deciziile de arhitectură</h1>
+  <div class="meta">Stare la 04.11.2026 · ramura <code>docs/mobile-first-architecture</code> · detaliile complete sunt în <code>docs/architecture/mobile-first/</code></div>
+  <p class="note">Documentul adună deciziile luate împreună, pas cu pas. Formulările juridice (scopul declarat, consimțământul, nota de informare) <b>așteaptă validarea juristului</b>. Planul nu alege între dezvoltarea nativă și cea cross-platform; decizia aparține echipei de dezvoltare.</p>
+</header>
+
+<section id="rezumat">
+  <h2>Rezumat</h2>
+  <div class="summary">
+    <div class="card"><b>Doar pacient, doar mobil</b><span>Fără laborator, fără medic, fără web.</span></div>
+    <div class="card"><b>Fără server propriu</b><span>Fără cont, fără telemetrie, fără cloud. Totul rulează pe telefon.</span></div>
+    <div class="card"><b>O singură persoană, 18+</b><span>Profil minim: nume, anul nașterii, sexul.</span></div>
+    <div class="card"><b>Parolă + cheia telefonului</b><span>MFA local, plus o cheie de recuperare de 24 de cuvinte.</span></div>
+    <div class="card"><b>FHIR R4</b><span>Cu LOINC, UCUM și ATC.</span></div>
+    <div class="card"><b>Pacientul confirmă</b><span>Nicio valoare citită automat nu e corectă până nu o confirmă pacientul.</span></div>
+    <div class="card"><b>Informează, nu diagnostichează</b><span>Fără diagnostic, doze, interacțiuni sau marcaje calculate.</span></div>
+    <div class="card"><b>Export pentru medic: PDF</b><span>Fără parolă, fără răspunsuri AI.</span></div>
+  </div>
+</section>
+
+<section id="context">
+  <h2>1. Context și decizia administrației</h2>
+  <ul>
+    <li>Administrația a hotărât <b>oprirea completă a lucrului la partea de laborator și medic</b>. Proiectul se concentrează doar pe pacient.</li>
+    <li>Trecem la <b>mobile-first</b>: se dezvoltă doar pentru telefon, fără versiune web.</li>
+    <li>Motivul principal: <b>securitatea</b>.</li>
+    <li>Sistemul actual <b>nu are utilizatori reali</b>, doar date ale dezvoltatorilor. Nu se face migrare: aplicația pornește de la zero.</li>
+    <li>Planul se bazează pe <b>GDPR</b>, <b>Legea nr. 195/2024</b> (în vigoare din 23.08.2026, înlocuiește Legea 133/2011) și <b>AI Act</b>, plus standardele FHIR și de securitate a datelor.</li>
+  </ul>
+</section>
+
+<section id="principii">
+  <h2>2. Principii de arhitectură (toate acceptate)</h2>
+  <div class="tbl"><table>
+    <tr><th>ID</th><th>Principiu</th><th>Ce înseamnă</th></tr>
+    <tr><td>ARH-01</td><td>Local-first</td><td>Datele stau pe telefon; aplicația funcționează complet fără internet.</td></tr>
+    <tr><td>ARH-02</td><td>Fără server propriu</td><td>Nici pentru date, conturi, distribuție sau telemetrie. Aplicația și modelele se livrează prin magazine.</td></tr>
+    <tr><td>ARH-03</td><td>Fără cloud pentru OCR și AI</td><td>Totul rulează pe telefon. Cloud-ul cu date anonimizate rămâne doar o opțiune viitoare, cu condiții.</td></tr>
+    <tr><td>ARH-04</td><td>Standarde deschise</td><td>HL7 FHIR R4 cu LOINC, UCUM, ATC.</td></tr>
+    <tr><td>ARH-05</td><td>Confidențialitate implicită</td><td>Fără cont, fără telemetrie, fără SDK-uri de analytics sau raportare a erorilor.</td></tr>
+    <tr><td>ARH-06</td><td>Omul confirmă</td><td>Nicio valoare extrasă automat nu devine confirmată fără pacient; proveniența se păstrează.</td></tr>
+    <tr><td>ARH-07</td><td>Independență de platformă</td><td>Contracte neutre; aceeași suită de teste pentru orice implementare.</td></tr>
+    <tr><td>ARH-08</td><td>Scop declarat limitat</td><td>Informează și organizează; nu pune diagnostice, nu recomandă tratamente.</td></tr>
+    <tr><td>ARH-09</td><td>Ștergere reală</td><td>Ștergerea distruge cheile, deci datele devin ireversibil ilizibile.</td></tr>
+    <tr><td>ARH-10</td><td>Transparență</td><td>Pacientul vede ce date are, de unde vin, ce a extras automatul și ce a generat AI-ul.</td></tr>
+    <tr><td>ARH-11</td><td>Acces multi-factor, local</td><td>Parolă obligatorie plus cheia hardware a telefonului; biometria e opțională.</td></tr>
+    <tr><td>ARH-12</td><td>Doar adulți</td><td>Vârsta minimă: 18 ani.</td></tr>
+  </table></div>
+</section>
+
+<section id="functii">
+  <h2>3. Ce face prima versiune</h2>
+  <ul>
+    <li>Păstrează documentele medicale proprii: analize, rapoarte, scrisori medicale, rețete.</li>
+    <li>Extrage automat valorile din documente, iar pacientul le confirmă.</li>
+    <li>Arată evoluția valorilor în timp.</li>
+    <li>Ține evidența medicamentelor și tratamentelor, cu mementouri după schema introdusă de pacient.</li>
+    <li>Notițe personale.</li>
+    <li>Asistent AI local (de la faza F4), pentru explicații generale.</li>
+    <li>Export când decide pacientul.</li>
+  </ul>
+  <p><b>O singură persoană</b> pe aplicație: fără profiluri pentru copii sau familie.</p>
+  <p><b>Limba:</b> engleza este limba principală a primei versiuni (interfață și documente), urmată de română. Textele legale există în ambele limbi.</p>
+</section>
+
+<section id="server">
+  <h2>4. Fără server, fără cloud</h2>
+  <div class="tbl"><table>
+    <tr><th>Ce trebuie livrat</th><th>Cum</th></tr>
+    <tr><td>Aplicația</td><td>Google Play și App Store</td></tr>
+    <tr><td>Modelele AI și OCR</td><td>Pachete de resurse livrate de magazin, descărcate pe Wi-Fi</td></tr>
+    <tr><td>Cataloage (LOINC, UCUM, medicamente)</td><td>Incluse în aplicație; se actualizează odată cu ea</td></tr>
+    <tr><td>Configurare</td><td>Inclusă în aplicație; fără configurare la distanță</td></tr>
+    <tr><td>Rapoarte de erori</td><td>Doar statisticile pe care magazinele le colectează deja; fără SDK-uri terțe</td></tr>
+  </table></div>
+  <ul>
+    <li>Aplicația <b>nu face cereri de rețea proprii</b>. Pe Android se verifică în F0 dacă poate funcționa chiar fără permisiunea de Internet.</li>
+    <li>Orice funcție care ar cere cont sau server (sincronizare, partajare prin link, cloud) se poate introduce doar printr-o decizie nouă, cu DPIA actualizat.</li>
+  </ul>
+  <h3>Anonimizarea înainte de cloud (întrebare analizată)</h3>
+  <p>Datele cu adevărat anonime ies de sub GDPR și Legea 195. Pragul e însă foarte ridicat: o analiză cu dată, laborator și valori rare poate identifica persoana, iar adresa IP și cheia API leagă cererea de telefon. <b>Prima versiune nu trimite nimic în cloud.</b> Condițiile minime pentru o eventuală versiune viitoare sunt în <code>CONFORMITATE_LEGALA.md §7</code>.</p>
+</section>
+
+<section id="acces">
+  <h2>5. Acces și chei (MFA fără cont)</h2>
+  <p>Fără cont nu putem folosi coduri prin SMS, email sau aplicații de tip Authenticator. Soluția este MFA <b>local</b>: datele se deschid doar dacă sunt prezenți <b>ambii factori</b>.</p>
+  <div class="keys">Parola aplicației ──(Argon2id)──┐
+                                ├──► deschid împreună cheia principală ──► datele
+Cheia hardware a telefonului ───┘
+
+Cheia de recuperare (24 de cuvinte) ──► copie separată a cheii principale
+                                    └──► deschide orice export</div>
+  <ul>
+    <li><b>Parola</b> e obligatorie la prima pornire; politica urmează NIST SP 800-63B (minimum 8 caractere, verificare față de parole compromise, fără expirare periodică).</li>
+    <li><b>Biometria</b> e opțională, pentru comoditate. Parola se cere după repornire, după schimbarea biometriei și periodic (de exemplu la 7 zile).</li>
+    <li><b>Cheia de recuperare</b>: 24 de cuvinte, afișate o singură dată, cu verificare că au fost notate.</li>
+    <li>Aplicația explică clar: <b>fără parolă și fără cheia de recuperare, datele nu pot fi recuperate de nimeni</b>, nici de noi.</li>
+    <li>Telefonul trebuie să aibă blocarea ecranului activă.</li>
+  </ul>
+</section>
+
+<section id="securitate">
+  <h2>6. Securitate</h2>
+  <div class="tbl"><table>
+    <tr><th>Tema</th><th>Decizie</th></tr>
+    <tr><td>Criptare</td><td>Toate datele (bază de date, fișiere, cache, miniaturi, fișiere temporare) criptate cu AES-256-GCM. Datele aplicației sunt excluse din backup-ul automat al telefonului.</td></tr>
+    <tr><td>Blocare automată</td><td>După <b>5 minute</b> de inactivitate și după <b>1 minut</b> în altă aplicație. Pacientul poate alege valori mai stricte. Camera și selectorul de fișiere nu declanșează blocarea.</td></tr>
+    <tr><td>Capturi de ecran</td><td><b>Blocate implicit</b>; se pot permite din setări, după un avertisment. Previzualizarea din lista de aplicații recente rămâne mereu încețoșată.</td></tr>
+    <tr><td>Parole greșite</td><td>Întârziere progresivă. Ștergerea automată după multe încercări e opțională și <b>dezactivată implicit</b>.</td></tr>
+    <tr><td>Telefoane cu root / jailbreak</td><td><b>Avertizare o singură dată, fără blocare</b>: datele sunt ale pacientului. Riscul rămas se trece în DPIA.</td></tr>
+    <tr><td>Actualizări</td><td><b>Fără blocarea versiunilor vechi.</b> Android: mecanismul Google Play cere insistent actualizarea. iPhone: actualizările automate ale App Store. Vulnerabilitățile critice se rezolvă în maximum 30 de zile.</td></tr>
+    <tr><td>Test de penetrare</td><td><b>Extern</b>, după OWASP MASVS L2: înainte de lansare și la fiecare schimbare majoră (inclusiv asistentul AI din F4).</td></tr>
+    <tr><td>Biblioteci terțe</td><td>Fără SDK-uri de reclame, analytics sau crash reporting.</td></tr>
+    <tr><td>Standarde</td><td>OWASP MASVS v2.1 (L2 + R), MASTG, NIST SP 800-63B și 800-57, Argon2id, HPKE, modelare de amenințări STRIDE și LINDDUN.</td></tr>
+  </table></div>
+</section>
+
+<section id="date">
+  <h2>7. Modelul de date</h2>
+  <p><span class="pill ok">Acceptat</span> HL7 <b>FHIR R4</b>, cu terminologiile <b>LOINC</b> (analize), <b>UCUM</b> (unități) și <b>ATC</b> (medicamente). Exportul complet are aceeași structură ca stocarea.</p>
+  <div class="tbl"><table>
+    <tr><th>Informație</th><th>Resursa FHIR</th></tr>
+    <tr><td>Profilul pacientului</td><td><code>Patient</code>: nume, <b>doar anul nașterii</b>, sexul, toate opționale. <b>Fără IDNP, adresă sau telefon.</b></td></tr>
+    <tr><td>Buletin de analize</td><td><code>DiagnosticReport</code> + <code>Observation</code> pentru fiecare valoare</td></tr>
+    <tr><td>Documentul original</td><td><code>DocumentReference</code> + fișierul criptat</td></tr>
+    <tr><td>Notițe</td><td><code>DocumentReference</code></td></tr>
+    <tr><td>Medicamente și tratamente</td><td><code>MedicationStatement</code>, <code>CarePlan</code></td></tr>
+    <tr><td>Conversațiile AI</td><td><code>Communication</code>, marcate „generat de AI”</td></tr>
+    <tr><td>Proveniența</td><td><code>Provenance</code> + marcaj: nevalidat / confirmat de pacient / introdus manual</td></tr>
+  </table></div>
+  <p><b>Pentru o versiune ulterioară:</b> diagnostice, alergii, vaccinări, măsurători făcute acasă. Modelul le poate adăuga fără schimbări de arhitectură.</p>
+  <h3>Editare și ștergere</h3>
+  <ul>
+    <li><b>Fără istoric al corecturilor.</b> Editarea suprascrie valoarea, fără a întreba motivul. Documentul original rămâne referința de verificare.</li>
+    <li>Pentru a păstra un tratament vechi, pacientul îl încheie (data de sfârșit) și adaugă unul nou.</li>
+    <li>Ștergerea este definitivă. Ștergerea totală se face dintr-o singură acțiune, confirmată de două ori.</li>
+  </ul>
+</section>
+
+<section id="ingestie">
+  <h2>8. Citirea documentelor (partea cea mai complexă din v1)</h2>
+  <p>Specificația completă e în <code>PIPELINE_INGESTIE.md</code>. Deciziile principale:</p>
+  <ul>
+    <li><b>Ce se extrage</b>, în ordinea priorității: <b>1) analize</b>, <b>2) notițe</b>, <b>3) medicamente</b>. Celelalte documente se păstrează, cu text căutabil.</li>
+    <li><b>Tipuri de text:</b> tipărit <b>și scris de mână</b>. Limbi: engleza, apoi româna. Documentele în rusă se păstrează, dar extragerea nu e garantată.</li>
+    <li>Fluxul: captură sau import → PDF digital sau imagine → OCR pe telefon → identificarea tabelului → extragerea valorilor → normalizare (LOINC, UCUM) → validare → <b>revizuirea de către pacient</b> → salvare.</li>
+    <li><b>„Confirmă tot”</b> apare doar după ce pacientul a derulat tot documentul și nu mai există câmpuri invalide.</li>
+    <li><b>Medicamentele se confirmă unul câte unul.</b></li>
+    <li><b>Valorile scrise de mână</b> sunt evidențiate la revizuire; după confirmare sunt considerate sigure.</li>
+    <li>Dacă numele de pe buletin nu corespunde profilului: <b>doar avertisment</b>.</li>
+    <li>Unitățile nu se convertesc la salvare; valoarea rămâne cea din buletin.</li>
+    <li>Textul OCR complet se păstrează pentru căutare și se șterge odată cu documentul. Metadatele foto (GPS etc.) se elimină.</li>
+  </ul>
+</section>
+
+<section id="ai">
+  <h2>9. Asistentul AI</h2>
+  <div class="tbl"><table>
+    <tr><th>Tema</th><th>Decizie</th></tr>
+    <tr><td>Când apare</td><td>În <b>faza F4</b>, după stocare, OCR și extragere.</td></tr>
+    <tr><td>Activare</td><td><b>Activat implicit</b> pe telefoanele compatibile; se poate dezactiva din setări.</td></tr>
+    <tr><td>Descărcare</td><td>Modelul (1–3 GB) se descarcă automat <b>doar pe Wi-Fi</b>, cu informarea pacientului.</td></tr>
+    <tr><td>Conversații</td><td><b>Se păstrează ca istoric, criptat</b>; pot fi șterse; intră în exportul complet.</td></tr>
+    <tr><td>Telefoane slabe (N3, sub 6 GB RAM)</td><td><b>Fără asistent AI</b>; restul funcțiilor rămân complete.</td></tr>
+    <tr><td>Transparență (AI Act art. 50)</td><td>Fiecare răspuns e etichetat „Generat de AI”; la prima folosire se explică limitele.</td></tr>
+    <tr><td>Siguranță</td><td>Filtre la intrare și la ieșire, testate pe un set adversarial EN/RO. Răspunsurile citează sursele din datele pacientului.</td></tr>
+  </table></div>
+</section>
+
+<section id="scop">
+  <h2>10. Scop informativ, nu dispozitiv medical</h2>
+  <p>Scopul declarat (formularea așteaptă validarea juridică): <i>„Aplicația ajută persoana să își păstreze, să organizeze și să înțeleagă în termeni generali propriile documente și date medicale, și să își amintească de medicamentele stabilite de medic. Aplicația nu oferă diagnostic, nu interpretează clinic rezultatele și nu recomandă tratamente.”</i></p>
+  <div class="tbl"><table>
+    <tr><th>Funcție</th><th>Decizie</th></tr>
+    <tr><td>Păstrare, afișare, căutare documente și valori</td><td><span class="pill ok">Permis</span></td></tr>
+    <tr><td>Grafic de evoluție cu intervalul de referință preluat din buletin</td><td><span class="pill ok">Permis</span></td></tr>
+    <tr><td>Marcaj H/L sau „anormal” doar dacă apare în buletin</td><td><span class="pill ok">Permis</span></td></tr>
+    <tr><td>AI: explicarea generală a unui test, rezumatul unui document, întrebări pentru medic</td><td><span class="pill ok">Permis</span></td></tr>
+    <tr><td>Mementouri după schema introdusă de pacient</td><td><span class="pill ok">Permis</span></td></tr>
+    <tr><td>Marcaj „valoare mare/mică” calculat de aplicație</td><td><span class="pill no">Interzis</span></td></tr>
+    <tr><td>AI: sugestii de diagnostic</td><td><span class="pill no">Interzis</span></td></tr>
+    <tr><td>AI: tratament, doze, oprirea medicamentelor</td><td><span class="pill no">Interzis</span></td></tr>
+    <tr><td>AI: evaluarea urgenței</td><td><span class="pill no">Interzis</span> răspuns fix cu trimitere la medic / 112</td></tr>
+    <tr><td>Calcul de doză</td><td><span class="pill no">Interzis</span></td></tr>
+    <tr><td>Verificarea interacțiunilor dintre medicamente</td><td><span class="pill no">Interzis</span></td></tr>
+  </table></div>
+</section>
+
+<section id="backup">
+  <h2>11. Backup și telefon nou</h2>
+  <ul>
+    <li><b>Export complet criptat</b> (date FHIR + documentele originale), care se deschide <b>doar cu cheia de recuperare</b> de 24 de cuvinte. Telefonul poate crea exporturi, dar nu le poate deschide fără cuvinte.</li>
+    <li><b>Export manual</b>, oricând.</li>
+    <li><b>Export automat periodic</b>, configurat din setări: dosarul (telefon, card, Google Drive, iCloud Drive) și frecvența. <b>Fără mementouri.</b> Rulează doar cât aplicația e deblocată; se păstrează ultimele 3 exporturi.</li>
+    <li><b>Telefon nou:</b> se instalează aplicația, se importă ultimul export și se deschide cu cheia de recuperare.</li>
+    <li>Transferul direct între telefoane: într-o versiune ulterioară.</li>
+    <li><b>Risc acceptat de administrație:</b> telefon pierdut fără niciun export înseamnă date pierdute definitiv.</li>
+  </ul>
+</section>
+
+<section id="medic">
+  <h2>12. Exportul pentru medic</h2>
+  <ul>
+    <li><b>Doar PDF</b> în prima versiune, generat pe telefon, <b>fără parolă</b>. Se trimite prin meniul de partajare al telefonului sau se arată pe ecran.</li>
+    <li>Înainte de trimitere: avertismentul „Fișierul va ieși din aplicație și nu mai este protejat de ea.”</li>
+    <li><b>Ce poate selecta pacientul:</b> analizele dintr-o perioadă; anumite buletine; anumite teste cu evoluția lor în timp; lista medicamentelor.</li>
+    <li><b>Conținut:</b> valoarea, data, laboratorul, unitatea și intervalul de referință exact ca în buletin, cu sursa („transcris din buletinul din …, verificat de pacient”).</li>
+    <li><b>Documentele originale</b> se atașează doar dacă pacientul le bifează.</li>
+    <li><b>Răspunsurile AI nu se includ.</b></li>
+    <li>Fără link sau cod QR (ar cere server). Formatul FHIR/IPS pentru medic poate veni ulterior.</li>
+  </ul>
+</section>
+
+<section id="legal">
+  <h2>13. Conformitate legală</h2>
+  <div class="tbl"><table>
+    <tr><th>Ce cere legea</th><th>Cum respectăm</th></tr>
+    <tr><td>Protecția datelor din proiectare (art. 25)</td><td>Date doar pe telefon, criptate; fără server, cont, telemetrie</td></tr>
+    <tr><td>Consimțământ explicit pentru date de sănătate (art. 9)</td><td>Ecran de consimțământ la prima pornire, EN și RO, cu posibilitatea de retragere</td></tr>
+    <tr><td>Acces și portabilitate (art. 15, 20)</td><td>Export complet FHIR</td></tr>
+    <tr><td>Dreptul la ștergere (art. 17)</td><td>Ștergere reală prin distrugerea cheilor</td></tr>
+    <tr><td>Vârsta</td><td>18+ (Legea 195 permite consimțământ de la 14 ani; am ales un prag mai strict)</td></tr>
+    <tr><td>Evaluarea de impact (DPIA)</td><td>Obligatorie pentru date de sănătate; începe în F0, se finalizează în F7</td></tr>
+    <tr><td>Notificarea unei încălcări în 72 de ore</td><td>Procedură de incident; notificarea CNPDCP</td></tr>
+    <tr><td>Transferuri de date</td><td>Nu există; singurul furnizor terț este cel de email pentru suport</td></tr>
+    <tr><td>AI Act, transparență (art. 50, de la 2 august 2026)</td><td>Etichetă „Generat de AI” și explicarea limitelor</td></tr>
+    <tr><td>Dispozitive medicale (MDR regula 11, Legea 102/2017)</td><td>Scop declarat informativ și lista de funcții interzise</td></tr>
+  </table></div>
+  <p>Întrebările pentru jurist / DPO sunt în <code>CONFORMITATE_LEGALA.md §9</code>.</p>
+</section>
+
+<section id="retragere">
+  <h2>14. Sistemul actual</h2>
+  <ul>
+    <li><b>Fără migrare</b>: datele de pe server aparțin doar dezvoltatorilor.</li>
+    <li>Serverul clinic, site-ul web și linkurile publice de partajare se opresc. Datele de test se șterg, inclusiv din backup-uri, iar ștergerea se documentează.</li>
+    <li>Se păstrează ce e util și nu conține date personale: lista de denumiri ale analizelor, documentele de test anonimizate, rezultatele testelor OCR.</li>
+    <li>Lucrul la laborator rămâne înghețat pe ramura <code>feature/federated-laboratory-smart-fhir</code>.</li>
+  </ul>
+  <p>Detaliile acestui pas nu au fost discutate până la capăt; întrebările rămase sunt în secțiunea 17.</p>
+</section>
+
+<section id="etape">
+  <h2>15. Etape F0–F7</h2>
+  <div class="tbl"><table>
+    <tr><th>Etapă</th><th>Conținut</th><th>Condiție de trecere</th></tr>
+    <tr><td>F0 Fundamentare</td><td>Decizii aprobate; alegerea platformei; DPIA inițial; validarea juridică a scopului; benchmark OCR/AI pe telefoane de referință</td><td>Decizii semnate; raport de benchmark; DPIA v0.1</td></tr>
+    <tr><td>F1 Nucleu local</td><td>Stocare criptată, chei, blocare, model FHIR, notițe, medicamente, mementouri, export, ștergere</td><td>Teste de conformitate; verificare MASVS</td></tr>
+    <tr><td>F2 Documente și OCR</td><td>Import, captură, OCR local, vizualizarea originalelor</td><td>Benchmark OCR peste prag</td></tr>
+    <tr><td>F3 Extragere și valori</td><td>Extragere, normalizare LOINC/UCUM, revizuire, grafice</td><td>Precizia extragerii peste prag; proveniență completă</td></tr>
+    <tr><td>F4 Asistent AI</td><td>Model local, filtre, niveluri de telefoane, transparență</td><td>Set adversarial trecut; test de penetrare extern</td></tr>
+    <tr><td>F5 Backup / transfer</td><td>Export manual și automat, import</td><td>Restaurare reușită pe un telefon nou</td></tr>
+    <tr><td>F6 Retragerea sistemului actual</td><td>Oprirea serverului și a web-ului; ștergerea datelor de test</td><td>Ștergere documentată</td></tr>
+    <tr><td>F7 Lansare</td><td>Test de penetrare extern; DPIA final; politici; registrul activităților; procedura de incident</td><td>Fără vulnerabilități critice sau ridicate; aprobarea DPO</td></tr>
+  </table></div>
+</section>
+
+<section id="adr">
+  <h2>16. Documente de decizie (ADR)</h2>
+  <div class="tbl"><table>
+    <tr><th>ADR</th><th>Titlu</th><th>Stare</th></tr>
+    <tr><td>0001</td><td>Mobile-first, doar pacient, fără web</td><td><span class="pill ok">Acceptat</span></td></tr>
+    <tr><td>0002</td><td>Stocare local-first criptată</td><td><span class="pill open">Propus</span></td></tr>
+    <tr><td>0003</td><td>HL7 FHIR R4 ca model de date</td><td><span class="pill ok">Acceptat</span></td></tr>
+    <tr><td>0004</td><td>OCR, extragere și AI pe dispozitiv</td><td><span class="pill open">Propus</span></td></tr>
+    <tr><td>0005</td><td>Scop declarat informativ</td><td><span class="pill ok">Acceptat intern</span> formularea așteaptă juristul</td></tr>
+    <tr><td>0006</td><td>Backup și transfer între dispozitive</td><td><span class="pill ok">Acceptat</span></td></tr>
+    <tr><td>0007</td><td>Fără server propriu, fără cont, fără telemetrie</td><td><span class="pill ok">Acceptat</span></td></tr>
+    <tr><td>0008</td><td>Autentificare locală multi-factor și cheie de recuperare</td><td><span class="pill ok">Acceptat</span></td></tr>
+    <tr><td>0009</td><td>Domeniul extragerii în prima versiune</td><td><span class="pill ok">Acceptat</span></td></tr>
+    <tr><td>0010</td><td>Asistentul AI local</td><td><span class="pill ok">Acceptat</span></td></tr>
+    <tr><td>0011</td><td>Exportul pentru medic</td><td><span class="pill ok">Acceptat</span></td></tr>
+  </table></div>
+</section>
+
+<section id="deschise">
+  <h2>17. Necesită răspuns</h2>
+  <div class="tbl"><table>
+    <tr><th>#</th><th>Întrebare</th><th>Cine decide</th></tr>
+    <tr><td>ORG-1</td><td>Unde se distribuie aplicația: doar în Republica Moldova sau și în UE?</td><td>Administrația</td></tr>
+    <tr><td>ORG-2</td><td>Cine este operatorul de date (entitatea care publică aplicația)?</td><td>Administrația</td></tr>
+    <tr><td>ORG-3</td><td>Responsabilul cu protecția datelor (DPO): există? Intern sau extern?</td><td>Administrația</td></tr>
+    <tr><td>ORG-4</td><td>Juristul care răspunde la întrebările juridice: intern sau extern?</td><td>Administrația</td></tr>
+    <tr><td>ORG-5</td><td>Cine aprobă bugetul pentru testul de penetrare extern?</td><td>Administrația</td></tr>
+    <tr><td>—</td><td>Domeniul web al proiectului, folosit pentru codurile FHIR proprii</td><td>Administrația</td></tr>
+    <tr><td>—</td><td>Ce formate de buletine de laborator intră în setul de test</td><td>Echipa</td></tr>
+    <tr><td>—</td><td>Ciornele de import neterminate se șterg automat după 30 de zile?</td><td>Echipa</td></tr>
+    <tr><td>—</td><td>Când se oprește serverul actual: acum sau în F6?</td><td>Administrația</td></tr>
+    <tr><td>—</td><td>Codul vechi se arhivează în Git (etichetă), fără ștergere?</td><td>Echipa</td></tr>
+    <tr><td>—</td><td>Datele dezvoltatorilor de pe server sunt analize reale sau documente de test?</td><td>Echipa</td></tr>
+    <tr><td>—</td><td>Acceptarea ADR-0002 (stocare) și ADR-0004 (OCR și AI pe telefon), încă în stadiul „Propus”</td><td>Arhitectură</td></tr>
+  </table></div>
+</section>
+
+<footer>Sursa deciziilor: documentele din <code>docs/architecture/mobile-first/</code>. Documentul nu reprezintă o opinie juridică.</footer>
+</main>
+</div>
+</body>
+</html>
