@@ -16,3 +16,6 @@ local.properties
 /docsLocal
 RULES.md
 AGENTS.md
+# Gradle and Kotlin build output, in every module
+**/build/
+.kotlin/
