@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             content {
@@ -20,4 +21,12 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "patient"
-include(":composeApp")
+include(
+    ":composeApp",
+    ":shared:fhir",
+    ":shared:domain",
+    ":shared:crypto",
+    ":shared:ingestion",
+    ":shared:data",
+    ":shared:platform",
+)
