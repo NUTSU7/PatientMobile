@@ -17,6 +17,26 @@ class KeyResultsTest {
     }
 
     @Test
+    fun lockState_whenExhaustive_compilesWithoutElse() {
+        val states = listOf(LockState.Unconfigured, LockState.Locked(isRecoveryRequired = true), LockState.Unlocked)
+
+        val labels = states.map { state ->
+            when (state) {
+                LockState.Unconfigured -> "unconfigured"
+                is LockState.Locked -> "locked"
+                LockState.Unlocked -> "unlocked"
+            }
+        }
+
+        assertEquals(3, labels.size)
+    }
+
+    @Test
+    fun toString_forLockedState_holdsOnlyTheFlag() {
+        assertEquals("Locked(isRecoveryRequired=true)", LockState.Locked(isRecoveryRequired = true).toString())
+    }
+
+    @Test
     fun unlockResult_whenExhaustive_compilesWithoutElse() {
         val results = listOf(
             UnlockResult.Unlocked(needsBiometricRefresh = false),
