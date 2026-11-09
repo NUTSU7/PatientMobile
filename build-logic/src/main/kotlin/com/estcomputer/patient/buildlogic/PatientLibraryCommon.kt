@@ -15,11 +15,19 @@ internal fun Project.configureAndroidLibrary() {
             compilerOptions {
                 jvmTarget.set(PatientBuildConfig.JVM_TARGET)
             }
+            withHostTest {}
+            withDeviceTest {
+                instrumentationRunner = INSTRUMENTATION_RUNNER
+            }
+        }
+        sourceSets.getByName("commonTest").dependencies {
+            implementation(kotlin("test"))
         }
     }
 }
 
 private const val ANDROID_LIBRARY_EXTENSION = "androidLibrary"
+private const val INSTRUMENTATION_RUNNER = "androidx.test.runner.AndroidJUnitRunner"
 
 internal fun Project.configureDetekt() {
     pluginManager.apply("io.gitlab.arturbosch.detekt")
