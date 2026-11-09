@@ -27,12 +27,14 @@ internal fun Project.configureAndroidLibrary() {
 }
 
 private const val ANDROID_LIBRARY_EXTENSION = "androidLibrary"
+private const val DETEKT_CONFIG_PATH = "config/detekt/detekt.yml"
 private const val INSTRUMENTATION_RUNNER = "androidx.test.runner.AndroidJUnitRunner"
 
 internal fun Project.configureDetekt() {
     pluginManager.apply("io.gitlab.arturbosch.detekt")
     extensions.configure<DetektExtension> {
         buildUponDefaultConfig = true
+        config.setFrom(rootProject.file(DETEKT_CONFIG_PATH))
         source.setFrom(fileTree("src") { include("*/kotlin/**") })
     }
 }
