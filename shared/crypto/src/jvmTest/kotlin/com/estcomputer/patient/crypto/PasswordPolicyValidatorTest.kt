@@ -9,7 +9,7 @@ import kotlin.test.assertIs
 class PasswordPolicyValidatorTest {
     private val validator = PasswordPolicyValidator(
         normalizer = JavaUnicodeNormalizer(),
-        blocklist = PasswordBlocklist(listOf("123456789", "parola123", "password", "patient")),
+        blocklist = PasswordBlocklist(listOf("123456789", "parola123", "password", "patient123")),
     )
 
     private fun check(text: String) = validator.validate(SecretChars.wrap(text.toCharArray()))
@@ -66,8 +66,18 @@ class PasswordPolicyValidatorTest {
     }
 
     @Test
-    fun validate_patient_isRejected() {
-        assertEquals(PasswordCheck.Rejected(PasswordRejection.TOO_SHORT), check("patient"))
+    fun validate_appWord_isRejectedAsCommon() {
+        assertRejected(PasswordRejection.COMMON, "Patient123")
+    }
+
+    @Test
+    fun validate_patientAlone_isTooShortBeforeBlocklist() {
+        assertRejected(PasswordRejection.TOO_SHORT, "patient")
+    }
+
+    @Test
+    fun validate_hugeInput_isRejectedBeforeNormalisation() {
+        assertRejected(PasswordRejection.TOO_LONG, "a".repeat(1_000_000))
     }
 
     @Test
