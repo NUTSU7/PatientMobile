@@ -13,7 +13,11 @@ internal class Bip39Codec(
     private val normalizer: UnicodeNormalizer,
     words: List<String>,
 ) {
-    private val wordlist = Bip39Wordlist(words)
+    private val wordlist = SortedStrings(words)
+
+    init {
+        require(wordlist.size == WORDLIST_SIZE) { "invalid wordlist size" }
+    }
 
     fun encode(entropy: SecretBytes): SecretChars {
         require(entropy.size == ENTROPY_BYTES) { "entropy must be 32 bytes" }
@@ -70,7 +74,7 @@ internal class Bip39Codec(
     private fun lookupAll(chars: CharArray, tokens: List<IntRange>, indexes: IntArray): Int {
         for ((position, range) in tokens.withIndex()) {
             val found = wordlist.indexOf(chars, range)
-            if (found == Bip39Wordlist.NOT_FOUND) return position
+            if (found == SortedStrings.NOT_FOUND) return position
             indexes[position] = found
         }
         return NO_UNKNOWN
@@ -120,6 +124,7 @@ internal class Bip39Codec(
     }
 
     private companion object {
+        const val WORDLIST_SIZE = 2048
         const val WORD_COUNT = 24
         const val ENTROPY_BYTES = 32
         const val PACKED_BYTES = ENTROPY_BYTES + 1
