@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Duration
@@ -182,6 +183,14 @@ class Argon2idKeyDeriverTest {
 
         assertTrue(result.params.salt.contentEquals(salt))
         assertTrue(result.params.isWithinBounds)
+    }
+
+    @Test
+    fun calibrate_wrongSaltSize_throwsWithoutDeriving() = runTest {
+        for (size in listOf(0, CryptoConstants.SALT_BYTES - 1, CryptoConstants.SALT_BYTES + 1)) {
+            assertFailsWith<IllegalArgumentException> { deriver().calibrate(password, ByteArray(size)) }
+        }
+        assertTrue(argon2.calls.isEmpty())
     }
 
     @Test

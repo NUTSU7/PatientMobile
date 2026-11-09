@@ -20,6 +20,7 @@ internal class Argon2idKeyDeriver(
     }
 
     override suspend fun calibrate(password: SecretChars, salt: ByteArray): CalibrationResult {
+        require(salt.size == CryptoConstants.SALT_BYTES) { "invalid salt size" }
         for ((memoryKib, startIterations) in PROFILES) {
             val result = calibrateProfile(password, salt, memoryKib, startIterations)
             if (result !is CalibrationResult.Failed || result.error != KeyError.OUT_OF_MEMORY) return result
