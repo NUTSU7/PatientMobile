@@ -14,8 +14,13 @@
 .cxx
 local.properties
 /docsLocal
-RULES.md
-AGENTS.md
+
+# AI Tooling
+AGENTS*.md
+/.agents/
+/.claude/
+/.github/workflows/
 # Gradle and Kotlin build output, in every module
 **/build/
 .kotlin/
+**/bin/
