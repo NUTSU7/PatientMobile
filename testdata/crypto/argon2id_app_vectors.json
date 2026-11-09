@@ -1,0 +1,11 @@
+[
+  {
+    "name": "app:production",
+    "password_utf8": "5061726f6cc483206465207465737420c899c89bc3aec3a220f09fa9ba",
+    "salt": "000102030405060708090a0b0c0d0e0f",
+    "memory_kib": 65536,
+    "iterations": 3,
+    "parallelism": 1,
+    "tag": "44b91672c36aaf2a83773a6960515a30783afbcc376a365c5e10496f2a940e7c"
+  }
+]
