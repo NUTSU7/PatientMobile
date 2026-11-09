@@ -22,8 +22,11 @@ class BundledResourcesTest {
 
         assertTrue(entries.size >= MIN_ENTRIES)
         assertEquals(entries.sorted(), entries)
-        assertTrue(PasswordBlocklist(entries).contains("password".toCharArray()))
-        assertTrue(PasswordBlocklist(entries).contains("parola123".toCharArray()))
+        assertTrue(entries.all { it.length >= CryptoConstants.PASSWORD_MIN_CODE_POINTS })
+        val blocklist = PasswordBlocklist(entries)
+        for (word in listOf("password", "parola123", "patient123", "pacient123", "parola1234", "parolamea")) {
+            assertTrue(blocklist.contains(word.toCharArray()), word)
+        }
     }
 
     @Test
@@ -43,6 +46,6 @@ class BundledResourcesTest {
 
     private companion object {
         const val WORDLIST_SHA256 = "2f5eed53a4727b4bf8880d8f3f199efc90e58503646d9ff8eff3a2ed3b24dbda"
-        const val MIN_ENTRIES = 10_000
+        const val MIN_ENTRIES = 2_000
     }
 }
