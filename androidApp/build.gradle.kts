@@ -44,8 +44,6 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
-    implementation(libs.androidx.biometric)
     implementation(libs.androidx.fragment)
-    implementation(libs.koin.core)
     implementation(libs.koin.android)
 }

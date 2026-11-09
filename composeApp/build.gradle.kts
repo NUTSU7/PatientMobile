@@ -41,6 +41,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.androidx.navigation.compose)
+            implementation(libs.koin.core)
         }
         androidMain.dependencies {
             implementation(project(":shared:crypto"))
@@ -48,6 +49,9 @@ kotlin {
             implementation(project(":shared:platform"))
             implementation(project(":shared:ingestion"))
             implementation(compose.preview)
+            implementation(libs.koin.android)
+            implementation(libs.androidx.biometric)
+            implementation(libs.androidx.fragment)
         }
         iosMain.dependencies {
         }
