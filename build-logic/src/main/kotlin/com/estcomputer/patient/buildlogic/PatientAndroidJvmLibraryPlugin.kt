@@ -9,15 +9,10 @@ class PatientAndroidJvmLibraryPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             pluginManager.apply("org.jetbrains.kotlin.multiplatform")
-            pluginManager.apply("com.android.library")
+            pluginManager.apply("com.android.kotlin.multiplatform.library")
             pluginManager.apply("patient.verification")
 
             extensions.configure<KotlinMultiplatformExtension> {
-                androidTarget {
-                    compilerOptions {
-                        jvmTarget.set(PatientBuildConfig.JVM_TARGET)
-                    }
-                }
                 jvm {
                     compilerOptions {
                         jvmTarget.set(PatientBuildConfig.JVM_TARGET)

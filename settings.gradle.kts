@@ -22,6 +22,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "patient"
 include(
+    ":androidApp",
     ":composeApp",
     ":shared:fhir",
     ":shared:domain",

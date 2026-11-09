@@ -1,13 +1,16 @@
 plugins {
     alias(libs.plugins.jetbrains.kotlin.multiplatform)
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
     id("patient.verification")
 }
 
 kotlin {
-    androidTarget {
+    androidLibrary {
+        namespace = "com.estcomputer.patient.composeApp"
+        compileSdk = 34
+        minSdk = 29
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
         }
@@ -45,40 +48,8 @@ kotlin {
             implementation(project(":shared:platform"))
             implementation(project(":shared:ingestion"))
             implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.androidx.core.ktx)
-            implementation(libs.material)
         }
         iosMain.dependencies {
         }
-    }
-}
-
-android {
-    namespace = "com.estcomputer.patient"
-    compileSdk = 34
-
-    defaultConfig {
-        applicationId = "com.estcomputer.patient"
-        minSdk = 29
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
     }
 }
