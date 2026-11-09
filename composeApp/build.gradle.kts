@@ -9,7 +9,7 @@ plugins {
 kotlin {
     androidLibrary {
         namespace = "com.estcomputer.patient.composeApp"
-        compileSdk = 34
+        compileSdk = 37
         minSdk = 29
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)

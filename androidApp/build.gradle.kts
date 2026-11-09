@@ -12,7 +12,7 @@ kotlin {
 
 android {
     namespace = "com.estcomputer.patient"
-    compileSdk = 34
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.estcomputer.patient"
