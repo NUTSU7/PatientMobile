@@ -48,8 +48,10 @@ internal class PasswordChangeFlow(
             else -> Outcome.Done(ChangePasswordResult.Failed(KeyError.WRONG_PASSWORD))
         }
 
-    private fun isRecentUnlock(): Boolean =
-        context.bootInfo.elapsedRealtimeMillis() - context.session.lastUnlockElapsedMillis < RECENT_UNLOCK_MILLIS
+    private fun isRecentUnlock(): Boolean {
+        val unlockedAt = context.session.passwordUnlockElapsedMillis
+        return unlockedAt != null && context.bootInfo.elapsedRealtimeMillis() - unlockedAt < RECENT_UNLOCK_MILLIS
+    }
 
     private suspend fun verifyOld(vault: VaultFile, old: SecretChars, new: SecretChars): Outcome =
         when (val attempt = verifier.verify(vault, old)) {

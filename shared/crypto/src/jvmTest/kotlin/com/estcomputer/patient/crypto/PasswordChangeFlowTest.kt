@@ -1,5 +1,6 @@
 package com.estcomputer.patient.crypto
 
+import com.estcomputer.patient.domain.model.BiometricBeginResult
 import com.estcomputer.patient.domain.model.ChangePasswordResult
 import com.estcomputer.patient.domain.model.KeyError
 import com.estcomputer.patient.domain.model.PasswordRejection
@@ -91,6 +92,24 @@ class PasswordChangeFlowTest {
             rig.change.change(null, chars(NEW_PASSWORD)),
         )
         assertContentEquals(before, rig.files.vaultBytes)
+    }
+
+    @Test
+    fun change_afterBiometricUnlock_needsTheOldPassword() = runTest {
+        val rig = unlockedRig(this)
+        val challenge = assertIs<BiometricBeginResult.Ready>(rig.biometrics.beginBiometricEnrolment()).challenge
+        rig.biometrics.completeBiometricEnrolment(challenge)
+        rig.session.clear()
+        val unlockChallenge = assertIs<BiometricBeginResult.Ready>(rig.biometrics.beginBiometricUnlock()).challenge
+        assertIs<UnlockResult.Unlocked>(rig.biometrics.completeBiometricUnlock(unlockChallenge))
+        val before = rig.files.vaultBytes!!.copyOf()
+
+        assertEquals(
+            ChangePasswordResult.Failed(KeyError.WRONG_PASSWORD),
+            rig.change.change(null, chars(NEW_PASSWORD)),
+        )
+        assertContentEquals(before, rig.files.vaultBytes)
+        assertEquals(ChangePasswordResult.Changed, rig.change.change(chars(PASSWORD), chars(NEW_PASSWORD)))
     }
 
     @Test

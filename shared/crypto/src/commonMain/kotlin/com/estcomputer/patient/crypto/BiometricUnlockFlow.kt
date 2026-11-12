@@ -79,7 +79,7 @@ internal class BiometricUnlockFlow(
                     context.session.start(
                         decoded.mk,
                         decoded.policy.passwordUnlockAt,
-                        context.bootInfo.elapsedRealtimeMillis(),
+                        passwordElapsedMillis = null,
                     )
                     UnlockResult.Unlocked(needsBiometricRefresh = false)
                 }
