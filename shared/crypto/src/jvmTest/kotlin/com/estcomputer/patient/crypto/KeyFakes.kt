@@ -79,6 +79,10 @@ internal class FakeKdf : PasswordKdf, KdfCalibrator {
     var calibrateCalls = 0
     var failure: KeyError? = null
 
+    /** Simulates the process dying while the KDF runs. */
+    var crash: Throwable? = null
+    var onDerive: suspend () -> Unit = {}
+
     private fun key(password: SecretChars, salt: ByteArray): SecretBytes {
         val bytes = password.read { chars ->
             ByteArray(CryptoConstants.KEY_SIZE_BYTES) { i ->
@@ -91,6 +95,8 @@ internal class FakeKdf : PasswordKdf, KdfCalibrator {
 
     override suspend fun derive(password: SecretChars, params: KdfParams): KdfResult {
         deriveCalls++
+        onDerive()
+        crash?.let { throw it }
         val error = failure
         return when {
             !params.isWithinBounds -> KdfResult.Failed(KeyError.VAULT_CORRUPT)
