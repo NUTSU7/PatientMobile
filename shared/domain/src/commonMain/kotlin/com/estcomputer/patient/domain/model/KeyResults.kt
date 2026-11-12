@@ -40,6 +40,9 @@ public sealed interface ChangePasswordResult {
     public data class Failed(val error: KeyError) : ChangePasswordResult
 
     public data class LockedOut(val remainingMillis: Long) : ChangePasswordResult
+
+    /** The old password failed at the auto-wipe limit and all data was destroyed. */
+    public data object Wiped : ChangePasswordResult
 }
 
 public sealed interface BiometricBeginResult {

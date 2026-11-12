@@ -85,6 +85,7 @@ class KeyResultsTest {
             ChangePasswordResult.PasswordRejected(PasswordRejection.TOO_LONG),
             ChangePasswordResult.Failed(KeyError.VAULT_CORRUPT),
             ChangePasswordResult.LockedOut(remainingMillis = 1),
+            ChangePasswordResult.Wiped,
         )
 
         val labels = results.map { result ->
@@ -93,10 +94,11 @@ class KeyResultsTest {
                 is ChangePasswordResult.PasswordRejected -> "rejected"
                 is ChangePasswordResult.Failed -> "failed"
                 is ChangePasswordResult.LockedOut -> "lockedOut"
+                ChangePasswordResult.Wiped -> "wiped"
             }
         }
 
-        assertEquals(4, labels.size)
+        assertEquals(5, labels.size)
     }
 
     @Test
