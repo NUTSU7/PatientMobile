@@ -12,8 +12,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * MK, the recovery blob and the export key stay as they were.
  */
 internal class RecoveryFlow(
-    private val validator: PasswordPolicyValidator,
-    private val calibrator: KdfCalibrator,
+    private val newPasswordDeriver: NewPasswordDeriver,
     private val hardware: HardwareWrap,
     private val biometricKeystore: BiometricKeystore,
     private val tools: KeyToolbox,
@@ -81,9 +80,10 @@ internal class RecoveryFlow(
     private suspend fun withNewPassword(vault: VaultFile, mk: SecretBytes, newPassword: SecretChars): UnlockResult {
         var isKept = false
         try {
-            val result = when (val checked = validator.validate(newPassword)) {
-                is PasswordCheck.Rejected -> UnlockResult.PasswordRejected(checked.reason)
-                is PasswordCheck.Ok -> calibrateAndStore(vault, mk, checked.normalized)
+            val result = when (val derived = newPasswordDeriver.derive(newPassword)) {
+                is NewPasswordResult.Rejected -> UnlockResult.PasswordRejected(derived.reason)
+                is NewPasswordResult.Failed -> UnlockResult.Failed(derived.error)
+                is NewPasswordResult.Ready -> wrapAndStore(vault, mk, derived)
             }
             isKept = result is UnlockResult.Unlocked
             return result
@@ -92,31 +92,20 @@ internal class RecoveryFlow(
         }
     }
 
-    private suspend fun calibrateAndStore(vault: VaultFile, mk: SecretBytes, normalized: SecretChars): UnlockResult =
-        try {
-            val salt = tools.random.nextBytes(CryptoConstants.SALT_BYTES)
-            when (val calibrated = calibrator.calibrate(normalized, salt)) {
-                is CalibrationResult.Failed -> UnlockResult.Failed(calibrated.error)
-                is CalibrationResult.Calibrated -> wrapAndStore(vault, mk, calibrated)
-            }
-        } finally {
-            normalized.zero()
-        }
-
     private suspend fun wrapAndStore(
         vault: VaultFile,
         mk: SecretBytes,
-        calibrated: CalibrationResult.Calibrated,
+        derived: NewPasswordResult.Ready,
     ): UnlockResult =
         try {
-            val inner = tools.aead.seal(calibrated.key, mk, CryptoConstants.AAD_MK_PASSWORD)
+            val inner = tools.aead.seal(derived.key, mk, CryptoConstants.AAD_MK_PASSWORD)
             // A missing or invalidated device key is exactly why the patient is recovering, so it is rebuilt.
             when (val wrapped = hardware.wrapRebuildingKey(vault.hwKeyAlias, inner)) {
                 is HardwareWrapResult.Failed -> UnlockResult.Failed(wrapped.error)
-                is HardwareWrapResult.Ok -> store(vault, mk, calibrated.params, wrapped.blob)
+                is HardwareWrapResult.Ok -> store(vault, mk, derived.params, wrapped.blob)
             }
         } finally {
-            calibrated.key.zero()
+            derived.key.zero()
         }
 
     private suspend fun store(vault: VaultFile, mk: SecretBytes, params: KdfParams, wrapped: ByteArray): UnlockResult {
