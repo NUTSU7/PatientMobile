@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.estcomputer.patient.domain.model.LockState
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.awaitCancellation
@@ -11,6 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -64,6 +66,27 @@ class SessionCoordinatorTest {
         coordinator.lock()
 
         assertEquals(listOf("job.cancelled", "closer.db", "keys.lock"), events)
+    }
+
+    @Test
+    fun lock_whenJobIgnoresCancellation_zeroesKeysAfterTimeout() = runTest {
+        val coordinator = coordinator(recordingCloser("db"))
+        coordinator.onUnlocked()
+        val started = CompletableDeferred<Unit>()
+        val stuck = requireNotNull(coordinator.unlockedSessionScope).launch {
+            withContext(NonCancellable) {
+                started.complete(Unit)
+                awaitCancellation()
+            }
+        }
+        started.await()
+
+        coordinator.lock()
+
+        assertEquals(listOf("closer.db", "keys.lock"), events)
+        assertEquals(LockState.Locked(isRecoveryRequired = false), coordinator.lockState.value)
+        // The job is still running: the lock did not wait for it.
+        assertFalse(stuck.isCompleted)
     }
 
     @Test
