@@ -18,7 +18,11 @@ internal interface AppDataProbe {
     suspend fun hasAppData(): Boolean
 }
 
-/** Asks for a full wipe. Implemented outside this module, because the wipe also destroys the keys. */
+/**
+ * Asks for a full wipe. Implemented outside this module, because the wipe also destroys the keys.
+ * The implementation writes the `wipe.pending` marker before deleting anything and must be idempotent, so
+ * a retry after a crash converges.
+ */
 internal fun interface WipeRequester {
     suspend fun wipeAllData()
 }

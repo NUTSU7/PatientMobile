@@ -31,14 +31,17 @@ internal class PasswordChangeFlow(
             }
         }
 
-    private suspend fun attempt(old: SecretChars?, new: SecretChars): Outcome {
-        check(context.session.isUnlocked) { "vault is locked" }
-        return when (val read = context.store.read()) {
-            is VaultReadResult.Ok -> authorize(read.vault, old, new)
-            VaultReadResult.Absent, VaultReadResult.Corrupt, VaultReadResult.Unreadable ->
-                Outcome.Done(ChangePasswordResult.Failed(KeyError.VAULT_CORRUPT))
+    private suspend fun attempt(old: SecretChars?, new: SecretChars): Outcome =
+        if (context.isWipePending) {
+            Outcome.Done(ChangePasswordResult.Wiped)
+        } else {
+            check(context.session.isUnlocked) { "vault is locked" }
+            when (val read = context.store.read()) {
+                is VaultReadResult.Ok -> authorize(read.vault, old, new)
+                VaultReadResult.Absent, VaultReadResult.Corrupt, VaultReadResult.Unreadable ->
+                    Outcome.Done(ChangePasswordResult.Failed(KeyError.VAULT_CORRUPT))
+            }
         }
-    }
 
     private suspend fun authorize(vault: VaultFile, old: SecretChars?, new: SecretChars): Outcome =
         when {
@@ -63,6 +66,7 @@ internal class PasswordChangeFlow(
                 }
             is PasswordAttempt.WrongPassword ->
                 if (attempt.isWipeDue) {
+                    context.isWipePending = true
                     Outcome.WipeDue
                 } else {
                     Outcome.Done(ChangePasswordResult.Failed(KeyError.WRONG_PASSWORD))

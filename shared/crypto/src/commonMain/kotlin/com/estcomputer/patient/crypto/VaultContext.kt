@@ -21,4 +21,11 @@ internal class VaultContext(
     val clock: Clock,
     val session: SessionKeys,
     val mutex: Mutex,
-)
+) {
+    /**
+     * Set under [mutex] when an attempt reached the auto-wipe limit, until the next setup. While it is set
+     * every attempt is refused, so a queued correct password cannot unlock a vault that is about to be
+     * wiped, and the wipe is requested only once.
+     */
+    var isWipePending: Boolean = false
+}

@@ -27,10 +27,14 @@ internal class PasswordUnlockFlow(
         }
 
     private suspend fun attempt(password: SecretChars): Outcome =
-        when (val read = context.store.read()) {
-            is VaultReadResult.Ok -> outcomeOf(read.vault, verifier.verify(read.vault, password))
-            VaultReadResult.Absent, VaultReadResult.Corrupt, VaultReadResult.Unreadable ->
-                Outcome.Done(UnlockResult.Failed(KeyError.VAULT_CORRUPT))
+        if (context.isWipePending) {
+            Outcome.Done(UnlockResult.Wiped)
+        } else {
+            when (val read = context.store.read()) {
+                is VaultReadResult.Ok -> outcomeOf(read.vault, verifier.verify(read.vault, password))
+                VaultReadResult.Absent, VaultReadResult.Corrupt, VaultReadResult.Unreadable ->
+                    Outcome.Done(UnlockResult.Failed(KeyError.VAULT_CORRUPT))
+            }
         }
 
     private fun outcomeOf(vault: VaultFile, attempt: PasswordAttempt): Outcome =
@@ -40,7 +44,12 @@ internal class PasswordUnlockFlow(
                 Outcome.Done(UnlockResult.Unlocked(needsBiometricRefresh = vault.wrappedMkBiometric != null))
             }
             is PasswordAttempt.WrongPassword ->
-                if (attempt.isWipeDue) Outcome.WipeDue else Outcome.Done(UnlockResult.Failed(KeyError.WRONG_PASSWORD))
+                if (attempt.isWipeDue) {
+                    context.isWipePending = true
+                    Outcome.WipeDue
+                } else {
+                    Outcome.Done(UnlockResult.Failed(KeyError.WRONG_PASSWORD))
+                }
             is PasswordAttempt.LockedOut -> Outcome.Done(UnlockResult.LockedOut(attempt.remainingMillis))
             is PasswordAttempt.Failed -> Outcome.Done(UnlockResult.Failed(attempt.error))
         }

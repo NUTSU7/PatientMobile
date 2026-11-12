@@ -34,6 +34,8 @@ internal class SetupFlow(
             check(inspector.inspect() == StartupState.Clean) { "setup needs a clean install" }
             pending?.abandon()
             pending = null
+            // A clean install means the earlier wipe finished.
+            context.isWipePending = false
             if (context.deviceSecurity.isDeviceSecure()) {
                 when (val checked = validator.validate(password)) {
                     is PasswordCheck.Rejected -> SetupResult.PasswordRejected(checked.reason)

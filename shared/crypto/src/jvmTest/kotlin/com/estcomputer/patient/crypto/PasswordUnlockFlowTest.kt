@@ -272,6 +272,35 @@ class PasswordUnlockFlowTest {
         assertTrue(results.all { it is UnlockResult.Unlocked })
     }
 
+    @Test
+    fun unlock_queuedAttemptsBehindTheWipingOne_areRefusedAndWipeRunsOnce() = runTest {
+        val rig = rig().setUpAndLock()
+        rig.store.write(rig.vault().copy(wipeAfterFailedAttempts = 10, failedAttempts = 9))
+        rig.kdf.onDerive = { yield() }
+
+        val results = listOf(
+            async { rig.unlock.unlock(chars("wrong password")) },
+            async { rig.unlock.unlock(chars(PASSWORD)) },
+            async { rig.unlock.unlock(chars("wrong again")) },
+        ).awaitAll()
+
+        assertEquals(listOf(UnlockResult.Wiped, UnlockResult.Wiped, UnlockResult.Wiped), results)
+        assertEquals(1, rig.wipe.calls)
+        assertFalse(rig.session.isUnlocked)
+    }
+
+    @Test
+    fun unlock_afterANewSetup_worksAgain() = runTest {
+        val rig = rig().setUpAndLock()
+        rig.store.write(rig.vault().copy(wipeAfterFailedAttempts = 10, failedAttempts = 9))
+        rig.unlock.unlock(chars("wrong password"))
+        rig.files.vaultBytes = null
+
+        rig.setUpAndLock()
+
+        assertIs<UnlockResult.Unlocked>(rig.unlock.unlock(chars(PASSWORD)))
+    }
+
     private companion object {
         const val PASSWORD = "correct horse battery"
         const val LOCKOUT_SKIP = 4_000_000L

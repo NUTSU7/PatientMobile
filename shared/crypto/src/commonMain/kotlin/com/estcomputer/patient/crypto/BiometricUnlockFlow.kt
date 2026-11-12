@@ -15,19 +15,27 @@ internal class BiometricUnlockFlow(
 ) {
     suspend fun begin(): BiometricBeginResult =
         context.mutex.withLock {
-            when (val read = context.store.read()) {
-                is VaultReadResult.Ok -> beginOpen(read.vault)
-                VaultReadResult.Absent, VaultReadResult.Corrupt, VaultReadResult.Unreadable ->
-                    BiometricBeginResult.Failed(KeyError.VAULT_CORRUPT)
+            if (context.isWipePending) {
+                BiometricBeginResult.Failed(KeyError.BIOMETRIC_INVALIDATED)
+            } else {
+                when (val read = context.store.read()) {
+                    is VaultReadResult.Ok -> beginOpen(read.vault)
+                    VaultReadResult.Absent, VaultReadResult.Corrupt, VaultReadResult.Unreadable ->
+                        BiometricBeginResult.Failed(KeyError.VAULT_CORRUPT)
+                }
             }
         }
 
     suspend fun complete(challenge: BiometricChallenge): UnlockResult =
         context.mutex.withLock {
-            when (val read = context.store.read()) {
-                is VaultReadResult.Ok -> open(read.vault, challenge)
-                VaultReadResult.Absent, VaultReadResult.Corrupt, VaultReadResult.Unreadable ->
-                    UnlockResult.Failed(KeyError.VAULT_CORRUPT)
+            if (context.isWipePending) {
+                UnlockResult.Wiped
+            } else {
+                when (val read = context.store.read()) {
+                    is VaultReadResult.Ok -> open(read.vault, challenge)
+                    VaultReadResult.Absent, VaultReadResult.Corrupt, VaultReadResult.Unreadable ->
+                        UnlockResult.Failed(KeyError.VAULT_CORRUPT)
+                }
             }
         }
 

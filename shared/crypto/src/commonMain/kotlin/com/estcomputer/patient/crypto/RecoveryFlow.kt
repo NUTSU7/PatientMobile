@@ -25,10 +25,14 @@ internal class RecoveryFlow(
 
     suspend fun unlock(words: SecretChars, newPassword: SecretChars): UnlockResult =
         context.mutex.withLock {
-            when (val read = context.store.read()) {
-                is VaultReadResult.Ok -> rateLimited(read.vault, words, newPassword)
-                VaultReadResult.Absent, VaultReadResult.Corrupt, VaultReadResult.Unreadable ->
-                    UnlockResult.Failed(KeyError.VAULT_CORRUPT)
+            if (context.isWipePending) {
+                UnlockResult.Wiped
+            } else {
+                when (val read = context.store.read()) {
+                    is VaultReadResult.Ok -> rateLimited(read.vault, words, newPassword)
+                    VaultReadResult.Absent, VaultReadResult.Corrupt, VaultReadResult.Unreadable ->
+                        UnlockResult.Failed(KeyError.VAULT_CORRUPT)
+                }
             }
         }
 
