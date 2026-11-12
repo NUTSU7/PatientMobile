@@ -4,6 +4,9 @@ import com.estcomputer.patient.domain.model.KeyError
 import com.estcomputer.patient.domain.model.SecretBytes
 import com.estcomputer.patient.domain.model.SecretChars
 import com.estcomputer.patient.domain.port.UnicodeNormalizer
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.cancellation.CancellationException
 
 internal sealed interface PasswordAttempt {
     /** The caller owns [mk] and zeroes it. [vault] is what is now stored, with the counter reset. */
@@ -63,7 +66,13 @@ internal class PasswordVerifier(
                 LockoutPolicy.delayFor(count).inWholeMilliseconds,
             lockoutBootCount = context.bootInfo.bootCount(),
         )
-        return if (context.store.write(attempted) == VaultStoreResult.DONE) {
+        val isCounted = try {
+            context.store.write(attempted) == VaultStoreResult.DONE
+        } catch (e: CancellationException) {
+            giveBack(vault)
+            throw e
+        }
+        return if (isCounted) {
             deriveAndCheck(vault, attempted, inner, password)
         } else {
             PasswordAttempt.Failed(KeyError.STORAGE_FAILED)
@@ -78,7 +87,14 @@ internal class PasswordVerifier(
     ): PasswordAttempt {
         val normalized = SecretChars.wrap(password.read { normalizer.normalizeNfkc(it) })
         try {
-            return when (val derived = kdf.derive(normalized, before.kdfParams)) {
+            val derived = try {
+                kdf.derive(normalized, before.kdfParams)
+            } catch (e: CancellationException) {
+                // No verdict reached anyone, so the attempt is given back. A process kill keeps it.
+                giveBack(before)
+                throw e
+            }
+            return when (derived) {
                 is KdfResult.Failed -> {
                     // Not a wrong password, so the attempt is given back.
                     context.store.write(before)
@@ -109,12 +125,22 @@ internal class PasswordVerifier(
             lockoutUntilElapsed = 0,
             lockoutBootCount = context.bootInfo.bootCount(),
         )
-        return if (context.store.write(reset) == VaultStoreResult.DONE) {
+        val isReset = try {
+            context.store.write(reset) == VaultStoreResult.DONE
+        } catch (e: CancellationException) {
+            mk.zero()
+            throw e
+        }
+        return if (isReset) {
             PasswordAttempt.Verified(mk, reset)
         } else {
             mk.zero()
             PasswordAttempt.Failed(KeyError.STORAGE_FAILED)
         }
+    }
+
+    private suspend fun giveBack(before: VaultFile) {
+        withContext(NonCancellable) { context.store.write(before) }
     }
 
     private fun isWipeDue(vault: VaultFile): Boolean =

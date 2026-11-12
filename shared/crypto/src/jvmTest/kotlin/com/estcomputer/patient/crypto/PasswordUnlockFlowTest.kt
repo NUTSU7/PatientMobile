@@ -4,12 +4,17 @@ import com.estcomputer.patient.domain.model.KeyError
 import com.estcomputer.patient.domain.model.SecretChars
 import com.estcomputer.patient.domain.model.SetupResult
 import com.estcomputer.patient.domain.model.UnlockResult
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -128,6 +133,67 @@ class PasswordUnlockFlowTest {
         assertFailsWith<IllegalStateException> { rig.unlock.unlock(chars(PASSWORD)) }
 
         assertEquals(1, rig.failedAttempts())
+    }
+
+    @Test
+    fun unlock_whenCancelledDuringKdf_restoresCounter() = runTest {
+        val rig = rig().setUpAndLock()
+        rig.wrongAttempts(2)
+        rig.boot.elapsedMillis += LOCKOUT_SKIP
+        val before = rig.vault()
+        rig.kdf.onDerive = { awaitCancellation() }
+
+        val job = launch { rig.unlock.unlock(chars(PASSWORD)) }
+        testScheduler.runCurrent()
+        assertEquals(3, rig.failedAttempts())
+        job.cancel()
+        job.join()
+
+        val after = rig.vault()
+        assertEquals(2, after.failedAttempts)
+        assertEquals(before.lockoutUntilElapsed, after.lockoutUntilElapsed)
+    }
+
+    @Test
+    fun unlock_whenCancelledDuringKdf_rethrowsCancellation() = runTest {
+        val rig = rig().setUpAndLock()
+        rig.kdf.onDerive = { throw CancellationException("cancelled") }
+
+        assertFailsWith<CancellationException> { rig.unlock.unlock(chars(PASSWORD)) }
+
+        assertEquals(0, rig.failedAttempts())
+        assertFalse(rig.session.isUnlocked)
+    }
+
+    @Test
+    fun unlock_whenCancelledDuringCounterWrite_restoresCounter() = runTest {
+        val rig = rig().setUpAndLock()
+        val writesBefore = rig.files.writes
+        val job = launch {
+            rig.files.onReplace = { count -> if (count == writesBefore + 1) coroutineContext.cancelJob() }
+            rig.unlock.unlock(chars(PASSWORD))
+        }
+        job.join()
+
+        assertTrue(job.isCancelled)
+        assertEquals(0, rig.failedAttempts())
+        assertEquals(0, rig.kdf.deriveCalls)
+    }
+
+    @Test
+    fun unlock_whenCancelledDuringResetWrite_zeroesMasterKey() = runTest {
+        val rig = rig().setUpAndLock()
+        val writesBefore = rig.files.writes
+        val job = launch {
+            // The second write is the counter reset after a verified password.
+            rig.files.onReplace = { count -> if (count == writesBefore + 2) coroutineContext.cancelJob() }
+            rig.unlock.unlock(chars(PASSWORD))
+        }
+        job.join()
+
+        assertTrue(job.isCancelled)
+        assertTrue(requireNotNull(rig.aead.lastOpened).isZeroed)
+        assertFalse(rig.session.isUnlocked)
     }
 
     @Test
@@ -305,4 +371,8 @@ class PasswordUnlockFlowTest {
         const val PASSWORD = "correct horse battery"
         const val LOCKOUT_SKIP = 4_000_000L
     }
+}
+
+private fun CoroutineContext.cancelJob() {
+    requireNotNull(this[Job]).cancel()
 }

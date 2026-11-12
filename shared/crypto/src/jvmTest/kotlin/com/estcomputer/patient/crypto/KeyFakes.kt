@@ -42,6 +42,9 @@ internal class FakeRandom : SecureRandomSource {
 }
 
 internal class FakeAead(private val random: SecureRandomSource) : AeadCipher {
+    /** The plaintext of the last successful open, so tests can check that it was zeroed. */
+    var lastOpened: SecretBytes? = null
+
     override fun seal(key: SecretBytes, plaintext: SecretBytes, aad: String): ByteArray =
         key.read { k ->
             plaintext.read { p ->
@@ -51,7 +54,10 @@ internal class FakeAead(private val random: SecureRandomSource) : AeadCipher {
 
     override fun open(key: SecretBytes, ciphertext: ByteArray, aad: String): OpenResult {
         val plain = key.read { ToyCipher.open(it, ciphertext, aad) }
-        return if (plain == null) OpenResult.AuthFailed else OpenResult.Ok(SecretBytes.wrap(plain))
+        if (plain == null) return OpenResult.AuthFailed
+        val opened = SecretBytes.wrap(plain)
+        lastOpened = opened
+        return OpenResult.Ok(opened)
     }
 }
 
@@ -291,6 +297,9 @@ internal class MemoryFileOps : AtomicFileOps {
     var failingStep: String? = null
     var writes = 0
 
+    /** Runs after each completed replace, with the number of replaces so far. */
+    var onReplace: (Int) -> Unit = {}
+
     private fun step(name: String, action: () -> Unit): Boolean {
         if (failingStep == name) return false
         action()
@@ -309,6 +318,7 @@ internal class MemoryFileOps : AtomicFileOps {
         vaultBytes = tempBytes
         tempBytes = null
         writes++
+        onReplace(writes)
     }
 
     override fun syncDirectory() = step("sync") {}
