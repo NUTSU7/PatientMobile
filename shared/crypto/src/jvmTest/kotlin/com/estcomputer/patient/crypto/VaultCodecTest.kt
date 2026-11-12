@@ -102,9 +102,18 @@ class VaultCodecTest {
     @Test
     fun decode_kdfParamsOutOfBounds_vaultCorrupt() {
         assertCorrupt(mutated("\"memory_kib\":65536", "\"memory_kib\":16384"))
+        assertCorrupt(mutated("\"memory_kib\":65536", "\"memory_kib\":65537"))
+        assertCorrupt(mutated("\"memory_kib\":65536", "\"memory_kib\":2147483647"))
         assertCorrupt(mutated("\"iterations\":3", "\"iterations\":0"))
         assertCorrupt(mutated("\"iterations\":3", "\"iterations\":11"))
         assertCorrupt(mutated("\"parallelism\":1", "\"parallelism\":2"))
+    }
+
+    @Test
+    fun decode_kdfMemoryAtFallback_isAccepted() {
+        val fallback = mutated("\"memory_kib\":65536", "\"memory_kib\":32768")
+
+        assertIs<VaultDecodeResult.Ok>(codec.decode(fallback.encodeToByteArray()))
     }
 
     @Test

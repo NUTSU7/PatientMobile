@@ -7,10 +7,11 @@ internal class KdfParams(
     val iterations: Int,
     val parallelism: Int,
 ) {
-    // Stored params outside what calibration can produce mean an edited vault, e.g. a downgrade.
+    // Stored params outside what calibration can produce mean an edited vault: a downgrade, or a memory
+    // size that would exhaust the heap at every unlock.
     val isWithinBounds: Boolean
         get() = salt.size == CryptoConstants.SALT_BYTES &&
-            memoryKib >= CryptoConstants.ARGON2_FALLBACK_MEMORY_KIB &&
+            memoryKib in CryptoConstants.ARGON2_FALLBACK_MEMORY_KIB..CryptoConstants.ARGON2_MEMORY_KIB &&
             iterations in 1..CryptoConstants.MAX_ITERATIONS &&
             parallelism == CryptoConstants.ARGON2_PARALLELISM
 }
