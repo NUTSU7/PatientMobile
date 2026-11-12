@@ -84,3 +84,25 @@ is rethrown, so a wrong key spec stays visible. The AAD is added after authentic
 - Recovery attempts are limited in memory only. A restart resets the limit. The words carry 256 random bits.
 - `PendingSetup.abandon()` zeroes the words at once but zeroes the key material only if no other key operation
   holds the lock; otherwise the next `lock()` does. Process death clears both.
+
+## Session, wipe, auto-lock and device checks
+
+- `SessionCoordinator.lock()` zeroes the keys even when a closer throws or the caller is cancelled. It also
+  zeroes them when no session was announced, so a wiring mistake cannot leave keys in memory.
+- `WipeAllData` still wipes when the `wipe.pending` marker cannot be written: erasing now matters more than
+  being able to resume. If the process then dies mid-wipe, nothing restarts it, and the patient sees a
+  locked app whose keys may already be gone.
+- A wipe that cannot finish (`WipeResult.INCOMPLETE`) keeps the marker, and start-up runs it again.
+  `VAULT_FILE_REMAINS` counts as incomplete for the reason given in the key manager section.
+- Reminders: a wipe cancels shown notifications only. Scheduled alarms are cancelled when the reminders phase
+  adds them; until then no alarm exists.
+- `AutoLockPolicy` and `ScreenSecurityPolicy` are main-thread only and keep no locks. The wiring must call them
+  from the main dispatcher.
+- The screen-off receiver is registered dynamically when the process lifecycle is created. The system sends
+  `ACTION_SCREEN_OFF` as a protected broadcast, so another app cannot trigger a lock with it.
+- Before API 33 the recents screenshot is taken at pause, so `FLAG_SECURE` is added in `onPause` even when the
+  patient allows screenshots. A manual check on API 29-32 and 33+ is still open.
+- Device integrity checks are hints. The `su` and Magisk path lists are heuristics and can be bypassed. Package
+  checks are skipped: they need a manifest `<queries>` entry, which the owner has not approved.
+- Device tests on the API 34 emulator: the screen-off lock (via `input keyevent KEYCODE_SLEEP`), a full storage
+  wipe in the real app directories, and the `FLAG_SECURE` flag on a window. Real devices are unchecked.
