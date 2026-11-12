@@ -205,7 +205,7 @@ class WipeAllDataTest {
     @Test
     fun invoke_afterUnlockedSession_closesSessionBeforeDestroyingKeys() = runTest {
         val (wipe, coordinator) = wipe()
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
 
         wipe()
 

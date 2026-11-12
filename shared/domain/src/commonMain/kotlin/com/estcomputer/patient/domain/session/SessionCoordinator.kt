@@ -28,6 +28,7 @@ public class SessionCoordinator(
     private val mutex = Mutex()
     private val _lockState = MutableStateFlow<LockState>(LockState.Locked(isRecoveryRequired = false))
     private val session = MutableStateFlow<Session?>(null)
+    private var lockCount = 0L
 
     public val lockState: StateFlow<LockState> = _lockState.asStateFlow()
 
@@ -43,18 +44,33 @@ public class SessionCoordinator(
         }
     }
 
-    /** Opens a new session scope and publishes [LockState.Unlocked]. Call after the key manager unlocked. */
-    public suspend fun onUnlocked() {
+    /** Call before asking the key manager to unlock, and pass the ticket to [onUnlocked] afterwards. */
+    public suspend fun startUnlock(): UnlockTicket = mutex.withLock { UnlockTicket(lockCount) }
+
+    /**
+     * Opens a new session scope and publishes [LockState.Unlocked]. Call after the key manager unlocked.
+     * Returns false, and zeroes the keys again, when a lock arrived after [ticket] was taken: the patient
+     * locked the app while the unlock was running, so no session opens.
+     */
+    public suspend fun onUnlocked(ticket: UnlockTicket): Boolean =
         mutex.withLock {
-            session.value?.job?.cancelAndAwait()
-            session.value = newSession()
-            _lockState.value = LockState.Unlocked
+            if (ticket.lockCount != lockCount) {
+                withContext(NonCancellable) { keyManager.lock() }
+                // The unlock or setup succeeded, so a vault exists even if the state still says Unconfigured.
+                _lockState.value = LockState.Locked(isRecoveryRequired = false)
+                false
+            } else {
+                session.value?.job?.cancelAndAwait()
+                session.value = newSession()
+                _lockState.value = LockState.Unlocked
+                true
+            }
         }
-    }
 
     /** Cancels the session, closes dependants, then zeroes the keys. Safe to call repeatedly. */
     public suspend fun lock() {
         mutex.withLock {
+            lockCount++
             val open = session.value
             if (open == null) {
                 // Keys may exist even though no session was announced, so zeroing is never skipped.

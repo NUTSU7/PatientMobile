@@ -18,6 +18,9 @@ public enum class KeyError {
 
     /** Biometrics were requested but no strong biometric is enrolled on the device. */
     BIOMETRIC_NOT_ENROLLED,
+
+    /** The app was locked while the unlock ran, so the keys were zeroed again and no session opened. */
+    LOCKED_DURING_UNLOCK,
 }
 
 public enum class PasswordRejection {

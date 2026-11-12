@@ -29,7 +29,7 @@ class AutoLockPolicyTest {
 
         suspend fun unlock() {
             policy.start()
-            coordinator.onUnlocked()
+            coordinator.onUnlocked(coordinator.startUnlock())
             scope.runCurrent()
         }
 

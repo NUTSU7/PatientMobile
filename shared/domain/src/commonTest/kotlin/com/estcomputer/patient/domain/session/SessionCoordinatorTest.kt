@@ -42,16 +42,39 @@ class SessionCoordinatorTest {
     fun onUnlocked_opensScopeAndPublishesUnlocked() = runTest {
         val coordinator = coordinator()
 
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
 
         assertEquals(LockState.Unlocked, coordinator.lockState.value)
         assertTrue(coordinator.unlockedSessionScope?.coroutineContext?.get(Job)?.isActive == true)
     }
 
     @Test
+    fun onUnlocked_afterLockSinceTicket_zeroesKeysAgainAndStaysLocked() = runTest {
+        val coordinator = coordinator()
+        coordinator.setIdleState(LockState.Unconfigured)
+        val ticket = coordinator.startUnlock()
+        coordinator.lock()
+        events.clear()
+
+        val isOpened = coordinator.onUnlocked(ticket)
+
+        assertFalse(isOpened)
+        assertEquals(listOf("keys.lock"), events)
+        assertNull(coordinator.unlockedSessionScope)
+        assertEquals(LockState.Locked(isRecoveryRequired = false), coordinator.lockState.value)
+    }
+
+    @Test
+    fun onUnlocked_withCurrentTicket_returnsTrue() = runTest {
+        val coordinator = coordinator()
+
+        assertTrue(coordinator.onUnlocked(coordinator.startUnlock()))
+    }
+
+    @Test
     fun lock_cancelsSessionJobsBeforeClosersRun() = runTest {
         val coordinator = coordinator(recordingCloser("db"))
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
         val started = CompletableDeferred<Unit>()
         requireNotNull(coordinator.unlockedSessionScope).launch {
             try {
@@ -71,7 +94,7 @@ class SessionCoordinatorTest {
     @Test
     fun lock_whenJobIgnoresCancellation_zeroesKeysAfterTimeout() = runTest {
         val coordinator = coordinator(recordingCloser("db"))
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
         val started = CompletableDeferred<Unit>()
         val stuck = requireNotNull(coordinator.unlockedSessionScope).launch {
             withContext(NonCancellable) {
@@ -92,7 +115,7 @@ class SessionCoordinatorTest {
     @Test
     fun lock_runsClosersInOrderBeforeZeroingKeys() = runTest {
         val coordinator = coordinator(recordingCloser("first"), recordingCloser("second"))
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
 
         coordinator.lock()
 
@@ -103,7 +126,7 @@ class SessionCoordinatorTest {
     fun lock_whenCloserFails_stillRunsOthersAndZeroesKeys() = runTest {
         val failing = SessionCloser { error("closer failed") }
         val coordinator = coordinator(failing, recordingCloser("after"))
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
 
         coordinator.lock()
 
@@ -116,7 +139,7 @@ class SessionCoordinatorTest {
         val seen = mutableListOf<LockState>()
         lateinit var coordinator: SessionCoordinator
         coordinator = coordinator(SessionCloser { seen += coordinator.lockState.value })
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
 
         coordinator.lock()
 
@@ -126,7 +149,7 @@ class SessionCoordinatorTest {
     @Test
     fun lock_twice_runsClosersOnce() = runTest {
         val coordinator = coordinator(recordingCloser("db"))
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
 
         coordinator.lock()
         coordinator.lock()
@@ -146,7 +169,7 @@ class SessionCoordinatorTest {
     @Test
     fun lock_clearsSessionScope() = runTest {
         val coordinator = coordinator()
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
 
         coordinator.lock()
 
@@ -156,11 +179,11 @@ class SessionCoordinatorTest {
     @Test
     fun onUnlocked_afterLock_createsNewScope() = runTest {
         val coordinator = coordinator()
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
         val first = assertNotNull(coordinator.unlockedSessionScope)
         coordinator.lock()
 
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
 
         val second = assertNotNull(coordinator.unlockedSessionScope)
         assertNotSame(first, second)
@@ -174,7 +197,7 @@ class SessionCoordinatorTest {
 
         coordinator.lockState.test {
             assertEquals(LockState.Locked(isRecoveryRequired = false), awaitItem())
-            coordinator.onUnlocked()
+            coordinator.onUnlocked(coordinator.startUnlock())
             assertEquals(LockState.Unlocked, awaitItem())
             coordinator.lock()
             assertEquals(LockState.Locked(isRecoveryRequired = false), awaitItem())
@@ -193,7 +216,7 @@ class SessionCoordinatorTest {
     @Test
     fun setIdleState_whileUnlocked_isIgnored() = runTest {
         val coordinator = coordinator()
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
 
         coordinator.setIdleState(LockState.Unconfigured)
 
@@ -203,7 +226,7 @@ class SessionCoordinatorTest {
     @Test
     fun onWiped_locksThenPublishesUnconfigured() = runTest {
         val coordinator = coordinator(recordingCloser("db"))
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
 
         coordinator.onWiped()
 

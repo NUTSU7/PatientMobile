@@ -63,7 +63,7 @@ class AndroidAutoLockEventsDeviceTest {
             AndroidAutoLockEvents(instrumentation.targetContext, policy).register()
         }
         policy.start()
-        coordinator.onUnlocked()
+        coordinator.onUnlocked(coordinator.startUnlock())
 
         try {
             instrumentation.uiAutomation.executeShellCommand("input keyevent KEYCODE_SLEEP").close()
