@@ -38,11 +38,18 @@ internal class VaultCodec {
             vault.wrappedMkPassword.size == WRAPPED_MK_PASSWORD_BYTES &&
             vault.wrappedMkRecovery.size == WRAPPED_MK_RECOVERY_BYTES &&
             vault.exportPublicKey.size == CryptoConstants.KEY_SIZE_BYTES &&
-            (vault.wrappedMkBiometric == null) == (vault.bioKeyAlias == null) &&
+            isValidBiometricPair(vault.wrappedMkBiometric, vault.bioKeyAlias) &&
             vault.failedAttempts >= 0 &&
             isValidWipeThreshold(vault.wipeAfterFailedAttempts) &&
             vault.lockoutUntilElapsed >= 0 &&
             vault.lockoutBootCount >= 0
+
+    private fun isValidBiometricPair(wrapped: ByteArray?, alias: String?): Boolean =
+        if (wrapped == null || alias == null) {
+            wrapped == null && alias == null
+        } else {
+            wrapped.size > MIN_WRAPPED_MK_BIOMETRIC_BYTES && alias.isNotBlank()
+        }
 
     private fun isInstant(text: String): Boolean =
         try {
@@ -65,6 +72,10 @@ internal class VaultCodec {
 
         // nonce + MK + tag.
         const val WRAPPED_MK_RECOVERY_BYTES = 60
+
+        // nonce + MK + tag, plus at least one byte of the policy JSON.
+        const val MIN_WRAPPED_MK_BIOMETRIC_BYTES =
+            CryptoConstants.GCM_NONCE_BYTES + CryptoConstants.KEY_SIZE_BYTES + CryptoConstants.GCM_TAG_BYTES
 
         val JSON = Json {
             ignoreUnknownKeys = false

@@ -154,6 +154,23 @@ class VaultCodecTest {
     }
 
     @Test
+    fun decode_biometricBlobTooShortOrAliasBlank_vaultCorrupt() {
+        val alias = "\"bio_key_alias\":null"
+        val blob = "\"wrapped_mk_biometric\":null"
+        val minimum = CryptoConstants.GCM_NONCE_BYTES + CryptoConstants.KEY_SIZE_BYTES + CryptoConstants.GCM_TAG_BYTES
+
+        fun withBio(size: Int, aliasValue: String) = golden
+            .replace(blob, "\"wrapped_mk_biometric\":\"${base64Of(size)}\"")
+            .replace(alias, "\"bio_key_alias\":\"$aliasValue\"")
+
+        assertCorrupt(withBio(minimum, "patient_bio_v1"))
+        assertCorrupt(withBio(0, "patient_bio_v1"))
+        assertCorrupt(withBio(minimum + 1, " "))
+        assertCorrupt(withBio(minimum + 1, ""))
+        assertIs<VaultDecodeResult.Ok>(codec.decode(withBio(minimum + 1, "patient_bio_v1").encodeToByteArray()))
+    }
+
+    @Test
     fun decode_counterOutOfRange_vaultCorrupt() {
         assertCorrupt(mutated("\"failed_attempts\":0", "\"failed_attempts\":-1"))
         assertCorrupt(mutated("\"lockout_until_elapsed\":0", "\"lockout_until_elapsed\":-1"))
