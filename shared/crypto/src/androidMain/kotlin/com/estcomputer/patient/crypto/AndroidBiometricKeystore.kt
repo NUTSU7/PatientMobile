@@ -7,6 +7,7 @@ import com.estcomputer.patient.domain.port.BiometricChallenge
 import kotlinx.coroutines.withContext
 import java.security.GeneralSecurityException
 import java.security.KeyStore
+import java.security.KeyStoreException
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
@@ -21,8 +22,7 @@ internal class AndroidBiometricKeystore(
     override suspend fun generateBioKey(alias: String): BiometricKeystoreGenerateResult =
         withContext(dispatchers.io) {
             if (!generator.generate(alias)) return@withContext BiometricKeystoreGenerateResult.NoBiometricEnrolled
-            val key = requireNotNull(loadKey(alias)) { "generated key missing" }
-            BiometricKeystoreGenerateResult.Ok(securityLevelOf(key))
+            BiometricKeystoreGenerateResult.Ok(storedLevel(alias))
         }
 
     override suspend fun beginSeal(alias: String): BiometricKeystoreBeginResult =
@@ -33,8 +33,10 @@ internal class AndroidBiometricKeystore(
                 val cipher = Cipher.getInstance(TRANSFORMATION)
                 // No IV: the Keystore must pick it, and randomised encryption is never disabled.
                 cipher.init(Cipher.ENCRYPT_MODE, key)
+                val iv = cipher.iv
+                check(iv.size == CryptoConstants.GCM_NONCE_BYTES) { "unexpected keystore nonce size" }
                 BiometricKeystoreBeginResult.Ready(
-                    KeystoreBiometricChallenge(cipher, KeystoreBiometricChallenge.Mode.ENCRYPT),
+                    KeystoreBiometricChallenge(cipher, KeystoreBiometricChallenge.Mode.ENCRYPT, iv),
                 )
             } catch (failure: GeneralSecurityException) {
                 BiometricKeystoreBeginResult.Failed(errorOf(alias, failure))
@@ -53,7 +55,7 @@ internal class AndroidBiometricKeystore(
                 val cipher = Cipher.getInstance(TRANSFORMATION)
                 cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(CryptoConstants.GCM_TAG_BITS, iv))
                 BiometricKeystoreBeginResult.Ready(
-                    KeystoreBiometricChallenge(cipher, KeystoreBiometricChallenge.Mode.DECRYPT),
+                    KeystoreBiometricChallenge(cipher, KeystoreBiometricChallenge.Mode.DECRYPT, iv),
                 )
             } catch (failure: GeneralSecurityException) {
                 BiometricKeystoreBeginResult.Failed(errorOf(alias, failure))
@@ -65,15 +67,13 @@ internal class AndroidBiometricKeystore(
         plaintext: SecretBytes,
         aad: String,
     ): BiometricKeystoreSealResult {
-        val cipher = cipherOf(challenge, KeystoreBiometricChallenge.Mode.ENCRYPT)
+        val own = challenge.requireOwn(KeystoreBiometricChallenge.Mode.ENCRYPT)
         return withContext(dispatchers.io) {
             try {
                 // AAD goes in after authentication: on an authenticated key every cipher call needs it.
-                cipher.updateAAD(aad.encodeToByteArray())
-                val ciphertext = plaintext.read { cipher.doFinal(it) }
-                val iv = cipher.iv
-                check(iv.size == CryptoConstants.GCM_NONCE_BYTES) { "unexpected keystore nonce size" }
-                BiometricKeystoreSealResult.Ok(iv + ciphertext)
+                own.cipher.updateAAD(aad.encodeToByteArray())
+                val ciphertext = plaintext.read { own.cipher.doFinal(it) }
+                BiometricKeystoreSealResult.Ok(own.iv + ciphertext)
             } catch (failure: GeneralSecurityException) {
                 BiometricKeystoreSealResult.Failed(biometricKeystoreErrorOf(failure) ?: throw failure)
             }
@@ -85,7 +85,7 @@ internal class AndroidBiometricKeystore(
         blob: ByteArray,
         aad: String,
     ): BiometricKeystoreOpenResult {
-        val cipher = cipherOf(challenge, KeystoreBiometricChallenge.Mode.DECRYPT)
+        val cipher = challenge.requireOwn(KeystoreBiometricChallenge.Mode.DECRYPT).cipher
         return withContext(dispatchers.io) {
             try {
                 if (blob.size < MIN_BLOB_BYTES) {
@@ -105,17 +105,27 @@ internal class AndroidBiometricKeystore(
         withContext(dispatchers.io) { keyStore.deleteEntry(alias) }
     }
 
-    private fun cipherOf(challenge: BiometricChallenge, mode: KeystoreBiometricChallenge.Mode): Cipher {
-        val own = challenge as? KeystoreBiometricChallenge
-        require(own != null && own.mode == mode) { "challenge does not belong to this operation" }
-        return own.cipher
-    }
+    private fun storedLevel(alias: String): SecurityLevel =
+        try {
+            loadKey(alias)?.let(::securityLevelOf) ?: SecurityLevel.UNKNOWN
+        } catch (_: GeneralSecurityException) {
+            SecurityLevel.UNKNOWN
+        }
 
     // An invalidated key is useless for good, so it is removed here and the caller drops the vault fields.
     private fun errorOf(alias: String, failure: GeneralSecurityException): BiometricKeystoreError {
         val error = biometricKeystoreErrorOf(failure) ?: throw failure
-        if (error == BiometricKeystoreError.KEY_INVALIDATED) keyStore.deleteEntry(alias)
+        if (error == BiometricKeystoreError.KEY_INVALIDATED) deleteQuietly(alias)
         return error
+    }
+
+    // A failed delete must not hide the invalidation; the caller deletes the alias again.
+    private fun deleteQuietly(alias: String) {
+        try {
+            keyStore.deleteEntry(alias)
+        } catch (_: KeyStoreException) {
+            return
+        }
     }
 
     private fun loadKey(alias: String): SecretKey? = keyStore.getKey(alias, null) as SecretKey?

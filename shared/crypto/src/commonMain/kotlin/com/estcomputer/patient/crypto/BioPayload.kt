@@ -32,7 +32,7 @@ internal object BioPayload {
             Wire.serializer(),
             Wire(policy.bootCount, policy.passwordUnlockAt.toString()),
         ).encodeToByteArray()
-        return SecretBytes.wrap(mk.read { it.copyOf() + json }.also { json.fill(0) })
+        return SecretBytes.wrap(mk.read { it + json }.also { json.fill(0) })
     }
 
     /** Consumes [payload]: it is zeroed on every path. */

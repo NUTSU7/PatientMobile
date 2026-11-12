@@ -59,15 +59,13 @@ class AndroidBiometricKeystoreDeviceTest {
     }
 
     @Test
-    fun seal_withoutAuthentication_doesNotReturnABlob() = withKeystore {
+    fun seal_withoutAuthentication_reportsNotAuthenticated() = withKeystore {
         generateOrSkip()
         val ready = assertIs<BiometricKeystoreBeginResult.Ready>(keystore.beginSeal(alias))
 
-        val outcome = runCatching {
-            keystore.seal(ready.challenge, SecretBytes.copyOf(ByteArray(CryptoConstants.KEY_SIZE_BYTES)), AAD)
-        }
+        val result = keystore.seal(ready.challenge, SecretBytes.copyOf(ByteArray(CryptoConstants.KEY_SIZE_BYTES)), AAD)
 
-        assertEquals(false, outcome.getOrNull() is BiometricKeystoreSealResult.Ok)
+        assertEquals(BiometricKeystoreSealResult.Failed(BiometricKeystoreError.NOT_AUTHENTICATED), result)
     }
 
     @Test
