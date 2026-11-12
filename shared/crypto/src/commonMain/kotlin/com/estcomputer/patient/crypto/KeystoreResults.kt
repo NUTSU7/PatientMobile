@@ -17,6 +17,13 @@ internal enum class KeystoreError {
     RECOVERY_REQUIRED,
 }
 
+internal sealed interface KeystoreGenerateResult {
+    data class Ok(val level: SecurityLevel) : KeystoreGenerateResult
+
+    /** The device has no secure lock screen, now or since the caller last checked. */
+    data object DeviceNotSecure : KeystoreGenerateResult
+}
+
 internal sealed interface KeystoreSealResult {
     class Ok(val blob: ByteArray) : KeystoreSealResult {
         override fun toString(): String = "Ok(***)"

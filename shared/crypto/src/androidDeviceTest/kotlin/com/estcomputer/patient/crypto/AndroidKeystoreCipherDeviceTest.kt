@@ -1,11 +1,13 @@
 package com.estcomputer.patient.crypto
 
+import android.app.KeyguardManager
 import androidx.test.platform.app.InstrumentationRegistry
 import com.estcomputer.patient.domain.coroutines.DispatcherProvider
 import com.estcomputer.patient.domain.model.SecretBytes
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assume.assumeFalse
 import org.junit.Test
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.test.assertContentEquals
@@ -39,6 +41,9 @@ class AndroidKeystoreCipherDeviceTest {
     @After
     fun tearDown() = withCipher { cipher.deleteAlias(alias) }
 
+    private suspend fun generate(): SecurityLevel =
+        assertIs<KeystoreGenerateResult.Ok>(cipher.generateHwKey(alias)).level
+
     private suspend fun seal(): ByteArray {
         val result = cipher.seal(alias, SecretBytes.copyOf(message), aad)
         return assertIs<KeystoreSealResult.Ok>(result).blob
@@ -46,7 +51,7 @@ class AndroidKeystoreCipherDeviceTest {
 
     @Test
     fun sealOpen_roundTrip_returnsPlaintext() = withCipher {
-        cipher.generateHwKey(alias)
+        generate()
         val blob = seal()
 
         val opened = assertIs<KeystoreOpenResult.Ok>(cipher.open(alias, blob, aad))
@@ -57,7 +62,7 @@ class AndroidKeystoreCipherDeviceTest {
 
     @Test
     fun open_withWrongAad_requiresRecovery() = withCipher {
-        cipher.generateHwKey(alias)
+        generate()
         val blob = seal()
 
         val result = cipher.open(alias, blob, CryptoConstants.AAD_MK_PASSWORD)
@@ -67,7 +72,7 @@ class AndroidKeystoreCipherDeviceTest {
 
     @Test
     fun open_withTamperedBlob_requiresRecovery() = withCipher {
-        cipher.generateHwKey(alias)
+        generate()
         val blob = seal()
         blob[blob.lastIndex] = (blob.last().toInt() xor 1).toByte()
 
@@ -83,7 +88,7 @@ class AndroidKeystoreCipherDeviceTest {
 
     @Test
     fun sealAndOpen_afterDelete_reportMissingKey() = withCipher {
-        cipher.generateHwKey(alias)
+        generate()
         val blob = seal()
 
         cipher.deleteAlias(alias)
@@ -98,7 +103,7 @@ class AndroidKeystoreCipherDeviceTest {
 
     @Test
     fun seal_twice_usesDifferentNonces() = withCipher {
-        cipher.generateHwKey(alias)
+        generate()
 
         val first = seal().copyOfRange(0, CryptoConstants.GCM_NONCE_BYTES)
         val second = seal().copyOfRange(0, CryptoConstants.GCM_NONCE_BYTES)
@@ -114,10 +119,20 @@ class AndroidKeystoreCipherDeviceTest {
 
     @Test
     fun generateHwKey_reportsLevelOfStoredKey() = withCipher {
-        val level = cipher.generateHwKey(alias)
+        val level = generate()
 
         assertNotNull(cipher.securityLevel(alias))
         assertEquals(level, cipher.securityLevel(alias))
+    }
+
+    // Runs only on a device without a secure lock screen: adb shell locksettings clear --old 1234
+    @Test
+    fun generateHwKey_withoutLockScreen_reportsDeviceNotSecure() = withCipher {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        assumeFalse(context.getSystemService(KeyguardManager::class.java).isDeviceSecure)
+
+        assertEquals(KeystoreGenerateResult.DeviceNotSecure, cipher.generateHwKey(alias))
+        assertNull(cipher.securityLevel(alias))
     }
 
     private companion object {

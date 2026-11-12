@@ -9,10 +9,14 @@ import com.estcomputer.patient.domain.model.SecretBytes
  */
 internal interface KeystoreCipher {
     /**
-     * Creates the key under [alias], replacing any existing one. The key needs no authentication per use and
-     * is usable only while the device is unlocked.
+     * Creates the key under [alias]. The key needs no authentication per use and is usable only while the
+     * device is unlocked.
+     *
+     * Replaces any existing key, which makes everything wrapped by the old one unrecoverable without the
+     * recovery words. Callers must refuse to call this while the alias or a vault exists, except when
+     * rebuilding the key during recovery.
      */
-    suspend fun generateHwKey(alias: String = CryptoConstants.HW_KEY_ALIAS): SecurityLevel
+    suspend fun generateHwKey(alias: String): KeystoreGenerateResult
 
     /** Encrypts under a nonce chosen by the platform. [plaintext] stays owned by the caller. */
     suspend fun seal(alias: String, plaintext: SecretBytes, aad: String): KeystoreSealResult
@@ -20,7 +24,7 @@ internal interface KeystoreCipher {
     /** A wrong [aad], tampered or truncated input gives `RECOVERY_REQUIRED`, never a wrong-password result. */
     suspend fun open(alias: String, ciphertext: ByteArray, aad: String): KeystoreOpenResult
 
-    /** Null when no key exists under [alias]. */
+    /** Null when no key exists under [alias]; `UNKNOWN` when the key exists but cannot be inspected. */
     suspend fun securityLevel(alias: String): SecurityLevel?
 
     /** Does nothing when [alias] does not exist. */

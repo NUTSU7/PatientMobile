@@ -1,5 +1,6 @@
 package com.estcomputer.patient.crypto
 
+import android.app.KeyguardManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -25,22 +26,13 @@ internal class AndroidKeystoreCipher(
 ) : KeystoreCipher {
     private val hasStrongBox =
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
+    private val keyStore: KeyStore by lazy { KeyStore.getInstance(PROVIDER).apply { load(null) } }
+    private val keyguard = context.getSystemService(KeyguardManager::class.java)
 
-    override suspend fun generateHwKey(alias: String): SecurityLevel =
+    override suspend fun generateHwKey(alias: String): KeystoreGenerateResult =
         withContext(dispatchers.io) {
-            // StrongBox can be advertised yet fail at generation, as a vendor ProviderException.
-            if (hasStrongBox) {
-                try {
-                    generate(alias, isStrongBox = true)
-                } catch (_: StrongBoxUnavailableException) {
-                    generate(alias, isStrongBox = false)
-                } catch (_: ProviderException) {
-                    generate(alias, isStrongBox = false)
-                }
-            } else {
-                generate(alias, isStrongBox = false)
-            }
-            levelOf(requireNotNull(loadKey(alias)) { "generated key missing" })
+            if (!generateWithFallback(alias)) return@withContext KeystoreGenerateResult.DeviceNotSecure
+            KeystoreGenerateResult.Ok(levelOf(requireNotNull(loadKey(alias)) { "generated key missing" }))
         }
 
     override suspend fun seal(alias: String, plaintext: SecretBytes, aad: String): KeystoreSealResult =
@@ -79,14 +71,40 @@ internal class AndroidKeystoreCipher(
         }
 
     override suspend fun securityLevel(alias: String): SecurityLevel? =
-        withContext(dispatchers.io) { loadKey(alias)?.let(::levelOf) }
+        withContext(dispatchers.io) {
+            try {
+                loadKey(alias)?.let(::levelOf)
+            } catch (_: GeneralSecurityException) {
+                SecurityLevel.UNKNOWN
+            }
+        }
 
     override suspend fun deleteAlias(alias: String) {
-        withContext(dispatchers.io) {
-            val store = keyStore()
-            if (store.containsAlias(alias)) store.deleteEntry(alias)
+        withContext(dispatchers.io) { keyStore.deleteEntry(alias) }
+    }
+
+    /** False when generation failed because the device has no secure lock screen. */
+    private fun generateWithFallback(alias: String): Boolean {
+        if (hasStrongBox && generateInStrongBox(alias)) return true
+        return try {
+            generate(alias, isStrongBox = false)
+            true
+        } catch (failure: ProviderException) {
+            if (keyguard.isDeviceSecure) throw failure
+            false
         }
     }
+
+    // StrongBox can be advertised yet fail at generation, as a vendor ProviderException.
+    private fun generateInStrongBox(alias: String): Boolean =
+        try {
+            generate(alias, isStrongBox = true)
+            true
+        } catch (_: StrongBoxUnavailableException) {
+            false
+        } catch (_: ProviderException) {
+            false
+        }
 
     private fun generate(alias: String, isStrongBox: Boolean) {
         val spec = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
@@ -101,9 +119,8 @@ internal class AndroidKeystoreCipher(
         generator.generateKey()
     }
 
-    private fun keyStore(): KeyStore = KeyStore.getInstance(PROVIDER).apply { load(null) }
 
-    private fun loadKey(alias: String): SecretKey? = keyStore().getKey(alias, null) as SecretKey?
+    private fun loadKey(alias: String): SecretKey? = keyStore.getKey(alias, null) as SecretKey?
 
     private fun levelOf(key: SecretKey): SecurityLevel {
         val factory = SecretKeyFactory.getInstance(key.algorithm, PROVIDER)
