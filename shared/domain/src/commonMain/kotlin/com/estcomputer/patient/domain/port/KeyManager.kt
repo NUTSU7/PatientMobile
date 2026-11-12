@@ -1,11 +1,13 @@
 package com.estcomputer.patient.domain.port
 
 import com.estcomputer.patient.domain.model.ChangePasswordResult
+import com.estcomputer.patient.domain.model.KeyDestructionResult
 import com.estcomputer.patient.domain.model.SecretBytes
 import com.estcomputer.patient.domain.model.SecretChars
 import com.estcomputer.patient.domain.model.SetupResult
 import com.estcomputer.patient.domain.model.StartupState
 import com.estcomputer.patient.domain.model.UnlockResult
+import com.estcomputer.patient.domain.model.WipeSettingResult
 
 /**
  * The only way to reach key material. Implemented in `shared:crypto`.
@@ -36,9 +38,13 @@ public interface KeyManager {
     /** Zeroes every key held in memory. Idempotent. */
     public suspend fun lock()
 
-    /** Deletes the Keystore keys and the vault. Part of the wipe: keys go before files. */
-    public suspend fun destroyKeys()
+    /**
+     * Deletes the Keystore keys and the vault. Part of the wipe: keys go before files.
+     * On [KeyDestructionResult.VAULT_FILE_REMAINS] the wipe must keep its marker and retry, because the
+     * recovery words still open a vault file that is left behind.
+     */
+    public suspend fun destroyKeys(): KeyDestructionResult
 
-    /** [attempts] must be in 10..20, or null to turn the auto-wipe off. */
-    public suspend fun setWipeAfterFailedAttempts(attempts: Int?)
+    /** [attempts] must be in 10..20, or null to turn the auto-wipe off. Valid only while unlocked. */
+    public suspend fun setWipeAfterFailedAttempts(attempts: Int?): WipeSettingResult
 }

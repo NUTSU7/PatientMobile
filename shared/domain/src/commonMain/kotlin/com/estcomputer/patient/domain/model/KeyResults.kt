@@ -58,3 +58,15 @@ public sealed interface BiometricEnrolmentResult {
 
     public data class Failed(val error: KeyError) : BiometricEnrolmentResult
 }
+
+public enum class KeyDestructionResult {
+    DONE,
+
+    /** The Keystore keys are gone, but the vault file could not be erased. The wipe must be retried. */
+    VAULT_FILE_REMAINS,
+}
+
+public enum class WipeSettingResult {
+    SAVED,
+    STORAGE_FAILED,
+}
