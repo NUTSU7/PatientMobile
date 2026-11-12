@@ -1,11 +1,13 @@
 package com.estcomputer.patient.crypto
 
+import com.estcomputer.patient.domain.model.KeyDestructionResult
 import com.estcomputer.patient.domain.model.KeyError
 import com.estcomputer.patient.domain.model.SecretChars
 import com.estcomputer.patient.domain.model.SetupCommitResult
 import com.estcomputer.patient.domain.model.SetupResult
 import com.estcomputer.patient.domain.model.StartupState
 import com.estcomputer.patient.domain.model.UnlockResult
+import com.estcomputer.patient.domain.model.WipeSettingResult
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -99,7 +101,7 @@ class VaultKeyManagerTest {
         rig.setUp()
         rig.bioKeystore.keys[CryptoConstants.BIO_KEY_ALIAS] = ByteArray(1)
 
-        rig.manager.destroyKeys()
+        assertEquals(KeyDestructionResult.DONE, rig.manager.destroyKeys())
 
         assertTrue(rig.keystore.keys.isEmpty())
         assertTrue(rig.bioKeystore.keys.isEmpty())
@@ -113,7 +115,7 @@ class VaultKeyManagerTest {
         rig.setUp()
         rig.files.failingStep = "delete"
 
-        assertFailsWith<IllegalStateException> { rig.manager.destroyKeys() }
+        assertEquals(KeyDestructionResult.VAULT_FILE_REMAINS, rig.manager.destroyKeys())
 
         assertTrue(rig.keystore.keys.isEmpty())
     }
@@ -138,9 +140,20 @@ class VaultKeyManagerTest {
         val rig = VaultRig(this)
         rig.setUp()
 
-        rig.manager.setWipeAfterFailedAttempts(15)
+        assertEquals(WipeSettingResult.SAVED, rig.manager.setWipeAfterFailedAttempts(15))
         assertEquals(15, rig.vault().wipeAfterFailedAttempts)
-        rig.manager.setWipeAfterFailedAttempts(null)
+        assertEquals(WipeSettingResult.SAVED, rig.manager.setWipeAfterFailedAttempts(null))
+        assertEquals(0, rig.vault().wipeAfterFailedAttempts)
+    }
+
+    @Test
+    fun setWipeAfterFailedAttempts_writeFails_reportsItAndKeepsTheOldValue() = runTest {
+        val rig = VaultRig(this)
+        rig.setUp()
+        rig.files.failingStep = "temp"
+
+        assertEquals(WipeSettingResult.STORAGE_FAILED, rig.manager.setWipeAfterFailedAttempts(15))
+
         assertEquals(0, rig.vault().wipeAfterFailedAttempts)
     }
 
