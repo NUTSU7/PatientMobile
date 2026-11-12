@@ -26,7 +26,10 @@ public interface KeyManager {
     /** Replaces the password using the recovery words. Wrong words never count toward the auto-wipe. */
     public suspend fun unlockWithRecovery(words: SecretChars, newPassword: SecretChars): UnlockResult
 
-    /** [old] may be null only within one minute of an unlock. */
+    /**
+     * [old] may be null only within one minute of a password or recovery unlock; otherwise the result is
+     * [com.estcomputer.patient.domain.model.KeyError.PASSWORD_REQUIRED].
+     */
     public suspend fun changePassword(old: SecretChars?, new: SecretChars): ChangePasswordResult
 
     /** A fresh copy of the database key; the caller zeroes it. Throws [IllegalStateException] while locked. */

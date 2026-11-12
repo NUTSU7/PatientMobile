@@ -88,7 +88,7 @@ class PasswordChangeFlowTest {
         rig.boot.elapsedMillis += 61_000
 
         assertEquals(
-            ChangePasswordResult.Failed(KeyError.WRONG_PASSWORD),
+            ChangePasswordResult.Failed(KeyError.PASSWORD_REQUIRED),
             rig.change.change(null, chars(NEW_PASSWORD)),
         )
         assertContentEquals(before, rig.files.vaultBytes)
@@ -105,7 +105,7 @@ class PasswordChangeFlowTest {
         val before = rig.storedBytes()
 
         assertEquals(
-            ChangePasswordResult.Failed(KeyError.WRONG_PASSWORD),
+            ChangePasswordResult.Failed(KeyError.PASSWORD_REQUIRED),
             rig.change.change(null, chars(NEW_PASSWORD)),
         )
         assertContentEquals(before, rig.files.vaultBytes)

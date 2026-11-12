@@ -66,19 +66,18 @@ public enum class KeyDestructionResult {
     VAULT_FILE_REMAINS,
 }
 
-public enum class WipeSettingResult {
-    SAVED,
-    STORAGE_FAILED,
-
-    /** No password was given and the last password unlock is more than one minute old. */
-    PASSWORD_REQUIRED,
-
-    /** The password was wrong. It counts as a failed attempt. */
-    WRONG_PASSWORD,
+public sealed interface WipeSettingResult {
+    public data object Saved : WipeSettingResult
 
     /** Too many failed attempts: the password cannot be checked yet. */
-    LOCKED_OUT,
+    public data class LockedOut(val remainingMillis: Long) : WipeSettingResult
 
     /** The wrong password reached the auto-wipe limit, and the data was wiped. */
-    WIPED,
+    public data object Wiped : WipeSettingResult
+
+    /**
+     * The setting is unchanged. [KeyError.WRONG_PASSWORD] counted as a failed attempt;
+     * [KeyError.PASSWORD_REQUIRED] means the password must be typed again.
+     */
+    public data class Failed(val error: KeyError) : WipeSettingResult
 }

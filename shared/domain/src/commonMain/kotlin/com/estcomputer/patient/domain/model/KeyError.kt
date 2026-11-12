@@ -21,6 +21,9 @@ public enum class KeyError {
 
     /** The app was locked while the unlock ran, so the keys were zeroed again and no session opened. */
     LOCKED_DURING_UNLOCK,
+
+    /** No password was given and the last password or recovery unlock is more than one minute old. */
+    PASSWORD_REQUIRED,
 }
 
 public enum class PasswordRejection {

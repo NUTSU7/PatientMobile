@@ -47,8 +47,7 @@ internal class PasswordChangeFlow(
         when {
             old != null -> verifyOld(vault, old, new)
             context.hasRecentPasswordUnlock() -> rewrap(vault, new)
-            // Without the old password a missing one is simply not the right one.
-            else -> Outcome.Done(ChangePasswordResult.Failed(KeyError.WRONG_PASSWORD))
+            else -> Outcome.Done(ChangePasswordResult.Failed(KeyError.PASSWORD_REQUIRED))
         }
 
     private suspend fun verifyOld(vault: VaultFile, old: SecretChars, new: SecretChars): Outcome =

@@ -1,5 +1,6 @@
 package com.estcomputer.patient.crypto
 
+import com.estcomputer.patient.domain.model.KeyError
 import com.estcomputer.patient.domain.model.SecretChars
 import com.estcomputer.patient.domain.model.WipeSettingResult
 import kotlinx.coroutines.sync.withLock
@@ -28,20 +29,20 @@ internal class WipeSettingFlow(
             // Outside the lock: the wipe destroys the keys through the key manager, which takes the same lock.
             Outcome.WipeDue -> {
                 wipe.wipeAllData()
-                WipeSettingResult.WIPED
+                WipeSettingResult.Wiped
             }
         }
     }
 
     private suspend fun attempt(attempts: Int?, password: SecretChars?): Outcome =
         if (context.isWipePending) {
-            Outcome.Done(WipeSettingResult.WIPED)
+            Outcome.Done(WipeSettingResult.Wiped)
         } else {
             check(context.session.isUnlocked) { "vault is locked" }
             when (val read = context.store.read()) {
                 is VaultReadResult.Ok -> authorize(read.vault, attempts, password)
                 VaultReadResult.Absent, VaultReadResult.Corrupt, VaultReadResult.Unreadable ->
-                    Outcome.Done(WipeSettingResult.STORAGE_FAILED)
+                    Outcome.Done(WipeSettingResult.Failed(KeyError.VAULT_CORRUPT))
             }
         }
 
@@ -49,7 +50,7 @@ internal class WipeSettingFlow(
         when {
             password != null -> verify(vault, attempts, password)
             context.hasRecentPasswordUnlock() -> Outcome.Done(save(vault, attempts))
-            else -> Outcome.Done(WipeSettingResult.PASSWORD_REQUIRED)
+            else -> Outcome.Done(WipeSettingResult.Failed(KeyError.PASSWORD_REQUIRED))
         }
 
     private suspend fun verify(vault: VaultFile, attempts: Int?, password: SecretChars): Outcome =
@@ -65,15 +66,19 @@ internal class WipeSettingFlow(
                     context.isWipePending = true
                     Outcome.WipeDue
                 } else {
-                    Outcome.Done(WipeSettingResult.WRONG_PASSWORD)
+                    Outcome.Done(WipeSettingResult.Failed(KeyError.WRONG_PASSWORD))
                 }
-            is PasswordAttempt.LockedOut -> Outcome.Done(WipeSettingResult.LOCKED_OUT)
-            is PasswordAttempt.Failed -> Outcome.Done(WipeSettingResult.STORAGE_FAILED)
+            is PasswordAttempt.LockedOut -> Outcome.Done(WipeSettingResult.LockedOut(attempt.remainingMillis))
+            is PasswordAttempt.Failed -> Outcome.Done(WipeSettingResult.Failed(attempt.error))
         }
 
     private suspend fun save(vault: VaultFile, attempts: Int?): WipeSettingResult {
         val written = context.store.write(vault.copy(wipeAfterFailedAttempts = attempts ?: WIPE_DISABLED))
-        return if (written == VaultStoreResult.DONE) WipeSettingResult.SAVED else WipeSettingResult.STORAGE_FAILED
+        return if (written == VaultStoreResult.DONE) {
+            WipeSettingResult.Saved
+        } else {
+            WipeSettingResult.Failed(KeyError.STORAGE_FAILED)
+        }
     }
 
     private companion object {
