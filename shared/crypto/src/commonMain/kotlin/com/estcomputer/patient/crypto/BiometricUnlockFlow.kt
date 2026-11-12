@@ -48,7 +48,7 @@ internal class BiometricUnlockFlow(
             when (val begun = keystore.beginOpen(alias, blob)) {
                 is BiometricKeystoreBeginResult.Ready -> BiometricBeginResult.Ready(begun.challenge)
                 is BiometricKeystoreBeginResult.Failed -> {
-                    cleaner.clear(vault)
+                    if (begun.error.isUnusable()) cleaner.clear(vault)
                     BiometricBeginResult.Failed(KeyError.BIOMETRIC_INVALIDATED)
                 }
             }

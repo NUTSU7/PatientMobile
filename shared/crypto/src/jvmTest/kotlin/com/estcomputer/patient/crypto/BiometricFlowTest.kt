@@ -253,6 +253,21 @@ class BiometricFlowTest {
     }
 
     @Test
+    fun bioUnlock_beginNotAuthenticated_keepsTheBlob() = runTest {
+        val rig = unlockedRig(this)
+        rig.enable()
+        rig.session.clear()
+        rig.bioKeystore.beginError = BiometricKeystoreError.NOT_AUTHENTICATED
+
+        assertEquals(
+            BiometricBeginResult.Failed(KeyError.BIOMETRIC_INVALIDATED),
+            rig.biometrics.beginBiometricUnlock(),
+        )
+
+        assertNotNull(rig.vault().wrappedMkBiometric)
+    }
+
+    @Test
     fun bioUnlock_whenNotEnabled_isInvalidated() = runTest {
         val rig = unlockedRig(this)
         rig.session.clear()
