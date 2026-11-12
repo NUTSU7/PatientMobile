@@ -25,3 +25,20 @@ that the directory fsync itself succeeded. Real devices are unchecked.
 `java.text.Normalizer` takes and returns a `String`. Every NFKC pass over a password and every NFKD pass over
 recovery words therefore leaves immutable copies on the heap until garbage collection. The `CharArray` inputs
 and outputs are zeroed, but these copies cannot be. Accepted because no audited normaliser works on arrays.
+
+## Keystore HW key without a secure lock screen
+
+The HW key needs `setUnlockedDeviceRequired(true)`. Generating it on a device with no secure lock screen fails with
+a `ProviderException`, which `AndroidKeystoreCipher.generateHwKey` does not catch after the StrongBox retry. Setup
+must check `KeyguardManager.isDeviceSecure` first (Category Q). The device tests set a PIN on the emulator for this
+reason: `adb shell locksettings set-pin 1234`.
+
+## Keystore failures mapped to `HW_KEY_INVALIDATED`
+
+`UnrecoverableKeyException` from `KeyStore.getKey` is treated like `KeyPermanentlyInvalidatedException`: the key
+exists but can no longer be used, so the patient goes to the recovery path. The plan lists only the second one.
+
+## Security level reporting
+
+Security level is display only. The device tests ran on an API 34 emulator, so StrongBox and a hardware-backed TEE
+are unchecked on real phones.
