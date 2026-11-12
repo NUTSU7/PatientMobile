@@ -1,7 +1,5 @@
 package com.estcomputer.patient.crypto
 
-import android.os.Build
-import android.security.KeyStoreException
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.UserNotAuthenticatedException
 import java.security.GeneralSecurityException
@@ -21,13 +19,3 @@ internal fun biometricKeystoreErrorOf(failure: GeneralSecurityException): Biomet
             if (isAuthenticationRequired(failure.cause)) BiometricKeystoreError.NOT_AUTHENTICATED else null
         else -> null
     }
-
-private const val KEYSTORE_EXCEPTION_CLASS = "android.security.KeyStoreException"
-
-// The class is public only from API 33; before that every keystore failure at doFinal counts, which fails closed.
-private fun isAuthenticationRequired(cause: Throwable?): Boolean =
-    cause?.javaClass?.name == KEYSTORE_EXCEPTION_CLASS &&
-        (
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-                (cause as KeyStoreException).numericErrorCode == KeyStoreException.ERROR_USER_AUTHENTICATION_REQUIRED
-            )

@@ -1,6 +1,7 @@
 package com.estcomputer.patient.crypto
 
 import android.os.Build
+import android.security.KeyStoreException
 import android.security.keystore.KeyInfo
 import android.security.keystore.KeyProperties
 import android.security.keystore.StrongBoxUnavailableException
@@ -45,3 +46,18 @@ internal fun securityLevelOf(key: SecretKey): SecurityLevel {
         if (info.isInsideSecureHardware) SecurityLevel.TRUSTED_ENVIRONMENT else SecurityLevel.SOFTWARE
     }
 }
+
+private const val KEYSTORE_EXCEPTION_CLASS = "android.security.KeyStoreException"
+
+/**
+ * True when [cause] says the key needs an authenticated user or an unlocked device. keystore2 (API 31+) wraps
+ * that in an `IllegalBlockSizeException` at `doFinal` instead of throwing `UserNotAuthenticatedException`.
+ * The class is public only from API 33; before that every keystore failure at `doFinal` counts. That opens
+ * nothing and counts no password attempt, so it fails closed.
+ */
+internal fun isAuthenticationRequired(cause: Throwable?): Boolean =
+    cause?.javaClass?.name == KEYSTORE_EXCEPTION_CLASS &&
+        (
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                (cause as KeyStoreException).numericErrorCode == KeyStoreException.ERROR_USER_AUTHENTICATION_REQUIRED
+            )
