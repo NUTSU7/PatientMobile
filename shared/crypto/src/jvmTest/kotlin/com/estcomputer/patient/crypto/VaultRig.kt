@@ -44,7 +44,9 @@ internal class VaultRig(scope: TestScope) {
         aead, keyDerivation, ExportKeyDeriver(keyDerivation, FakeX25519()), bip39, random,
     )
 
-    val setup = SetupFlow(inspector, validator, kdf, keystore, tools, context)
+    private val hardware = HardwareWrap(keystore)
+    val setup = SetupFlow(inspector, validator, kdf, hardware, tools, context)
     private val verifier = PasswordVerifier(keystore, kdf, tools, normalizer, context)
     val unlock = PasswordUnlockFlow(verifier, wipe, context)
+    val recovery = RecoveryFlow(validator, kdf, hardware, bioKeystore, tools, context)
 }

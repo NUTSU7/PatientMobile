@@ -14,7 +14,7 @@ internal class SetupFlow(
     private val inspector: StartupInspector,
     private val validator: PasswordPolicyValidator,
     private val calibrator: KdfCalibrator,
-    private val keystore: KeystoreCipher,
+    private val hardware: HardwareWrap,
     private val tools: KeyToolbox,
     private val context: VaultContext,
 ) {
@@ -126,25 +126,16 @@ internal class SetupFlow(
     }
 
     private suspend fun write(prepared: Prepared): SetupCommitResult =
-        when (keystore.generateHwKey(CryptoConstants.HW_KEY_ALIAS)) {
+        when (hardware.create(CryptoConstants.HW_KEY_ALIAS)) {
             KeystoreGenerateResult.DeviceNotSecure -> SetupCommitResult.Failed(KeyError.DEVICE_NOT_SECURE)
             is KeystoreGenerateResult.Ok -> sealAndStore(prepared)
         }
 
     private suspend fun sealAndStore(prepared: Prepared): SetupCommitResult =
-        when (val sealed = sealWithHw(prepared.inner)) {
-            is KeystoreSealResult.Failed -> failAndDropKey(sealed.error.toKeyError())
-            is KeystoreSealResult.Ok -> storeVault(prepared, sealed.blob)
+        when (val wrapped = hardware.wrap(CryptoConstants.HW_KEY_ALIAS, prepared.inner)) {
+            is HardwareWrapResult.Failed -> failAndDropKey(wrapped.error)
+            is HardwareWrapResult.Ok -> storeVault(prepared, wrapped.blob)
         }
-
-    private suspend fun sealWithHw(inner: ByteArray): KeystoreSealResult {
-        val secret = SecretBytes.copyOf(inner)
-        try {
-            return keystore.seal(CryptoConstants.HW_KEY_ALIAS, secret, CryptoConstants.AAD_MK_HW)
-        } finally {
-            secret.zero()
-        }
-    }
 
     private suspend fun storeVault(prepared: Prepared, wrappedPassword: ByteArray): SetupCommitResult {
         val now = context.clock.now()
@@ -178,7 +169,7 @@ internal class SetupFlow(
     }
 
     private suspend fun failAndDropKey(error: KeyError): SetupCommitResult {
-        keystore.deleteAlias(CryptoConstants.HW_KEY_ALIAS)
+        hardware.drop(CryptoConstants.HW_KEY_ALIAS)
         return SetupCommitResult.Failed(error)
     }
 

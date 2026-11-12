@@ -126,6 +126,9 @@ internal class FakeKeystore(private val random: SecureRandomSource) : KeystoreCi
     val keys = mutableMapOf<String, ByteArray>()
     var openError: KeystoreError? = null
     var sealError: KeystoreError? = null
+
+    /** Fails the next seal only. */
+    var failNextSeal: KeystoreError? = null
     var isDeviceSecure = true
     var generateCalls = 0
     val deleted = mutableListOf<String>()
@@ -139,7 +142,9 @@ internal class FakeKeystore(private val random: SecureRandomSource) : KeystoreCi
 
     override suspend fun seal(alias: String, plaintext: SecretBytes, aad: String): KeystoreSealResult {
         val key = keys[alias]
-        val error = sealError ?: if (key == null) KeystoreError.HW_KEY_MISSING else null
+        val once = failNextSeal
+        failNextSeal = null
+        val error = once ?: sealError ?: if (key == null) KeystoreError.HW_KEY_MISSING else null
         return if (error != null || key == null) {
             KeystoreSealResult.Failed(error ?: KeystoreError.HW_KEY_MISSING)
         } else {
