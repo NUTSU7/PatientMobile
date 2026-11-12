@@ -10,10 +10,10 @@ internal class AtomicVaultStore(
     private val fileOps: AtomicFileOps,
     private val codec: VaultCodec,
     private val dispatchers: DispatcherProvider,
-) {
+) : VaultStore {
     private val mutex = Mutex()
 
-    suspend fun read(): VaultReadResult = locked {
+    override suspend fun read(): VaultReadResult = locked {
         // A leftover temp file is an interrupted write; the vault file is still the last complete one.
         fileOps.deleteTemp()
         when (val file = fileOps.read()) {
@@ -26,7 +26,7 @@ internal class AtomicVaultStore(
         }
     }
 
-    suspend fun write(vault: VaultFile): VaultStoreResult = locked {
+    override suspend fun write(vault: VaultFile): VaultStoreResult = locked {
         val written = fileOps.writeTempSynced(codec.encode(vault)) &&
             fileOps.replaceWithTemp() &&
             fileOps.syncDirectory()
@@ -35,7 +35,7 @@ internal class AtomicVaultStore(
     }
 
     /** Overwrites then deletes. The Keystore key is destroyed first (ARH-09), which is the real guarantee. */
-    suspend fun destroy(): VaultStoreResult = locked {
+    override suspend fun destroy(): VaultStoreResult = locked {
         val tempGone = fileOps.deleteTemp()
         val zeroed = fileOps.overwriteWithZerosSynced()
         val deleted = fileOps.delete()
