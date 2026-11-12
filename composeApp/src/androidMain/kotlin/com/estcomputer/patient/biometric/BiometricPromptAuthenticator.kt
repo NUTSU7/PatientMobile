@@ -64,6 +64,7 @@ internal class BiometricPromptAuthenticator(
                 BiometricPrompt.ERROR_USER_CANCELED,
                 BiometricPrompt.ERROR_NEGATIVE_BUTTON,
                 BiometricPrompt.ERROR_CANCELED,
+                BiometricPrompt.ERROR_TIMEOUT,
                 -> BiometricOutcome.CANCELLED
                 BiometricPrompt.ERROR_LOCKOUT,
                 BiometricPrompt.ERROR_LOCKOUT_PERMANENT,
