@@ -15,6 +15,11 @@ kotlin {
             implementation(libs.tink.android)
             implementation(libs.bouncycastle.bcprov)
         }
+        getByName("androidDeviceTest").dependencies {
+            implementation(libs.androidx.test.runner)
+            implementation(libs.androidx.test.ext.junit)
+            implementation(kotlin("test"))
+        }
         commonTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.turbine)

@@ -17,7 +17,8 @@ that the Keystore key is deleted first, which makes every wrapped key in the old
 
 `AndroidAtomicFileOps.syncDirectory()` is best effort: a filesystem that refuses to open a directory is not
 treated as a failed write. The rename itself is atomic; only its durability across a power cut is unproven there.
-Not yet exercised on a device.
+The device test runs it on an API 34 emulator, but the method never reports failure, so that run does not show
+that the directory fsync itself succeeded. Real devices are unchecked.
 
 ## Unicode normalisation creates immutable copies
 
