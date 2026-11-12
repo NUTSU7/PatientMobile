@@ -120,9 +120,10 @@ is rethrown, so a wrong key spec stays visible. The AAD is added after authentic
 - User activity reaches the auto-lock through `Activity.onUserInteraction` (key presses and touch-downs) and
   `dispatchTouchEvent` (touch moves). `ComponentActivity.dispatchKeyEvent` is restricted API, so key releases and
   repeats are not forwarded.
-- `AndroidBootInfo.bootCount()` falls back to a constant when the platform setting cannot be read. Then a reboot is
-  no longer detected, and a biometric unlock after a reboot is not forced to a password. The setting exists on
-  every supported API level, so this only covers a vendor quirk.
+- `AndroidBootInfo.bootCount()` fails closed when the platform setting cannot be read: it returns a random value
+  fixed for the process and above any real boot count. Every process start then looks like a reboot, so a
+  biometric unlock asks for the password and an active lockout re-arms. The setting exists on every supported API
+  level, so this only covers a vendor quirk.
 - The device integrity check is built and tested but not called yet: the warning needs a screen.
 - `shared:crypto` exposes one public entry point, `VaultKeysFactory`, which returns only the `KeyManager` and
   `BiometricKeyManager` ports. **SECURITY-SENSITIVE**: it only assembles existing parts and changes no format,
@@ -149,3 +150,36 @@ is rethrown, so a wrong key spec stays visible. The AAD is added after authentic
 - Security level per test phone: only an API 34 emulator was run. Nothing is recorded for a real phone, a
   StrongBox device or API 29 and 30 yet.
 - The manual biometric checklist above is still open, as no fingerprint was enrolled on the emulator.
+
+## Review follow-up decisions
+
+Decided after the Phase 2 review, where doc 04 was silent.
+
+- A cancelled password attempt that reached no verdict gives the attempt back: a cancellation while the counter
+  is written or while Argon2 runs restores the previous vault. A process kill keeps the counted attempt, as
+  before. Once the password check has a result, a cancellation changes nothing.
+- A successful biometric unlock clears `failed_attempts` and the lockout. The strong biometric proves the
+  patient, so earlier typos must not stay one step from the auto-wipe. Biometric unlock stays allowed during a
+  password lockout; the 7-day and reboot rules still force the password.
+- Changing the auto-wipe setting needs the password, checked as a counted attempt, or a password or recovery
+  unlock less than one minute old. A biometric unlock alone cannot arm or disarm the wipe.
+- The stored Argon2 memory must be between 32 and 64 MiB; a larger value is `VAULT_CORRUPT`, so an edited vault
+  cannot exhaust the heap at every unlock.
+- On lock, the session coordinator waits at most 3 seconds for session jobs to end. A job that ignores
+  cancellation (a blocking call) can outlive the lock and keep a derived key until it returns; the closers make
+  its next use of the data fail, and the master key is zeroed regardless.
+- A process frozen in the background keeps the master key until it runs again. The lock is applied by the
+  timer or on the return to the foreground, not while the process is frozen.
+- After a wipe the app is not restarted: the lock state becomes `Unconfigured` and the UI shows the welcome
+  screen. The keys are zeroed and the session is gone, so no decrypted state survives in memory. Revisit when
+  the wipe confirmation screen is built.
+- The wipe still deletes a fixed list of paths. Today `vault.json` is the only data file written. Phase 3 must
+  keep the database in `noBackupFilesDir` under `AppPaths.DATABASE` and add an app-level device test that fails
+  when any file outside the wipe list remains after setup, use and a wipe.
+
+Still open, for the owner, because they change `vault.json` or doc 04:
+- integrity of `export_public_key` and `wrapped_mk_recovery` (a MAC needs a new HKDF `info` string);
+- splitting the attempt counters out of `vault.json` and keeping a backup copy of the key material;
+- monotonic time instead of the wall clock in the biometric policy;
+- a distinct result for an unknown newer vault `format`;
+- rotating the hardware key on password change, and a flow to replace the recovery words.
