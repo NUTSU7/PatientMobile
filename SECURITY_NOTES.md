@@ -90,8 +90,9 @@ is rethrown, so a wrong key spec stays visible. The AAD is added after authentic
 - `SessionCoordinator.lock()` zeroes the keys even when a closer throws or the caller is cancelled. It also
   zeroes them when no session was announced, so a wiring mistake cannot leave keys in memory.
 - `WipeAllData` still wipes when the `wipe.pending` marker cannot be written: erasing now matters more than
-  being able to resume. If the process then dies mid-wipe, nothing restarts it, and the patient sees a
-  locked app whose keys may already be gone.
+  being able to resume. It writes the marker again once the keys are gone. If both writes fail and the process
+  dies mid-wipe, or the vault file or data files cannot be deleted, nothing restarts the wipe; the keys are gone
+  first, so the patient sees a locked app, and the recovery words could still open a vault file left behind.
 - A wipe that cannot finish (`WipeResult.INCOMPLETE`) keeps the marker, and start-up runs it again.
   `VAULT_FILE_REMAINS` counts as incomplete for the reason given in the key manager section.
 - Reminders: a wipe cancels shown notifications only. Scheduled alarms are cancelled when the reminders phase
@@ -125,6 +126,12 @@ is rethrown, so a wrong key spec stays visible. The AAD is added after authentic
   biometric unlock asks for the password and an active lockout re-arms. The setting exists on every supported API
   level, so this only covers a vendor quirk.
 - The device integrity check is built and tested but not called yet: the warning needs a screen.
+- Unlocks go through the use cases `UnlockWithPassword`, `UnlockWithRecovery`, `CompleteBiometricUnlock` and
+  `CommitSetup`, which open the session in `SessionCoordinator` after the key manager succeeds. Calling the key
+  manager directly unlocks the keys without a session, so auto-lock never starts; screens must use the use cases.
+- A lock that arrives while an unlock runs (screen off during Argon2) wins: the coordinator zeroes the keys again,
+  opens no session and the use case returns `LOCKED_DURING_UNLOCK`. After setup the vault is already written, so
+  the state becomes `Locked`, not `Unconfigured`.
 - `shared:crypto` exposes one public entry point, `VaultKeysFactory`, which returns only the `KeyManager` and
   `BiometricKeyManager` ports. **SECURITY-SENSITIVE**: it only assembles existing parts and changes no format,
   key, algorithm or AAD string.
