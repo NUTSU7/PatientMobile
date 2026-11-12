@@ -2,6 +2,7 @@ package com.estcomputer.patient.crypto
 
 import com.estcomputer.patient.domain.model.KeyDestructionResult
 import com.estcomputer.patient.domain.model.KeyError
+import com.estcomputer.patient.domain.model.SecretBytes
 import com.estcomputer.patient.domain.model.SecretChars
 import com.estcomputer.patient.domain.model.SetupCommitResult
 import com.estcomputer.patient.domain.model.SetupResult
@@ -124,7 +125,7 @@ class VaultKeyManagerTest {
     fun autoWipe_throughTheRealDestroyKeys_doesNotDeadlock() = runTest {
         val rig = VaultRig(this)
         rig.setUp()
-        rig.manager.setWipeAfterFailedAttempts(10)
+        rig.manager.setWipeAfterFailedAttempts(10, null)
         rig.store.write(rig.vault().copy(failedAttempts = 9))
         rig.manager.lock()
         rig.wipe.onWipe = { rig.manager.destroyKeys() }
@@ -140,9 +141,9 @@ class VaultKeyManagerTest {
         val rig = VaultRig(this)
         rig.setUp()
 
-        assertEquals(WipeSettingResult.SAVED, rig.manager.setWipeAfterFailedAttempts(15))
+        assertEquals(WipeSettingResult.SAVED, rig.manager.setWipeAfterFailedAttempts(15, null))
         assertEquals(15, rig.vault().wipeAfterFailedAttempts)
-        assertEquals(WipeSettingResult.SAVED, rig.manager.setWipeAfterFailedAttempts(null))
+        assertEquals(WipeSettingResult.SAVED, rig.manager.setWipeAfterFailedAttempts(null, null))
         assertEquals(0, rig.vault().wipeAfterFailedAttempts)
     }
 
@@ -152,7 +153,7 @@ class VaultKeyManagerTest {
         rig.setUp()
         rig.files.failingStep = "temp"
 
-        assertEquals(WipeSettingResult.STORAGE_FAILED, rig.manager.setWipeAfterFailedAttempts(15))
+        assertEquals(WipeSettingResult.STORAGE_FAILED, rig.manager.setWipeAfterFailedAttempts(15, null))
 
         assertEquals(0, rig.vault().wipeAfterFailedAttempts)
     }
@@ -162,8 +163,65 @@ class VaultKeyManagerTest {
         val rig = VaultRig(this)
         rig.setUp()
 
-        assertFailsWith<IllegalArgumentException> { rig.manager.setWipeAfterFailedAttempts(9) }
-        assertFailsWith<IllegalArgumentException> { rig.manager.setWipeAfterFailedAttempts(21) }
+        assertFailsWith<IllegalArgumentException> { rig.manager.setWipeAfterFailedAttempts(9, null) }
+        assertFailsWith<IllegalArgumentException> { rig.manager.setWipeAfterFailedAttempts(21, null) }
+    }
+
+    @Test
+    fun setWipe_afterBiometricUnlockWithoutPassword_requiresPassword() = runTest {
+        val rig = VaultRig(this)
+        rig.setUp()
+        val mk = rig.session.requireMk().read { SecretBytes.copyOf(it) }
+        rig.session.start(mk, rig.clock.now(), passwordElapsedMillis = null)
+
+        assertEquals(WipeSettingResult.PASSWORD_REQUIRED, rig.manager.setWipeAfterFailedAttempts(10, null))
+
+        assertEquals(0, rig.vault().wipeAfterFailedAttempts)
+    }
+
+    @Test
+    fun setWipe_after61Seconds_requiresPassword() = runTest {
+        val rig = VaultRig(this)
+        rig.setUp()
+        rig.boot.elapsedMillis += 61_000
+
+        assertEquals(WipeSettingResult.PASSWORD_REQUIRED, rig.manager.setWipeAfterFailedAttempts(10, null))
+    }
+
+    @Test
+    fun setWipe_withCorrectPassword_saves() = runTest {
+        val rig = VaultRig(this)
+        rig.setUp()
+        rig.boot.elapsedMillis += 61_000
+
+        assertEquals(WipeSettingResult.SAVED, rig.manager.setWipeAfterFailedAttempts(12, chars(PASSWORD)))
+
+        assertEquals(12, rig.vault().wipeAfterFailedAttempts)
+        assertEquals(0, rig.vault().failedAttempts)
+    }
+
+    @Test
+    fun setWipe_withWrongPassword_countsAttempt() = runTest {
+        val rig = VaultRig(this)
+        rig.setUp()
+
+        val result = rig.manager.setWipeAfterFailedAttempts(null, chars("wrong password"))
+
+        assertEquals(WipeSettingResult.WRONG_PASSWORD, result)
+        assertEquals(1, rig.vault().failedAttempts)
+    }
+
+    @Test
+    fun setWipe_wrongPasswordAtLimit_wipes() = runTest {
+        val rig = VaultRig(this)
+        rig.setUp()
+        rig.store.write(rig.vault().copy(wipeAfterFailedAttempts = 10, failedAttempts = 9))
+        rig.wipe.onWipe = { rig.manager.destroyKeys() }
+
+        assertEquals(WipeSettingResult.WIPED, rig.manager.setWipeAfterFailedAttempts(null, chars("wrong password")))
+
+        assertEquals(1, rig.wipe.calls)
+        assertNull(rig.files.vaultBytes)
     }
 
     @Test
@@ -172,7 +230,7 @@ class VaultKeyManagerTest {
         rig.setUp()
         rig.manager.lock()
 
-        assertFailsWith<IllegalStateException> { rig.manager.setWipeAfterFailedAttempts(10) }
+        assertFailsWith<IllegalStateException> { rig.manager.setWipeAfterFailedAttempts(10, null) }
     }
 
     @Test

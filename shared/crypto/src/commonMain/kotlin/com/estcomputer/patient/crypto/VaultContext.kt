@@ -28,4 +28,11 @@ internal class VaultContext(
      * wiped, and the wipe is requested only once.
      */
     var isWipePending: Boolean = false
+
+    /** True within one minute of a password or recovery unlock. Never true after a biometric unlock. */
+    fun hasRecentPasswordUnlock(): Boolean {
+        val unlockedAt = session.passwordUnlockElapsedMillis
+        return unlockedAt != null &&
+            bootInfo.elapsedRealtimeMillis() - unlockedAt < CryptoConstants.RECENT_PASSWORD_UNLOCK_MILLIS
+    }
 }

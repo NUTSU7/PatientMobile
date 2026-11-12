@@ -18,6 +18,7 @@ internal class VaultFlows(
     val recovery: RecoveryFlow,
     val change: PasswordChangeFlow,
     val biometrics: BiometricFlow,
+    val wipeSetting: WipeSettingFlow,
 )
 
 /** The one object behind [KeyManager] and [BiometricKeyManager]; every operation shares one mutex. */
@@ -59,19 +60,8 @@ internal class VaultKeyManager(
             keys.destroy()
         }
 
-    override suspend fun setWipeAfterFailedAttempts(attempts: Int?): WipeSettingResult {
-        require(attempts == null || attempts in CryptoConstants.WIPE_AFTER_MIN..CryptoConstants.WIPE_AFTER_MAX) {
-            "attempts out of range"
-        }
-        return context.mutex.withLock {
-            check(context.session.isUnlocked) { "vault is locked" }
-            when (val read = context.store.read()) {
-                is VaultReadResult.Ok -> context.saveWipeThreshold(read.vault, attempts)
-                VaultReadResult.Absent, VaultReadResult.Corrupt, VaultReadResult.Unreadable ->
-                    WipeSettingResult.STORAGE_FAILED
-            }
-        }
-    }
+    override suspend fun setWipeAfterFailedAttempts(attempts: Int?, password: SecretChars?): WipeSettingResult =
+        flows.wipeSetting.set(attempts, password)
 }
 
 /** Deletes both Keystore keys, then the vault file. */
@@ -90,10 +80,3 @@ internal class KeyDestroyer(
         }
     }
 }
-
-private suspend fun VaultContext.saveWipeThreshold(vault: VaultFile, attempts: Int?): WipeSettingResult {
-    val written = store.write(vault.copy(wipeAfterFailedAttempts = attempts ?: WIPE_DISABLED))
-    return if (written == VaultStoreResult.DONE) WipeSettingResult.SAVED else WipeSettingResult.STORAGE_FAILED
-}
-
-private const val WIPE_DISABLED = 0

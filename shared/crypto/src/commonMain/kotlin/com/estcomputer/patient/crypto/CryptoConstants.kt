@@ -41,6 +41,9 @@ internal object CryptoConstants {
 
     val BIO_PASSWORD_MAX_AGE: Duration = 7.days
 
+    /** How long after a password unlock a sensitive setting can change without typing the password again. */
+    const val RECENT_PASSWORD_UNLOCK_MILLIS: Long = 60_000L
+
     const val PASSWORD_MIN_CODE_POINTS: Int = 8
     const val PASSWORD_MAX_CODE_POINTS: Int = 256
 

@@ -36,7 +36,8 @@ private class NoKeys : KeyManager {
     override suspend fun changePassword(old: SecretChars?, new: SecretChars): ChangePasswordResult = error("unused")
     override suspend fun databaseKey(): SecretBytes = error("unused")
     override suspend fun fileKeyEncryptionKey(): SecretBytes = error("unused")
-    override suspend fun setWipeAfterFailedAttempts(attempts: Int?): WipeSettingResult = error("unused")
+    override suspend fun setWipeAfterFailedAttempts(attempts: Int?, password: SecretChars?): WipeSettingResult =
+        error("unused")
 }
 
 class AndroidAutoLockEventsDeviceTest {

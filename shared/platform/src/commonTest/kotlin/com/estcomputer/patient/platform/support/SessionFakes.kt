@@ -30,7 +30,8 @@ class FakeKeyManager : KeyManager {
     override suspend fun changePassword(old: SecretChars?, new: SecretChars): ChangePasswordResult = unused()
     override suspend fun databaseKey(): SecretBytes = unused()
     override suspend fun fileKeyEncryptionKey(): SecretBytes = unused()
-    override suspend fun setWipeAfterFailedAttempts(attempts: Int?): WipeSettingResult = unused()
+    override suspend fun setWipeAfterFailedAttempts(attempts: Int?, password: SecretChars?): WipeSettingResult =
+        unused()
 
     private fun unused(): Nothing = error("not used by these tests")
 }

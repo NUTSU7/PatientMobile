@@ -36,6 +36,6 @@ internal class DeferredKeyManager(private val target: suspend () -> KeyManager) 
 
     override suspend fun destroyKeys(): KeyDestructionResult = target().destroyKeys()
 
-    override suspend fun setWipeAfterFailedAttempts(attempts: Int?): WipeSettingResult =
-        target().setWipeAfterFailedAttempts(attempts)
+    override suspend fun setWipeAfterFailedAttempts(attempts: Int?, password: SecretChars?): WipeSettingResult =
+        target().setWipeAfterFailedAttempts(attempts, password)
 }

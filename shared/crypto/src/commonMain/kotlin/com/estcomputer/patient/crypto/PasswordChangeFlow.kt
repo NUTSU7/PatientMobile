@@ -46,15 +46,10 @@ internal class PasswordChangeFlow(
     private suspend fun authorize(vault: VaultFile, old: SecretChars?, new: SecretChars): Outcome =
         when {
             old != null -> verifyOld(vault, old, new)
-            isRecentUnlock() -> rewrap(vault, new)
+            context.hasRecentPasswordUnlock() -> rewrap(vault, new)
             // Without the old password a missing one is simply not the right one.
             else -> Outcome.Done(ChangePasswordResult.Failed(KeyError.WRONG_PASSWORD))
         }
-
-    private fun isRecentUnlock(): Boolean {
-        val unlockedAt = context.session.passwordUnlockElapsedMillis
-        return unlockedAt != null && context.bootInfo.elapsedRealtimeMillis() - unlockedAt < RECENT_UNLOCK_MILLIS
-    }
 
     private suspend fun verifyOld(vault: VaultFile, old: SecretChars, new: SecretChars): Outcome =
         when (val attempt = verifier.verify(vault, old)) {
@@ -111,9 +106,5 @@ internal class PasswordChangeFlow(
         } else {
             ChangePasswordResult.Failed(KeyError.STORAGE_FAILED)
         }
-    }
-
-    private companion object {
-        const val RECENT_UNLOCK_MILLIS = 60_000L
     }
 }

@@ -44,6 +44,7 @@ class CryptoConstantsTest {
             assertEquals(10, MAX_ITERATIONS)
 
             assertEquals(7.days, BIO_PASSWORD_MAX_AGE)
+            assertEquals(60_000L, RECENT_PASSWORD_UNLOCK_MILLIS)
 
             assertEquals(8, PASSWORD_MIN_CODE_POINTS)
             assertEquals(256, PASSWORD_MAX_CODE_POINTS)

@@ -57,11 +57,12 @@ internal class VaultRig(scope: TestScope) {
         BiometricEnrolmentFlow(bioKeystore, cleaner, context),
     )
     val change = PasswordChangeFlow(verifier, newPassword, hardware, tools, wipe, context)
+    private val wipeSetting = WipeSettingFlow(verifier, wipe, context)
 
     fun storedBytes(): ByteArray = requireNotNull(files.vaultBytes) { "no vault file" }.copyOf()
 
     val manager = VaultKeyManager(
-        VaultFlows(setup, unlock, recovery, change, biometrics),
+        VaultFlows(setup, unlock, recovery, change, biometrics, wipeSetting),
         inspector,
         keyDerivation,
         KeyDestroyer(hardware, bioKeystore, store),

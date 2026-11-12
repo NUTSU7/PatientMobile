@@ -69,4 +69,16 @@ public enum class KeyDestructionResult {
 public enum class WipeSettingResult {
     SAVED,
     STORAGE_FAILED,
+
+    /** No password was given and the last password unlock is more than one minute old. */
+    PASSWORD_REQUIRED,
+
+    /** The password was wrong. It counts as a failed attempt. */
+    WRONG_PASSWORD,
+
+    /** Too many failed attempts: the password cannot be checked yet. */
+    LOCKED_OUT,
+
+    /** The wrong password reached the auto-wipe limit, and the data was wiped. */
+    WIPED,
 }

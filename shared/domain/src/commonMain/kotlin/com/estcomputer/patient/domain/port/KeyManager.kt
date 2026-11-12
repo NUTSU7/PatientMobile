@@ -45,6 +45,10 @@ public interface KeyManager {
      */
     public suspend fun destroyKeys(): KeyDestructionResult
 
-    /** [attempts] must be in 10..20, or null to turn the auto-wipe off. Valid only while unlocked. */
-    public suspend fun setWipeAfterFailedAttempts(attempts: Int?): WipeSettingResult
+    /**
+     * [attempts] must be in 10..20, or null to turn the auto-wipe off. Valid only while unlocked.
+     * [password] may be null only within one minute of a password or recovery unlock; a biometric unlock
+     * alone never changes this setting. A wrong [password] counts as a failed attempt.
+     */
+    public suspend fun setWipeAfterFailedAttempts(attempts: Int?, password: SecretChars?): WipeSettingResult
 }

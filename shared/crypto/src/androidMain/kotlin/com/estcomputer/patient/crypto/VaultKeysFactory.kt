@@ -123,6 +123,7 @@ public object VaultKeysFactory {
                 BiometricUnlockFlow(bioKeystore, BioPolicy(environment.bootInfo, environment.clock), cleaner, context),
                 BiometricEnrolmentFlow(bioKeystore, cleaner, context),
             ),
+            wipeSetting = WipeSettingFlow(verifier, wipe, context),
         )
         return VaultKeyManager(flows, inspector, keyDerivation, KeyDestroyer(hardware, bioKeystore, store), context)
     }
