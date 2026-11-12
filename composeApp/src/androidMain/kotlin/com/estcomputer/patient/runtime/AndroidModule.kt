@@ -6,10 +6,15 @@ import com.estcomputer.patient.crypto.VaultEnvironment
 import com.estcomputer.patient.crypto.VaultKeys
 import com.estcomputer.patient.crypto.VaultKeysFactory
 import com.estcomputer.patient.domain.coroutines.DispatcherProvider
+import com.estcomputer.patient.domain.port.BiometricKeyManager
 import com.estcomputer.patient.domain.port.BootInfo
 import com.estcomputer.patient.domain.port.KeyManager
 import com.estcomputer.patient.domain.session.SessionCoordinator
+import com.estcomputer.patient.domain.usecase.CommitSetup
+import com.estcomputer.patient.domain.usecase.CompleteBiometricUnlock
 import com.estcomputer.patient.domain.usecase.RunStartup
+import com.estcomputer.patient.domain.usecase.UnlockWithPassword
+import com.estcomputer.patient.domain.usecase.UnlockWithRecovery
 import com.estcomputer.patient.domain.usecase.WipeAllData
 import com.estcomputer.patient.platform.autolock.AndroidAutoLockEvents
 import com.estcomputer.patient.platform.autolock.AutoLockPolicy
@@ -47,6 +52,9 @@ public val androidModules: List<Module> = listOf(
         single { AppDataInspector(get()) }
         single<Deferred<VaultKeys>> { lazyKeys(get<Context>(), get(), get(), get(), get(), getWipe = { get() }) }
         single<KeyManager> { DeferredKeyManager { get<Deferred<VaultKeys>>().await().keyManager } }
+        single<BiometricKeyManager> {
+            DeferredBiometricKeyManager { get<Deferred<VaultKeys>>().await().biometrics }
+        }
         single {
             SessionCoordinator(get(), get(), listOf(ShareCacheCleaner(get())))
         }
@@ -61,6 +69,10 @@ public val androidModules: List<Module> = listOf(
             )
         }
         single { RunStartup(get(), get(), TransientFileCleaner(get()), get()) }
+        single { UnlockWithPassword(get(), get()) }
+        single { UnlockWithRecovery(get(), get()) }
+        single { CompleteBiometricUnlock(get(), get()) }
+        single { CommitSetup(get()) }
         single { AutoLockPolicy(get(), get(), get(), get()) }
         single { ScreenSecurityPolicy() }
         single { PatientRuntime(get(), get(), get(), AndroidAutoLockEvents(get(), get()), get()) }
