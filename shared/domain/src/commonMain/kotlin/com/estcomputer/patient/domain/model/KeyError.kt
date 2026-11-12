@@ -12,6 +12,12 @@ public enum class KeyError {
     BIOMETRIC_POLICY_EXPIRED,
     DEVICE_NOT_SECURE,
     OUT_OF_MEMORY,
+
+    /** The vault file could not be written, so the previous state is unchanged. */
+    STORAGE_FAILED,
+
+    /** Biometrics were requested but no strong biometric is enrolled on the device. */
+    BIOMETRIC_NOT_ENROLLED,
 }
 
 public enum class PasswordRejection {
