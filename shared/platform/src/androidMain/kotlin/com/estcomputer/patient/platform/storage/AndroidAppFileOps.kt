@@ -24,6 +24,9 @@ public class AndroidAppFileOps(
             children.map { it.deleteRecursively() || !it.exists() }.all { it }
         }
 
+    override suspend fun exists(directory: AppDirectory, relativePath: String): Boolean =
+        withContext(dispatchers.io) { File(rootOf(directory), relativePath).exists() }
+
     private fun rootOf(directory: AppDirectory): File =
         when (directory) {
             AppDirectory.NO_BACKUP_FILES -> noBackupFilesDir

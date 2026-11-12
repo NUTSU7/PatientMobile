@@ -104,4 +104,26 @@ class AndroidStorageHostTest {
 
         assertEquals(WipeStepResult.FAILED, AndroidWipeMarker(noBackup, dispatchers()).write())
     }
+
+    @Test
+    fun exists_reflectsFilesInBothRoots() = runTest {
+        val ops = AndroidAppFileOps(noBackup, cache, dispatchers())
+        plant(noBackup, "${AppPaths.BLOBS}/a1")
+
+        assertTrue(ops.exists(AppDirectory.NO_BACKUP_FILES, AppPaths.BLOBS))
+        assertFalse(ops.exists(AppDirectory.CACHE, AppPaths.BLOBS))
+        assertFalse(ops.exists(AppDirectory.NO_BACKUP_FILES, AppPaths.ALARMS))
+    }
+
+    @Test
+    fun inspector_seesTheMarkerTheAndroidMarkerWrites() = runTest {
+        val inspector = AppDataInspector(AndroidAppFileOps(noBackup, cache, dispatchers()))
+        val marker = AndroidWipeMarker(noBackup, dispatchers())
+
+        assertFalse(inspector.hasWipeMarker())
+        marker.write()
+        assertTrue(inspector.hasWipeMarker())
+        marker.delete()
+        assertFalse(inspector.hasWipeMarker())
+    }
 }

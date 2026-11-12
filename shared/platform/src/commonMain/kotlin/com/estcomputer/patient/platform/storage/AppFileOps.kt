@@ -6,4 +6,7 @@ public interface AppFileOps {
 
     /** Deletes everything inside the directory but keeps the directory itself. Returns true when it is empty. */
     public suspend fun clearDirectory(directory: AppDirectory, relativePath: String): Boolean
+
+    /** True when a file or directory exists at the path. */
+    public suspend fun exists(directory: AppDirectory, relativePath: String): Boolean
 }

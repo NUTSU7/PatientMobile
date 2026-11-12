@@ -16,6 +16,9 @@ class FakeAppFileOps(vararg initial: Pair<AppDirectory, String>) : AppFileOps {
         return remove(directory, relativePath, includeRoot = false)
     }
 
+    override suspend fun exists(directory: AppDirectory, relativePath: String): Boolean =
+        files.any { (dir, path) -> dir == directory && (path == relativePath || path.startsWith("$relativePath/")) }
+
     private fun remove(directory: AppDirectory, relativePath: String, includeRoot: Boolean): Boolean {
         val doomed = files.filter { (dir, path) ->
             dir == directory && (path.startsWith("$relativePath/") || (includeRoot && path == relativePath))
