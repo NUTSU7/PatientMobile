@@ -18,10 +18,22 @@ internal class SetupFlow(
     private val tools: KeyToolbox,
     private val context: VaultContext,
 ) {
+    private var pending: PendingSetup? = null
+
+    /** Zeroes a setup that was prepared but not committed, e.g. on lock. */
+    suspend fun abandonPending() {
+        context.mutex.withLock {
+            pending?.abandon()
+            pending = null
+        }
+    }
+
     /** Valid only in [StartupState.Clean]; anything else is a caller bug. */
     suspend fun prepare(password: SecretChars): SetupResult =
         context.mutex.withLock {
             check(inspector.inspect() == StartupState.Clean) { "setup needs a clean install" }
+            pending?.abandon()
+            pending = null
             if (context.deviceSecurity.isDeviceSecure()) {
                 when (val checked = validator.validate(password)) {
                     is PasswordCheck.Rejected -> SetupResult.PasswordRejected(checked.reason)
@@ -87,7 +99,7 @@ internal class SetupFlow(
             wrappedRecovery = wrappedRecovery,
             exportPublicKey = tools.exportKeyDeriver.publicKey(recoverySecret),
         )
-        return PendingSetupImpl(prepared, tools.bip39.encode(recoverySecret))
+        return PendingSetupImpl(prepared, tools.bip39.encode(recoverySecret)).also { pending = it }
     }
 
     private class Prepared(
