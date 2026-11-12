@@ -29,3 +29,6 @@
     public static *** wtf(...);
     public static *** println(...);
 }
+-assumenosideeffects class com.estcomputer.patient.domain.util.PatientLog {
+    public void event(...);
+}
