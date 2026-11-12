@@ -139,6 +139,45 @@ class BiometricFlowTest {
     }
 
     @Test
+    fun bioUnlock_afterWrongPasswords_clearsCounterAndLockout() = runTest {
+        val rig = unlockedRig(this)
+        rig.enable()
+        rig.session.clear()
+        repeat(5) { rig.unlock.unlock(chars("wrong password")) }
+        assertEquals(5, rig.vault().failedAttempts)
+
+        assertEquals(UnlockResult.Unlocked(needsBiometricRefresh = false), rig.bioUnlock())
+
+        assertEquals(0, rig.vault().failedAttempts)
+        assertEquals(0, rig.vault().lockoutUntilElapsed)
+    }
+
+    @Test
+    fun bioUnlock_withoutFailedAttempts_writesNothing() = runTest {
+        val rig = unlockedRig(this)
+        rig.enable()
+        rig.session.clear()
+        val writes = rig.files.writes
+
+        rig.bioUnlock()
+
+        assertEquals(writes, rig.files.writes)
+    }
+
+    @Test
+    fun bioUnlock_policyExpired_keepsCounter() = runTest {
+        val rig = unlockedRig(this)
+        rig.enable()
+        rig.session.clear()
+        rig.unlock.unlock(chars("wrong password"))
+        rig.boot.bootCount = 2
+
+        rig.bioUnlock()
+
+        assertEquals(1, rig.vault().failedAttempts)
+    }
+
+    @Test
     fun bioUnlock_afterReboot_requiresPassword() = runTest {
         val rig = unlockedRig(this)
         rig.enable()
@@ -264,18 +303,6 @@ class BiometricFlowTest {
         assertEquals(UnlockResult.Failed(KeyError.BIOMETRIC_INVALIDATED), rig.bioUnlock())
 
         assertNull(rig.vault().bioKeyAlias)
-    }
-
-    @Test
-    fun bioUnlock_leavesTheFailedAttemptCounterAlone() = runTest {
-        val rig = unlockedRig(this)
-        rig.enable()
-        rig.store.write(rig.vault().copy(failedAttempts = 3))
-        rig.session.clear()
-
-        rig.bioUnlock()
-
-        assertEquals(3, rig.vault().failedAttempts)
     }
 
     @Test

@@ -83,6 +83,7 @@ internal class BiometricUnlockFlow(
                     decoded.mk.zero()
                     UnlockResult.Failed(KeyError.BIOMETRIC_POLICY_EXPIRED)
                 } else {
+                    clearFailedAttempts(vault)
                     // Keeps the recorded password time, so a biometric unlock never extends the 7 days.
                     context.session.start(
                         decoded.mk,
@@ -92,4 +93,17 @@ internal class BiometricUnlockFlow(
                     UnlockResult.Unlocked(needsBiometricRefresh = false)
                 }
         }
+
+    // A strong biometric proves the patient, so earlier typos no longer count toward the lockout or the
+    // auto-wipe. A failed write only leaves the old count, which the next password unlock clears.
+    private suspend fun clearFailedAttempts(vault: VaultFile) {
+        if (vault.failedAttempts == 0 && vault.lockoutUntilElapsed == 0L) return
+        context.store.write(
+            vault.copy(
+                failedAttempts = 0,
+                lockoutUntilElapsed = 0,
+                lockoutBootCount = context.bootInfo.bootCount(),
+            ),
+        )
+    }
 }
