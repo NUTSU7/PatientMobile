@@ -84,7 +84,7 @@ class PasswordChangeFlowTest {
     @Test
     fun change_withoutOldPasswordAfter61Seconds_isRejected() = runTest {
         val rig = unlockedRig(this)
-        val before = rig.files.vaultBytes!!.copyOf()
+        val before = rig.storedBytes()
         rig.boot.elapsedMillis += 61_000
 
         assertEquals(
@@ -102,7 +102,7 @@ class PasswordChangeFlowTest {
         rig.session.clear()
         val unlockChallenge = assertIs<BiometricBeginResult.Ready>(rig.biometrics.beginBiometricUnlock()).challenge
         assertIs<UnlockResult.Unlocked>(rig.biometrics.completeBiometricUnlock(unlockChallenge))
-        val before = rig.files.vaultBytes!!.copyOf()
+        val before = rig.storedBytes()
 
         assertEquals(
             ChangePasswordResult.Failed(KeyError.WRONG_PASSWORD),
@@ -115,7 +115,7 @@ class PasswordChangeFlowTest {
     @Test
     fun change_weakNewPassword_isRejectedAndNothingChanges() = runTest {
         val rig = unlockedRig(this)
-        val before = rig.files.vaultBytes!!.copyOf()
+        val before = rig.storedBytes()
 
         assertEquals(
             ChangePasswordResult.PasswordRejected(PasswordRejection.TOO_SHORT),

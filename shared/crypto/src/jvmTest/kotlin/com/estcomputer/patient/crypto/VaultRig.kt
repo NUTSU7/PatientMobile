@@ -40,8 +40,9 @@ internal class VaultRig(scope: TestScope) {
     val inspector = StartupInspector(store, probe, keystore, bioKeystore)
 
     private val context = VaultContext(store, security, boot, clock, session, mutex)
+    val x25519 = FakeX25519()
     private val tools = KeyToolbox(
-        aead, keyDerivation, ExportKeyDeriver(keyDerivation, FakeX25519()), bip39, random,
+        aead, keyDerivation, ExportKeyDeriver(keyDerivation, x25519), bip39, random,
     )
 
     private val hardware = HardwareWrap(keystore)
@@ -56,6 +57,8 @@ internal class VaultRig(scope: TestScope) {
         BiometricEnrolmentFlow(bioKeystore, cleaner, context),
     )
     val change = PasswordChangeFlow(verifier, newPassword, hardware, tools, wipe, context)
+
+    fun storedBytes(): ByteArray = requireNotNull(files.vaultBytes) { "no vault file" }.copyOf()
 
     val manager = VaultKeyManager(
         VaultFlows(setup, unlock, recovery, change, biometrics),

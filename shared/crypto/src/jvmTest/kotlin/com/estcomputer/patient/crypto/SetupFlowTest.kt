@@ -239,6 +239,32 @@ class SetupFlowTest {
     }
 
     @Test
+    fun abandon_whileAnotherOperationHoldsTheLock_zeroesWordsNowAndCommitIsRefused() = runTest {
+        val rig = rig()
+        val pending = rig.pending()
+        rig.mutex.lock()
+
+        pending.abandon()
+
+        assertTrue(pending.recoveryWords.isZeroed)
+        rig.mutex.unlock()
+        assertFailsWith<IllegalStateException> { pending.commit() }
+        assertNull(rig.files.vaultBytes)
+    }
+
+    @Test
+    fun prepare_whenAStepThrows_releasesTheMasterKeyAndLeavesNothing() = runTest {
+        val rig = rig()
+        rig.x25519.isBroken = true
+
+        assertFailsWith<IllegalStateException> { rig.setup.prepare(chars(PASSWORD)) }
+
+        assertNull(rig.files.vaultBytes)
+        rig.x25519.isBroken = false
+        assertIs<SetupResult.Ready>(rig.setup.prepare(chars(PASSWORD)))
+    }
+
+    @Test
     fun session_afterCommit_holdsMkThatTheRecoveryBlobOpens() = runTest {
         val rig = rig()
         val words = rig.pending().let { p -> p.recoveryWords.read { String(it) }.also { p.commit() } }

@@ -69,8 +69,13 @@ internal class FakeHkdf : Hkdf {
 }
 
 internal class FakeX25519 : X25519 {
+    var isBroken = false
+
     override fun publicKey(privateKey: SecretBytes): ByteArray =
-        privateKey.read { k -> ByteArray(k.size) { (k[it].toInt() + 1).toByte() } }
+        privateKey.read { k ->
+            check(!isBroken) { "x25519 failed" }
+            ByteArray(k.size) { (k[it].toInt() + 1).toByte() }
+        }
 }
 
 /** Stands in for Argon2id: a key from the password and salt, the real bounds check, and failure injection. */

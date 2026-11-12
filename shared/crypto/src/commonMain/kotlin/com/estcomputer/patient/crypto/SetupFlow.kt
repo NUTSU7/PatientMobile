@@ -88,20 +88,29 @@ internal class SetupFlow(
         recoverySecret: SecretBytes,
     ): PendingSetup {
         val inner = tools.aead.seal(calibrated.key, mk, CryptoConstants.AAD_MK_PASSWORD)
-        val rwk = tools.keyDerivation.deriveRwk(recoverySecret)
-        val wrappedRecovery = try {
-            tools.aead.seal(rwk, mk, CryptoConstants.AAD_MK_RECOVERY)
+        var isReady = false
+        try {
+            val rwk = tools.keyDerivation.deriveRwk(recoverySecret)
+            val wrappedRecovery = try {
+                tools.aead.seal(rwk, mk, CryptoConstants.AAD_MK_RECOVERY)
+            } finally {
+                rwk.zero()
+            }
+            val prepared = Prepared(
+                mk = mk,
+                inner = inner,
+                kdf = calibrated.params,
+                wrappedRecovery = wrappedRecovery,
+                exportPublicKey = tools.exportKeyDeriver.publicKey(recoverySecret),
+            )
+            val setup = PendingSetupImpl(prepared, tools.bip39.encode(recoverySecret))
+            pending = setup
+            isReady = true
+            return setup
         } finally {
-            rwk.zero()
+            // If a step threw, the caller never sees the setup, so its temporaries go here.
+            if (!isReady) inner.fill(0)
         }
-        val prepared = Prepared(
-            mk = mk,
-            inner = inner,
-            kdf = calibrated.params,
-            wrappedRecovery = wrappedRecovery,
-            exportPublicKey = tools.exportKeyDeriver.publicKey(recoverySecret),
-        )
-        return PendingSetupImpl(prepared, tools.bip39.encode(recoverySecret)).also { pending = it }
     }
 
     private class Prepared(
@@ -120,15 +129,27 @@ internal class SetupFlow(
 
         override suspend fun commit(): SetupCommitResult =
             context.mutex.withLock {
-                check(!isDone) { "setup already finished" }
+                check(!isDone && !isAbandoned) { "setup already finished" }
                 val result = write(prepared)
                 // On failure the patient may retry commit, so only a success consumes the setup.
                 if (result is SetupCommitResult.Committed) release(keepMk = true)
                 result
             }
 
+        private var isAbandoned = false
+
+        // Callable from any thread without suspending. The words go at once. The key material goes now if no
+        // other key operation is running, otherwise at the next lock, which also abandons a pending setup.
         override fun abandon() {
-            if (!isDone) release(keepMk = false)
+            isAbandoned = true
+            recoveryWords.zero()
+            if (context.mutex.tryLock()) {
+                try {
+                    if (!isDone) release(keepMk = false)
+                } finally {
+                    context.mutex.unlock()
+                }
+            }
         }
 
         private fun release(keepMk: Boolean) {

@@ -91,9 +91,13 @@ internal class PasswordChangeFlow(
 
     private suspend fun store(vault: VaultFile, derived: NewPasswordResult.Ready): ChangePasswordResult {
         val inner = tools.aead.seal(derived.key, context.session.requireMk(), CryptoConstants.AAD_MK_PASSWORD)
-        return when (val wrapped = hardware.wrap(vault.hwKeyAlias, inner)) {
-            is HardwareWrapResult.Failed -> ChangePasswordResult.Failed(wrapped.error)
-            is HardwareWrapResult.Ok -> write(vault, derived.params, wrapped.blob)
+        try {
+            return when (val wrapped = hardware.wrap(vault.hwKeyAlias, inner)) {
+                is HardwareWrapResult.Failed -> ChangePasswordResult.Failed(wrapped.error)
+                is HardwareWrapResult.Ok -> write(vault, derived.params, wrapped.blob)
+            }
+        } finally {
+            inner.fill(0)
         }
     }
 

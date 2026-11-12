@@ -73,7 +73,7 @@ class BiometricFlowTest {
     fun enable_noBiometricEnrolled_failsAndLeavesVault() = runTest {
         val rig = unlockedRig(this)
         rig.bioKeystore.isEnrolled = false
-        val before = rig.files.vaultBytes!!.copyOf()
+        val before = rig.storedBytes()
 
         assertEquals(
             BiometricBeginResult.Failed(KeyError.BIOMETRIC_NOT_ENROLLED),
@@ -94,7 +94,7 @@ class BiometricFlowTest {
     fun refresh_cancelled_keepsTheOldBlob() = runTest {
         val rig = unlockedRig(this)
         rig.enable()
-        val before = rig.vault().wrappedMkBiometric!!.copyOf()
+        val before = requireNotNull(rig.vault().wrappedMkBiometric).copyOf()
 
         rig.challenge(rig.biometrics.beginBiometricEnrolment())
 
@@ -319,7 +319,7 @@ class BiometricFlowTest {
     @Test
     fun disable_whenNeverEnabled_isHarmless() = runTest {
         val rig = unlockedRig(this)
-        val before = rig.files.vaultBytes!!.copyOf()
+        val before = rig.storedBytes()
 
         rig.biometrics.disableBiometrics()
 

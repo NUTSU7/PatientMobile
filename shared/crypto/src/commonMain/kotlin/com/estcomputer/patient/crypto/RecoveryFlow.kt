@@ -103,10 +103,14 @@ internal class RecoveryFlow(
     ): UnlockResult =
         try {
             val inner = tools.aead.seal(derived.key, mk, CryptoConstants.AAD_MK_PASSWORD)
-            // A missing or invalidated device key is exactly why the patient is recovering, so it is rebuilt.
-            when (val wrapped = hardware.wrapRebuildingKey(vault.hwKeyAlias, inner)) {
-                is HardwareWrapResult.Failed -> UnlockResult.Failed(wrapped.error)
-                is HardwareWrapResult.Ok -> store(vault, mk, derived.params, wrapped.blob)
+            try {
+                // A missing or invalidated device key is exactly why the patient is recovering, so it is rebuilt.
+                when (val wrapped = hardware.wrapRebuildingKey(vault.hwKeyAlias, inner)) {
+                    is HardwareWrapResult.Failed -> UnlockResult.Failed(wrapped.error)
+                    is HardwareWrapResult.Ok -> store(vault, mk, derived.params, wrapped.blob)
+                }
+            } finally {
+                inner.fill(0)
             }
         } finally {
             derived.key.zero()

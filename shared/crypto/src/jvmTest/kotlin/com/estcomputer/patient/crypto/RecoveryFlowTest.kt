@@ -103,7 +103,7 @@ class RecoveryFlowTest {
     @Test
     fun recovery_deviceNotSecureWhenRebuilding_failsAndKeepsVault() = runTest {
         val s = lockedSetup(rig())
-        val before = s.rig.files.vaultBytes!!.copyOf()
+        val before = s.rig.storedBytes()
         s.rig.keystore.keys.clear()
         s.rig.keystore.isDeviceSecure = false
 
@@ -173,7 +173,7 @@ class RecoveryFlowTest {
     fun recovery_wrongWords_neverTouchTheVaultOrWipe() = runTest {
         val s = lockedSetup(rig())
         s.rig.store.write(s.rig.vault().copy(wipeAfterFailedAttempts = 10, failedAttempts = 9))
-        val before = s.rig.files.vaultBytes!!.copyOf()
+        val before = s.rig.storedBytes()
 
         repeat(3) {
             s.rig.boot.elapsedMillis += SKIP
@@ -187,7 +187,7 @@ class RecoveryFlowTest {
     @Test
     fun recovery_weakNewPassword_isRejectedAndNothingChanges() = runTest {
         val s = lockedSetup(rig())
-        val before = s.rig.files.vaultBytes!!.copyOf()
+        val before = s.rig.storedBytes()
 
         assertEquals(
             UnlockResult.PasswordRejected(PasswordRejection.TOO_SHORT),
@@ -215,7 +215,7 @@ class RecoveryFlowTest {
     @Test
     fun recovery_writeFails_leavesOldVaultAndBiometricsAlone() = runTest {
         val s = lockedSetup(rig())
-        val before = s.rig.files.vaultBytes!!.copyOf()
+        val before = s.rig.storedBytes()
         s.rig.bioKeystore.keys[CryptoConstants.BIO_KEY_ALIAS] = ByteArray(1)
         s.rig.files.failingStep = "temp"
 
