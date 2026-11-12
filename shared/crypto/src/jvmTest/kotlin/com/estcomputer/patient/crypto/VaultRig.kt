@@ -50,5 +50,10 @@ internal class VaultRig(scope: TestScope) {
     val unlock = PasswordUnlockFlow(verifier, wipe, context)
     private val newPassword = NewPasswordDeriver(validator, kdf, random)
     val recovery = RecoveryFlow(newPassword, hardware, bioKeystore, tools, context)
+    private val cleaner = BiometricCleaner(bioKeystore, context)
+    val biometrics = BiometricFlow(
+        BiometricUnlockFlow(bioKeystore, BioPolicy(boot, clock), cleaner, context),
+        BiometricEnrolmentFlow(bioKeystore, cleaner, context),
+    )
     val change = PasswordChangeFlow(verifier, newPassword, hardware, tools, wipe, context)
 }
