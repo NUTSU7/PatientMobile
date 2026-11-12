@@ -27,10 +27,12 @@ public class WipeAllData(
     public suspend operator fun invoke(): WipeResult =
         mutex.withLock {
             // A failed marker write does not stop the wipe: erasing now matters more than resuming later.
-            marker.write()
+            // It is tried again once the keys are gone, so a later start-up can still finish what is left.
+            val isMarked = marker.write() == WipeStepResult.DONE
             sessionCoordinator.lock()
             // ARH-09: keys go before files, so leftover ciphertext is useless.
             val keysDone = keyManager.destroyKeys() == KeyDestructionResult.DONE
+            if (!isMarked) marker.write()
             val storageDone = storage.deleteAll() == WipeStepResult.DONE
             reminders.cancelAll()
             if (keysDone && storageDone && marker.delete() == WipeStepResult.DONE) {

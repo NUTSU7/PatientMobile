@@ -39,6 +39,7 @@ class WipeAllDataTest {
     private var crashAt: String? = null
     private var storageResult = WipeStepResult.DONE
     private var markerWriteResult = WipeStepResult.DONE
+    private var markerWriteFailuresLeft = 0
     private var markerDeleteResult = WipeStepResult.DONE
 
     private fun step(name: String, action: () -> Unit) {
@@ -49,8 +50,10 @@ class WipeAllDataTest {
 
     private val marker = object : WipeMarker {
         override suspend fun write(): WipeStepResult {
-            step("marker.write") { if (markerWriteResult == WipeStepResult.DONE) disk.isMarkerPresent = true }
-            return markerWriteResult
+            val result = if (markerWriteFailuresLeft > 0) WipeStepResult.FAILED else markerWriteResult
+            if (markerWriteFailuresLeft > 0) markerWriteFailuresLeft--
+            step("marker.write") { if (result == WipeStepResult.DONE) disk.isMarkerPresent = true }
+            return result
         }
 
         override suspend fun delete(): WipeStepResult {
@@ -191,6 +194,20 @@ class WipeAllDataTest {
         assertEquals(WipeResult.DONE, result)
         assertFalse(disk.hasKeys)
         assertFalse(disk.hasFiles)
+    }
+
+    @Test
+    fun invoke_whenFirstMarkerWriteFails_retriesAfterKeysSoStartupCanFinish() = runTest {
+        markerWriteFailuresLeft = 1
+        storageResult = WipeStepResult.FAILED
+        val (wipe, _) = wipe()
+
+        val result = wipe()
+
+        assertEquals(WipeResult.INCOMPLETE, result)
+        assertEquals(listOf("marker.write", "keys.lock", "keys.destroy", "marker.write"), events.take(4))
+        assertTrue(disk.isMarkerPresent)
+        assertFalse(disk.hasKeys)
     }
 
     @Test
