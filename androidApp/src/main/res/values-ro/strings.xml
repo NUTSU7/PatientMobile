@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">PatientMobile</string>
+    <string name="biometric_prompt_title">Deblocare biometrică</string>
+    <string name="biometric_prompt_negative">Folosește parola</string>
+</resources>
