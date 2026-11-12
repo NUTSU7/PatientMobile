@@ -106,3 +106,46 @@ is rethrown, so a wrong key spec stays visible. The AAD is added after authentic
   checks are skipped: they need a manifest `<queries>` entry, which the owner has not approved.
 - Device tests on the API 34 emulator: the screen-off lock (via `input keyevent KEYCODE_SLEEP`), a full storage
   wipe in the real app directories, and the `FLAG_SECURE` flag on a window. Real devices are unchecked.
+
+## App wiring and start-up
+
+- `PatientRuntime` runs `RunStartup` in the application scope and `PatientAppHost` composes nothing until it ends.
+  Order: finish an interrupted wipe, empty `tmp/` and `cacheDir/share/`, then publish the lock state. A wipe that
+  stays incomplete, or data left without a vault (`OrphanedData`), keeps the app locked and publishes no vault
+  state. The screens that explain it and offer an explicit wipe belong to the UI phase.
+- Every `unlockedSessionScope` job runs on the default dispatcher, because the coordinator inherits the
+  application scope's dispatcher.
+- The key manager is built on first use and its two word lists are read on the IO dispatcher. The wipe and the key
+  manager reach each other through `DeferredKeyManager` and a late-bound lookup, so neither is built first.
+- User activity reaches the auto-lock through `Activity.onUserInteraction` (key presses and touch-downs) and
+  `dispatchTouchEvent` (touch moves). `ComponentActivity.dispatchKeyEvent` is restricted API, so key releases and
+  repeats are not forwarded.
+- `AndroidBootInfo.bootCount()` falls back to a constant when the platform setting cannot be read. Then a reboot is
+  no longer detected, and a biometric unlock after a reboot is not forced to a password. The setting exists on
+  every supported API level, so this only covers a vendor quirk.
+- The device integrity check is built and tested but not called yet: the warning needs a screen.
+- `shared:crypto` exposes one public entry point, `VaultKeysFactory`, which returns only the `KeyManager` and
+  `BiometricKeyManager` ports. **SECURITY-SENSITIVE**: it only assembles existing parts and changes no format,
+  key, algorithm or AAD string.
+
+## Release build
+
+- The minified release build (R8) ran setup, lock, a wrong password, the right password and key destruction on an
+  API 34 emulator, with no keep rule added. This used a throw-away harness that was not committed, because no
+  setup screen exists yet. Tink, Bouncy Castle Argon2id, kotlinx-serialization and the Keystore all work after R8.
+- `:androidApp:verifyReleaseManifest` passes. The merged release manifest has no `INTERNET`, only the allowed
+  permissions and one exported component, the launcher activity. `androidx.startup.InitializationProvider` is not
+  exported and keeps `ProcessLifecycleInitializer`, which the auto-lock needs.
+
+## More accepted risks
+
+- Compose text state: a text field keeps what the patient types in memory that the app cannot zero. The password
+  field must clear its state right after derivation; the copies Compose made stay until garbage collection.
+- A rooted device can restore an older `vault.json` and reset the failed-attempt counter, because the counter is
+  stored in that file. The Keystore key stays, so this lets an attacker guess again but reveals nothing without
+  the password. The recovery limit is in memory only for the same reason.
+- Flash wear levelling can keep old blocks of a deleted file, as written for `vault.json` above. This applies to
+  every file the wipe deletes. The keys are destroyed first, so the old blocks are ciphertext without a key.
+- Security level per test phone: only an API 34 emulator was run. Nothing is recorded for a real phone, a
+  StrongBox device or API 29 and 30 yet.
+- The manual biometric checklist above is still open, as no fingerprint was enrolled on the emulator.
