@@ -1,9 +1,6 @@
 package com.estcomputer.patient.crypto
 
 import android.content.Context
-import android.os.Build
-import android.security.keystore.KeyInfo
-import android.security.keystore.KeyProperties
 import com.estcomputer.patient.domain.coroutines.DispatcherProvider
 import com.estcomputer.patient.domain.model.SecretBytes
 import com.estcomputer.patient.domain.port.BiometricChallenge
@@ -12,7 +9,6 @@ import java.security.GeneralSecurityException
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
-import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
 
 internal class AndroidBiometricKeystore(
@@ -26,7 +22,7 @@ internal class AndroidBiometricKeystore(
         withContext(dispatchers.io) {
             if (!generator.generate(alias)) return@withContext BiometricKeystoreGenerateResult.NoBiometricEnrolled
             val key = requireNotNull(loadKey(alias)) { "generated key missing" }
-            BiometricKeystoreGenerateResult.Ok(levelOf(key))
+            BiometricKeystoreGenerateResult.Ok(securityLevelOf(key))
         }
 
     override suspend fun beginSeal(alias: String): BiometricKeystoreBeginResult =
@@ -124,24 +120,8 @@ internal class AndroidBiometricKeystore(
 
     private fun loadKey(alias: String): SecretKey? = keyStore.getKey(alias, null) as SecretKey?
 
-    private fun levelOf(key: SecretKey): SecurityLevel {
-        val factory = SecretKeyFactory.getInstance(key.algorithm, PROVIDER)
-        val info = factory.getKeySpec(key, KeyInfo::class.java) as KeyInfo
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            when (info.securityLevel) {
-                KeyProperties.SECURITY_LEVEL_STRONGBOX -> SecurityLevel.STRONGBOX
-                KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT -> SecurityLevel.TRUSTED_ENVIRONMENT
-                KeyProperties.SECURITY_LEVEL_SOFTWARE -> SecurityLevel.SOFTWARE
-                else -> SecurityLevel.UNKNOWN
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            if (info.isInsideSecureHardware) SecurityLevel.TRUSTED_ENVIRONMENT else SecurityLevel.SOFTWARE
-        }
-    }
-
     private companion object {
-        const val PROVIDER = "AndroidKeyStore"
+        const val PROVIDER = ANDROID_KEYSTORE_PROVIDER
         const val TRANSFORMATION = "AES/GCM/NoPadding"
         const val MIN_BLOB_BYTES = CryptoConstants.GCM_NONCE_BYTES + CryptoConstants.GCM_TAG_BYTES
     }

@@ -5,9 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import android.security.keystore.StrongBoxUnavailableException
 import java.security.InvalidAlgorithmParameterException
-import java.security.ProviderException
 import javax.crypto.KeyGenerator
 
 internal class BiometricKeyGenerator(context: Context) {
@@ -15,25 +13,10 @@ internal class BiometricKeyGenerator(context: Context) {
         context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
 
     /** False when no secure lock screen or strong biometric is enrolled. */
-    fun generate(alias: String): Boolean {
-        if (hasStrongBox && tryStrongBox(alias)) return true
-        return try {
-            build(alias, isStrongBox = false)
-            true
-        } catch (_: InvalidAlgorithmParameterException) {
-            false
-        }
-    }
-
-    // StrongBox can be advertised yet fail at generation, as a vendor ProviderException.
-    private fun tryStrongBox(alias: String): Boolean =
+    fun generate(alias: String): Boolean =
         try {
-            build(alias, isStrongBox = true)
+            generateWithStrongBoxFallback(hasStrongBox) { build(alias, it) }
             true
-        } catch (_: StrongBoxUnavailableException) {
-            false
-        } catch (_: ProviderException) {
-            false
         } catch (_: InvalidAlgorithmParameterException) {
             false
         }
@@ -59,7 +42,7 @@ internal class BiometricKeyGenerator(context: Context) {
     }
 
     private companion object {
-        const val PROVIDER = "AndroidKeyStore"
+        const val PROVIDER = ANDROID_KEYSTORE_PROVIDER
         const val AUTH_EVERY_USE = 0
     }
 }
