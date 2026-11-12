@@ -96,8 +96,9 @@ internal class PasswordVerifier(
             }
             return when (derived) {
                 is KdfResult.Failed -> {
-                    // Not a wrong password, so the attempt is given back.
-                    context.store.write(before)
+                    // Not a wrong password, so the attempt is given back. If that write fails, the attempt
+                    // stays counted, which only costs the patient one attempt.
+                    giveBack(before)
                     PasswordAttempt.Failed(derived.error)
                 }
                 is KdfResult.Derived ->
