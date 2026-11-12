@@ -18,3 +18,9 @@ that the Keystore key is deleted first, which makes every wrapped key in the old
 `AndroidAtomicFileOps.syncDirectory()` is best effort: a filesystem that refuses to open a directory is not
 treated as a failed write. The rename itself is atomic; only its durability across a power cut is unproven there.
 Not yet exercised on a device.
+
+## Unicode normalisation creates immutable copies
+
+`java.text.Normalizer` takes and returns a `String`. Every NFKC pass over a password and every NFKD pass over
+recovery words therefore leaves immutable copies on the heap until garbage collection. The `CharArray` inputs
+and outputs are zeroed, but these copies cannot be. Accepted because no audited normaliser works on arrays.
